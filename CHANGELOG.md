@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2026-07-09
+
+### Added
+- **Python SDK** (`packages/python`) — standalone agent with embedded tools, CLI, remote client
+- **JavaScript/TypeScript SDK** (`packages/javascript`) — Node.js agent, CLI, remote client
+- **Standalone HTTP server** (`server/`) — Sinatra/Rack API callable from any language
+- **OpenAPI spec** (`packages/core-protocol/openapi.yaml`) — universal API contract
+- Multi-language monorepo documentation
+
 ## [0.1.0] - 2026-07-09
 
 ### Added

@@ -1,12 +1,71 @@
 # Rails AI Build
 
-**Cursor-like AI agent integration for any Rails application.**
+**Cursor-like AI coding agents for any project — Ruby, Python, JavaScript, and more.**
 
-`rails_ai_build` is a Ruby gem that brings AI coding agents into your Rails app. Create agents that read, search, and modify your codebase — powered by OpenAI, Anthropic, or your own custom models.
+A multi-language monorepo that brings AI coding agents into your applications. Agents read, search, and modify your codebase using multiple AI models — just like Cursor.
+
+## Packages
+
+| Package | Language | Install | Use case |
+|---------|----------|---------|----------|
+| [`rails_ai_build`](./lib) | Ruby (Rails gem) | `gem "rails_ai_build"` | Full Rails integration with engine, DB, jobs |
+| [`rails-ai-build`](./packages/python) | Python | `pip install rails-ai-build` | Django, FastAPI, Flask, scripts, data science |
+| [`@rails-ai-build/sdk`](./packages/javascript) | JavaScript/TypeScript | `npm install @rails-ai-build/sdk` | Node.js, Express, Next.js, React |
+| [`server`](./server) | Ruby (Sinatra) | `bundle exec rackup` | Language-agnostic HTTP API for any stack |
+
+All packages share the same agent architecture and can work **standalone** (no Ruby required) or connect via the **HTTP API**.
+
+## Quick start by language
+
+### Ruby / Rails
+
+```ruby
+gem "rails_ai_build"
+# rails generate rails_ai_build:install && rails db:migrate
+
+RailsAiBuild::ChatService.ask("Add a health check endpoint")
+```
+
+### Python
+
+```python
+pip install rails-ai-build
+
+from rails_ai_build import configure, ask
+configure(api_keys={"openai": "sk-..."})
+result = ask("Add type hints to all functions in src/")
+```
+
+### JavaScript / TypeScript
+
+```typescript
+npm install @rails-ai-build/sdk
+
+import { configure, ask } from "@rails-ai-build/sdk";
+configure({ apiKeys: { openai: process.env.OPENAI_API_KEY! } });
+const result = await ask("Add JSDoc to all exports in src/");
+```
+
+### Any language (via HTTP)
+
+```bash
+# Start the standalone server
+cd server && bundle install && WORKSPACE_ROOT=/your/project bundle exec rackup -p 9292
+
+# Call from Go, Java, PHP, Rust, etc.
+curl -X POST http://localhost:9292/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "List all source files", "provider": "openai", "model": "gpt-4o"}'
+```
+
+See [`packages/core-protocol/openapi.yaml`](./packages/core-protocol/openapi.yaml) for the full API spec.
+
+---
 
 ## Features
 
 - **Multi-model support** — OpenAI, Anthropic, and custom providers (Ollama, Together, Groq, or any HTTP API)
+- **Multi-language SDKs** — Ruby, Python, JavaScript with identical agent capabilities
 - **Agent loop** — Tool-calling agent that iterates until the task is complete (like Cursor)
 - **Built-in tools** — `read_file`, `write_file`, `grep`, `list_files`, `shell`
 - **Rails engine** — REST API, ActiveRecord models, background jobs
