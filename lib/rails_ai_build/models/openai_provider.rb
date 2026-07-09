@@ -17,7 +17,7 @@ module RailsAiBuild
         @base_url = base_url
       end
 
-      def chat(messages:, tools: [], model: nil, **kwargs)
+      def chat(messages:, tools: [], model: nil, on_delta: nil, **kwargs)
         validate_api_key!
 
         payload = {
@@ -29,7 +29,9 @@ module RailsAiBuild
         payload.merge!(kwargs.slice(:temperature, :max_tokens, :top_p))
 
         response = post("/chat/completions", payload)
-        parse_response(response)
+        parsed = parse_response(response)
+        emit_token_deltas(parsed[:content], on_delta: on_delta)
+        parsed
       end
 
       def list_models

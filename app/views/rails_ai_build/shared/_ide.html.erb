@@ -18,6 +18,21 @@
     localStorage.setItem('rab-theme', themeSelect.value);
   });
 
+  // Activity panel switch (explorer / threads)
+  document.querySelectorAll('.rab-activity-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = btn.dataset.panel;
+      document.querySelectorAll('.rab-activity-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('rab-sidebar-files').style.display = panel === 'files' ? 'flex' : 'none';
+      document.getElementById('rab-sidebar-sessions').style.display = panel === 'sessions' ? 'flex' : 'none';
+      if (panel === 'sessions') loadSessions();
+      if (panel === 'agent') {
+        document.querySelector('[data-tab="agent"]')?.click();
+      }
+    });
+  });
+
   // Right panel tabs
   document.querySelectorAll('.rab-right-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -97,24 +112,59 @@
 
   function formatEvent(event, data) {
     const tags = { start: 'rab-tag-start', context: 'rab-tag-start', session: 'rab-tag-start',
-      tool_call: 'rab-tag-tool', delta: 'rab-tag-iteration', iteration: 'rab-tag-iteration',
-      complete: 'rab-tag-complete', done: 'rab-tag-complete', error: 'rab-tag-error' };
+      attempt: 'rab-tag-start', verify: 'rab-tag-iteration', queued: 'rab-tag-start', running: 'rab-tag-start',
+      tool_call: 'rab-tag-tool', tool_result: 'rab-tag-tool', delta: 'rab-tag-iteration', iteration: 'rab-tag-iteration',
+      complete: 'rab-tag-complete', done: 'rab-tag-complete', finished: 'rab-tag-complete', pr_ready: 'rab-tag-complete',
+      error: 'rab-tag-error' };
     let body = '';
     if (event === 'session') {
       sessionId = data.id;
       localStorage.setItem('rab-session-id', sessionId);
       body = 'Thread ' + sessionId.slice(0, 8) + '… (model: ' + (data.model || '') + ')';
+      loadSessions();
     } else if (event === 'context') {
       body = 'Auto-context: Rails ' + (data.rails || '?') + ', conventions loaded';
-    } else if (event === 'start') body = 'Starting: "' + (data.message || '') + '"';
-    else if (event === 'tool_call') body = '<strong>' + data.name + '</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + JSON.stringify(data.arguments, null, 2) + '</pre>';
-    else if (event === 'delta' || event === 'iteration') body = data.content || '';
-    else if (event === 'complete' || event === 'done') {
-      body = data.content || 'Done.';
+    } else if (event === 'start' || event === 'attempt') {
+      body = (event === 'attempt' ? 'Attempt ' + data.number + '/' + data.max : 'Starting: "' + (data.task || data.message || '') + '"');
+    } else if (event === 'verify') {
+      body = data.passed ? '✓ Verification passed' : '✗ Verification failed';
+    } else if (event === 'tool_call') {
+      body = '<strong>' + data.name + '</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + JSON.stringify(data.arguments, null, 2) + '</pre>';
+    } else if (event === 'tool_result') {
+      body = '<strong>' + data.name + ' →</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + (data.result || '').slice(0, 800) + '</pre>';
+    } else if (event === 'delta' || event === 'iteration') {
+      body = data.content || '';
+      if (data.token) return '<span class="rab-token-delta">' + escapeHtml(body) + '</span>';
+    } else if (event === 'complete' || event === 'done' || event === 'finished') {
+      body = data.content || (data.status ? 'Status: ' + data.status : 'Done.');
       if (data.pending_changes?.length) refreshChanges(data.pending_changes);
-    }
-    else if (event === 'error') body = data.error;
+      if (data.compare_url || data.pr_url) body += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
+    } else if (event === 'pr_ready') {
+      body = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' + (data.branch || 'compare') + '</a>';
+    } else if (event === 'error') body = data.error;
     return '<div class="rab-event"><span class="rab-event-tag ' + (tags[event] || 'rab-tag-error') + '">' + event + '</span><div class="rab-event-body">' + body + '</div></div>';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function consumeSse(res, onChunk) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+      for (const part of parts) {
+        const em = part.match(/event: (\w+)/);
+        const dm = part.match(/data: (.+)/s);
+        if (em && dm) onChunk(em[1], JSON.parse(dm[1]));
+      }
+    }
   }
 
   async function runAgent(e) {
@@ -130,21 +180,36 @@
         body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
       });
       const data = await res.json();
-      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', { content: 'Queued task ' + data.id }));
+      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', { content: 'Queued task ' + data.id, status: data.status }));
+      watchTask(data.id);
       loadTasks();
       return;
     }
 
-    if (mode === 'build') {
+    if (mode === 'build' || mode === 'composer') {
       running = true;
       runBtn.disabled = true;
-      statusEl.textContent = 'Building…';
-      const res = await fetch(base + '/build', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
+      statusEl.textContent = mode === 'composer' ? 'Composing…' : 'Building…';
+      streamEl.innerHTML = '';
+      const res = await fetch(base + '/build/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        body: JSON.stringify({
+          task: prompt,
+          skill: document.getElementById('rab-skill').value || undefined,
+          verify: true,
+          composer: mode === 'composer'
+        })
       });
-      const data = await res.json();
-      streamEl.insertAdjacentHTML('beforeend', formatEvent(data.status === 'success' ? 'complete' : 'error', { content: data.content || data.error }));
+      await consumeSse(res, (event, data) => {
+        const html = formatEvent(event, data);
+        if (event === 'delta' && data.token) {
+          streamEl.insertAdjacentHTML('beforeend', html);
+        } else {
+          streamEl.insertAdjacentHTML('beforeend', html);
+        }
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
       running = false;
       runBtn.disabled = false;
       statusEl.textContent = '';
@@ -182,24 +247,10 @@
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify(body)
       });
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop();
-        for (const part of parts) {
-          const em = part.match(/event: (\w+)/);
-          const dm = part.match(/data: (.+)/s);
-          if (em && dm) {
-            streamEl.insertAdjacentHTML('beforeend', formatEvent(em[1], JSON.parse(dm[1])));
-            streamEl.scrollTop = streamEl.scrollHeight;
-          }
-        }
-      }
+      await consumeSse(res, (event, data) => {
+        streamEl.insertAdjacentHTML('beforeend', formatEvent(event, data));
+        streamEl.scrollTop = streamEl.scrollHeight;
+      });
     } catch (err) {
       streamEl.insertAdjacentHTML('beforeend', formatEvent('error', { error: err.message }));
     } finally {
@@ -258,7 +309,7 @@
       body: JSON.stringify({ title: 'AI: ' + document.getElementById('rab-prompt').value.slice(0, 60) })
     });
     const data = await res.json();
-    if (data.compare_url) window.open(data.compare_url, '_blank');
+    if (data.compare_url || data.pr_url) window.open(data.compare_url || data.pr_url, '_blank');
     else alert(data.error || JSON.stringify(data));
   });
 
@@ -270,6 +321,64 @@
     document.getElementById('rab-audit-log').textContent = JSON.stringify(data, null, 2);
   });
 
+  const watchedTasks = new Set();
+
+  async function watchTask(id) {
+    if (!id || watchedTasks.has(id)) return;
+    watchedTasks.add(id);
+    try {
+      const res = await fetch(base + '/tasks/' + id + '/stream', {
+        method: 'POST',
+        headers: { Accept: 'text/event-stream' }
+      });
+      await consumeSse(res, (event, data) => {
+        if (event === 'delta' && data.token) return;
+        streamEl.insertAdjacentHTML('beforeend', formatEvent(event, data));
+        loadTasks();
+      });
+    } catch (e) { /* task may have finished before subscribe */ }
+    watchedTasks.delete(id);
+  }
+
+  async function loadSessions() {
+    const el = document.getElementById('rab-session-list');
+    if (!el) return;
+    try {
+      const res = await fetch(base + '/ai/sessions');
+      const data = await res.json();
+      if (!data.sessions?.length) {
+        el.innerHTML = '<p class="rab-locked">No threads yet</p>';
+        return;
+      }
+      el.innerHTML = data.sessions.map(s =>
+        '<div class="rab-tree-item rab-session-item' + (s.id === sessionId ? ' active' : '') + '" data-session="' + s.id + '" style="padding:0.4rem 0.5rem;cursor:pointer;border-bottom:1px solid var(--rab-border)">' +
+        '<div style="font-weight:600;font-size:0.75rem">' + escapeHtml(s.title || 'Thread') + '</div>' +
+        '<div style="font-size:0.68rem;color:var(--rab-muted)">' + (s.preview || '').slice(0, 60) + '</div></div>'
+      ).join('');
+    } catch (e) {
+      el.innerHTML = '<p class="rab-locked">' + e.message + '</p>';
+    }
+  }
+
+  document.getElementById('rab-session-list')?.addEventListener('click', (ev) => {
+    const item = ev.target.closest('[data-session]');
+    if (!item) return;
+    sessionId = item.dataset.session;
+    localStorage.setItem('rab-session-id', sessionId);
+    document.querySelectorAll('.rab-session-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    streamEl.innerHTML = formatEvent('session', { id: sessionId });
+  });
+
+  document.getElementById('rab-new-session')?.addEventListener('click', async () => {
+    const res = await fetch(base + '/ai/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json();
+    sessionId = data.id;
+    localStorage.setItem('rab-session-id', sessionId);
+    streamEl.innerHTML = '';
+    loadSessions();
+  });
+
   async function loadTasks() {
     const el = document.getElementById('rab-task-list');
     if (!el) return;
@@ -277,13 +386,21 @@
       const res = await fetch(base + '/tasks');
       const data = await res.json();
       if (!data.tasks?.length) { el.innerHTML = '<p class="rab-locked">No tasks queued</p>'; return; }
-      el.innerHTML = data.tasks.map(t =>
-        '<div class="rab-change-item"><div class="rab-change-path">' + t.status + '</div><div style="font-size:0.72rem">' + (t.description || '').slice(0, 60) + '</div></div>'
-      ).join('');
+      el.innerHTML = data.tasks.map(t => {
+        const pr = t.compare_url || t.pr_url;
+        return '<div class="rab-change-item" data-task-id="' + t.id + '">' +
+          '<div class="rab-change-path">' + t.status + (t.branch ? ' · ' + t.branch : '') + '</div>' +
+          '<div style="font-size:0.72rem">' + (t.description || '').slice(0, 60) + '</div>' +
+          (pr ? '<a href="' + pr + '" target="_blank" style="font-size:0.68rem">PR</a>' : '') +
+          '</div>';
+      }).join('');
+      data.tasks.filter(t => t.status === 'running' || t.status === 'queued').forEach(t => watchTask(t.id));
     } catch (e) { el.innerHTML = '<p class="rab-locked">' + e.message + '</p>'; }
   }
 
   document.getElementById('rab-refresh-tasks')?.addEventListener('click', loadTasks);
   loadTasks();
+  loadSessions();
+  setInterval(loadTasks, 8000);
 })();
 </script>

@@ -28,6 +28,8 @@ gem "rails_ai_build"
 rails generate rails_ai_build:boost   # Laravel Boost-style introspection tools
 
 RailsAiBuild::Ai::Driver.run("Add Stripe subscriptions")  # model-first — like Cursor/Claude
+# Stream: Driver.stream("...") { |event, data| ... }  # SSE: delta, tool_call, tool_result, done
+# API: POST /rails_ai_build/ai/stream · POST /build/stream · POST /tasks/:id/stream
 # Multi-turn: session = RailsAiBuild::Ai::Session.create; Driver.run("...", session: session)
 
 RailsAiBuild::ChatService.build("Add Stripe subscriptions with webhooks")

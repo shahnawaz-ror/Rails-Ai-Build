@@ -39,6 +39,7 @@
   <div class="rab-workspace">
     <nav class="rab-activity">
       <button class="rab-activity-btn active" data-panel="files" title="Explorer">📁</button>
+      <button class="rab-activity-btn" data-panel="sessions" title="Threads">💬</button>
       <button class="rab-activity-btn" data-panel="agent" title="Agent">🤖</button>
       <% if @features[:git_integration] %><button class="rab-activity-btn" data-panel="git" title="Git">⎇</button><% end %>
     </nav>
@@ -47,6 +48,16 @@
       <div class="rab-sidebar-header">Explorer</div>
       <div class="rab-sidebar-body" id="rab-file-tree">
         <p class="rab-locked">Loading workspace…</p>
+      </div>
+    </aside>
+
+    <aside class="rab-sidebar" id="rab-sidebar-sessions" style="display:none">
+      <div class="rab-sidebar-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Threads</span>
+        <button type="button" class="rab-btn rab-btn-secondary" id="rab-new-session" style="padding:0.2rem 0.4rem;font-size:0.65rem">New</button>
+      </div>
+      <div class="rab-sidebar-body" id="rab-session-list">
+        <p class="rab-locked">Loading threads…</p>
       </div>
     </aside>
 
@@ -70,6 +81,7 @@
           <select id="rab-mode" title="Mode">
             <option value="stream">Agent</option>
             <option value="build">Build (verify)</option>
+            <option value="composer">Composer</option>
             <option value="queue">Queue task</option>
           </select>
           <select id="rab-skill">

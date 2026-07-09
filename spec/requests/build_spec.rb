@@ -22,4 +22,19 @@ RSpec.describe 'Build API', type: :request do
       expect(json_response[:content]).to include('Feature')
     end
   end
+
+  describe 'POST /rails_ai_build/build/stream' do
+    it 'streams build events' do
+      allow_any_instance_of(RailsAiBuild::Tools::RunRailsCheckTool).to receive(:call)
+        .and_return({ passed: true, checks: {} })
+
+      post '/rails_ai_build/build/stream',
+           params: { task: 'Add health endpoint', verify: false }.to_json,
+           headers: { 'CONTENT_TYPE' => 'application/json', 'Accept' => 'text/event-stream' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('event: start')
+      expect(response.body).to include('event: complete')
+    end
+  end
 end

@@ -5,13 +5,14 @@ module RailsAiBuild
     class PullRequest
       # Creates a git branch, commits changes, and opens a PR (Team+ feature)
       class << self
-        def create(title:, body: nil, branch_prefix: "ai/rails-ai-build", provider: :github)
+        def create(title:, body: nil, branch_prefix: "ai/rails-ai-build", existing_branch: nil, provider: :github)
           Plans.check!(:pr_creation)
 
-          branch = "#{branch_prefix}-#{Time.now.to_i}"
+          branch = existing_branch || "#{branch_prefix}-#{Time.now.to_i}"
           body ||= "Automated changes by [Rails AI Build](https://github.com/shahnawaz-ror/Rails-Ai-Build)"
 
-          Git.create_branch(branch)
+          Git.create_branch(branch) unless existing_branch
+          Git.checkout_branch(branch) if existing_branch
           Git.commit(message: title)
           push_result = Git.push(branch: branch)
 
@@ -27,6 +28,7 @@ module RailsAiBuild
             provider: provider,
             push: push_result,
             pr_url: pr_url,
+            compare_url: pr_url,
             message: "Branch pushed. Create PR at: #{pr_url}"
           }
         end

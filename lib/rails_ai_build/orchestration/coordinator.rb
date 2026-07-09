@@ -9,22 +9,34 @@ module RailsAiBuild
           system_prompt: <<~PROMPT,
             You are a planning agent. Analyze the task, read relevant files, and produce
             a step-by-step plan. Do NOT write code. Output a numbered plan only.
+            Use Rails Boost tools (routes, schema, models) to ground the plan in this app.
           PROMPT
-          tools: %i[read_file grep list_files]
+          tools: %i[
+            read_file grep list_files
+            application_info list_routes database_schema list_models
+          ]
         },
         coder: {
           system_prompt: <<~PROMPT,
             You are a coding agent. Execute the plan by reading and writing files.
             Follow Rails conventions. Make minimal focused changes.
+            Run run_rails_check after substantive edits.
           PROMPT
-          tools: %i[read_file write_file grep list_files shell]
+          tools: %i[
+            read_file write_file grep list_files shell
+            run_rails_check list_migrations
+          ]
         },
         reviewer: {
           system_prompt: <<~PROMPT,
             You are a review agent. Check the changes for bugs, missing tests,
-            and Rails best practices. Suggest fixes if needed.
+            and Rails best practices. Use model_attributes and run_rails_check.
+            Suggest fixes if needed.
           PROMPT
-          tools: %i[read_file grep list_files shell]
+          tools: %i[
+            read_file grep list_files shell
+            run_rails_check model_attributes
+          ]
         }
       }.freeze
 
@@ -87,7 +99,7 @@ module RailsAiBuild
       def verify_workspace
         workspace = RailsAiBuild.configuration.workspace_path
         tool = Tools::RunRailsCheckTool.new(workspace: workspace)
-        result = tool.call({ 'checks' => %w[zeitwerk] })
+        result = tool.call({ 'checks' => %w[zeitwerk test] })
         { passed: result[:passed], checks: result[:checks] }
       rescue StandardError => e
         { passed: false, error: e.message }

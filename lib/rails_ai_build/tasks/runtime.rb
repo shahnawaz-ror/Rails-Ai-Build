@@ -29,7 +29,8 @@ module RailsAiBuild
         model: nil,
         skill: nil,
         verify: nil,
-        max_attempts: nil
+        max_attempts: nil,
+        task_id: nil
       )
         @task = task.to_s
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
@@ -38,17 +39,23 @@ module RailsAiBuild
         @skill = skill
         @verify = verify.nil? ? RailsAiBuild.configuration.verify_builds : verify
         @max_attempts = max_attempts || RailsAiBuild.configuration.build_max_attempts
+        @task_id = task_id
         @attempts = []
       end
 
-      def run!
+      def run!(&on_event)
+        streaming = on_event || @task_id
+        emit = streaming ? build_emitter(on_event) : nil
+        emit&.call(:start, { task: @task })
         context = +''
         last_result = nil
 
         @max_attempts.times do |i|
+          emit&.call(:attempt, { number: i + 1, max: @max_attempts })
           prompt = build_prompt(attempt: i + 1, context: context)
-          last_result = run_agent(prompt)
+          last_result = run_agent(prompt, emit)
           verify_result = @verify ? verify_workspace : { passed: true, skipped: true }
+          emit&.call(:verify, verify_result)
 
           attempt_record = {
             number: i + 1,
@@ -58,17 +65,30 @@ module RailsAiBuild
           }
           @attempts << attempt_record
 
-          return success_result(last_result, verify_result) if verify_result[:passed]
+          if verify_result[:passed]
+            result = success_result(last_result, verify_result)
+            emit&.call(:complete, result.to_h)
+            return result
+          end
 
           context << "\n\n## Attempt #{i + 1} failed verification\n"
           context << format_verify_failure(verify_result)
           context << "\nFix the issues and try again. Do not repeat the same mistake.\n"
         end
 
-        failed_result(last_result)
+        result = failed_result(last_result)
+        emit&.call(:complete, result.to_h)
+        result
       end
 
       private
+
+      def build_emitter(on_event)
+        lambda do |event, data|
+          on_event&.call(event, data)
+          EventBus.emit(@task_id, event, data) if @task_id
+        end
+      end
 
       def build_prompt(attempt:, context:)
         parts = ["# Task\n#{@task}"]
@@ -77,20 +97,38 @@ module RailsAiBuild
         parts.join
       end
 
-      def run_agent(prompt)
-        result = Ai::Driver.run(
-          prompt,
-          provider: @provider,
-          model: @model,
-          skill: @skill,
-          workspace: @workspace
-        )
-        {
-          content: result.content,
-          iterations: result.iterations,
-          usage: result.usage,
-          messages: result.messages
-        }
+      def run_agent(prompt, emit)
+        if emit
+          result = Ai::Driver.stream(
+            prompt,
+            provider: @provider,
+            model: @model,
+            skill: @skill,
+            workspace: @workspace
+          ) do |event, data|
+            emit.call(event, data)
+          end
+          {
+            content: result.content,
+            iterations: result.iterations,
+            usage: result.usage,
+            messages: result.messages
+          }
+        else
+          result = Ai::Driver.run(
+            prompt,
+            provider: @provider,
+            model: @model,
+            skill: @skill,
+            workspace: @workspace
+          )
+          {
+            content: result.content,
+            iterations: result.iterations,
+            usage: result.usage,
+            messages: result.messages
+          }
+        end
       end
 
       def verify_workspace

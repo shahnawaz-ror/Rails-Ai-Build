@@ -91,15 +91,28 @@ module RailsAiBuild
       def wire_streaming(runner, on_event)
         return unless on_event
 
+        streamed_tokens = false
         emit(on_event, :session, @session.to_h.merge(model: @model, provider: @provider))
+
+        runner.on(:on_delta) do |chunk|
+          streamed_tokens = true
+          emit(on_event, :delta, { content: chunk[:content].to_s, token: true })
+        end
 
         runner.on(:on_iteration) do |response|
           content = response[:content].to_s
-          emit(on_event, :delta, { content: content }) unless content.empty?
+          next if content.empty? || streamed_tokens
+
+          emit(on_event, :delta, { content: content, final: true })
+          streamed_tokens = false
         end
 
         runner.on(:on_tool_call) do |tc|
-          emit(on_event, :tool_call, { name: tc[:name], arguments: tc[:arguments] })
+          emit(on_event, :tool_call, { name: tc[:name], arguments: tc[:arguments], tool_call_id: tc[:id] })
+        end
+
+        runner.on(:on_tool_result) do |tr|
+          emit(on_event, :tool_result, tr)
         end
       end
 

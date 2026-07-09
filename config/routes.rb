@@ -11,10 +11,16 @@ RailsAiBuild::Engine.routes.draw do
 
   post "chat", to: "chat#create"
   post "build", to: "build#create"
+  post "build/stream", to: "build#stream"
   post "ai/chat", to: "ai#chat"
   post "ai/stream", to: "ai#stream"
+  resources :sessions, path: "ai/sessions", controller: "sessions", only: %i[index show create destroy]
 
-  resources :tasks, only: %i[index show create destroy]
+  resources :tasks, only: %i[index show create destroy] do
+    member do
+      post :stream
+    end
+  end
 
   resources :agents do
     member do

@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.2.0] - 2026-07-09
+
+### Added — Cursor parity (real-time + git isolation + threads)
+- **Token streaming** — word-by-word `delta` events from providers via `Ai::Driver`
+- **`tool_result` SSE** — tool output streamed back to IDE after each call
+- **`POST /build/stream`** — SSE for universal builder (attempt/verify/complete events)
+- **`POST /tasks/:id/stream`** — per-task live event stream + `Tasks::EventBus`
+- **`GET/POST/DELETE /ai/sessions`** — conversation thread API
+- **IDE Threads panel** — sidebar thread list, New Chat, session switch
+- **Composer mode** — multi-file plan-first builds via `/build/stream?composer=true`
+- **Task polling** — auto-refresh + subscribe to running task streams
+- **Git isolation** — `branch_per_task` on enqueue, `auto_pr_on_complete` on success
+- **Coordinator boost** — planner/coder/reviewer use Rails Boost tools; verify = zeitwerk + test
+
+### Changed
+- `Tasks::Runtime` streams through `Ai::Driver` when task has events
+- `PullRequest.create` accepts `existing_branch` for branch-per-task flow
+- IDE Build mode uses SSE instead of blocking JSON
+
 ## [2.1.0] - 2026-07-09
 
 ### Added — AI Driver (model-first, like Cursor & Claude)

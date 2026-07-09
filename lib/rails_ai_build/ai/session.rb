@@ -20,18 +20,30 @@ module RailsAiBuild
 
       def add_message(message)
         @messages << message
+        auto_title! if @title.nil? && message.role == :user
       end
 
       def to_h
         {
           id: id,
-          title: title,
+          title: title || default_title,
           model: model,
           provider: provider,
           message_count: messages.size,
           created_at: created_at&.iso8601,
-          metadata: metadata
+          metadata: metadata,
+          preview: messages.last&.content.to_s[0, 120]
         }
+      end
+
+      def messages_preview
+        messages.map do |msg|
+          {
+            role: msg.role,
+            content: msg.content.to_s[0, 500],
+            name: msg.name
+          }
+        end
       end
 
       class << self
@@ -45,6 +57,14 @@ module RailsAiBuild
           store[id.to_s]
         end
 
+        def all
+          store.values.sort_by(&:created_at).reverse
+        end
+
+        def destroy(id)
+          store.delete(id.to_s)
+        end
+
         def reset!
           @store = {}
         end
@@ -54,6 +74,17 @@ module RailsAiBuild
         def store
           @store ||= {}
         end
+      end
+
+      private
+
+      def auto_title!
+        first = messages.find { |m| m.role == :user }&.content.to_s
+        @title = first[0, 48] if first.present?
+      end
+
+      def default_title
+        "Thread #{id.to_s[0, 8]}"
       end
     end
   end

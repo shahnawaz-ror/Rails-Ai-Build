@@ -9,6 +9,8 @@ RSpec.describe 'Tasks API', type: :request do
       c.sync_tasks = true
       c.multitask_enabled = true
       c.api_keys[:openai] = 'sk-test'
+      c.branch_per_task = false
+      c.auto_pr_on_complete = false
     end
     allow_any_instance_of(RailsAiBuild::Tasks::Runtime).to receive(:run!).and_return(
       RailsAiBuild::Tasks::Runtime::Result.new(

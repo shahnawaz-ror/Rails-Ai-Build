@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe RailsAiBuild do
   it "has a version number" do
     expect(RailsAiBuild::VERSION).to match(/\A\d+\.\d+\.\d+\z/)
-    expect(RailsAiBuild::VERSION).to eq("2.1.0")
+    expect(RailsAiBuild::VERSION).to eq("2.2.0")
   end
 
   it "exposes Providers as an alias to Models::Registry" do

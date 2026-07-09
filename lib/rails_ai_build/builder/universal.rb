@@ -9,6 +9,11 @@ module RailsAiBuild
           Tasks::Runtime.new(task: task, **options).run!
         end
 
+        def stream(task, **options, &)
+          runtime = Tasks::Runtime.new(task: task, **options)
+          runtime.run!(&)
+        end
+
         def build!(task, **options)
           result = build(task, **options)
           raise AgentError, "Build failed after #{result.attempts.size} attempts" if result.status == :failed

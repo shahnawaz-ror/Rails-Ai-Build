@@ -23,7 +23,9 @@ module RailsAiBuild
                   :build_max_attempts,
                   :multitask_enabled,
                   :max_concurrent_tasks,
-                  :sync_tasks
+                  :sync_tasks,
+                  :branch_per_task,
+                  :auto_pr_on_complete
 
     def initialize
       @default_model = "gpt-4o"
@@ -48,6 +50,8 @@ module RailsAiBuild
       @multitask_enabled = true
       @max_concurrent_tasks = 2
       @sync_tasks = false
+      @branch_per_task = true
+      @auto_pr_on_complete = true
     end
 
     def workspace_path

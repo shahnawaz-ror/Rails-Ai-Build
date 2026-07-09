@@ -18,7 +18,7 @@ module RailsAiBuild
         @base_url = base_url
       end
 
-      def chat(messages:, tools: [], model: nil, **kwargs)
+      def chat(messages:, tools: [], model: nil, on_delta: nil, **kwargs)
         validate_api_key!
 
         system_message, conversation = split_system(messages)
@@ -34,7 +34,9 @@ module RailsAiBuild
         payload[:temperature] = kwargs[:temperature] if kwargs[:temperature]
 
         response = post("/messages", payload)
-        parse_response(response)
+        parsed = parse_response(response)
+        emit_token_deltas(parsed[:content], on_delta: on_delta)
+        parsed
       end
 
       def list_models

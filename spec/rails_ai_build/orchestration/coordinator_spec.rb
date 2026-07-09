@@ -8,10 +8,14 @@ RSpec.describe RailsAiBuild::Orchestration::Coordinator do
   end
 
   it "configures planner with read-only tools" do
-    expect(described_class::AGENT_ROLES[:planner][:tools]).to eq(%i[read_file grep list_files])
+    expect(described_class::AGENT_ROLES[:planner][:tools]).to include(:application_info, :list_routes, :list_models)
   end
 
-  it "configures coder with write tools" do
-    expect(described_class::AGENT_ROLES[:coder][:tools]).to include(:write_file, :shell)
+  it "configures coder with boost verify tools" do
+    expect(described_class::AGENT_ROLES[:coder][:tools]).to include(:run_rails_check, :list_migrations)
+  end
+
+  it "configures reviewer with model_attributes" do
+    expect(described_class::AGENT_ROLES[:reviewer][:tools]).to include(:model_attributes, :run_rails_check)
   end
 end

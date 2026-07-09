@@ -2,6 +2,8 @@
 
 module RailsAiBuild
   class TasksController < ActionController::API
+    include ActionController::Live
+
     def index
       render json: { tasks: Tasks::Queue.all }
     end
@@ -35,6 +37,25 @@ module RailsAiBuild
       return render json: { error: 'Not found' }, status: :not_found unless task
 
       render json: task.to_h
+    end
+
+    def stream
+      task = Tasks::Queue.find(params.expect(:id))
+      return render json: { error: 'Not found' }, status: :not_found unless task
+
+      response.headers['Content-Type'] = 'text/event-stream'
+      response.headers['Cache-Control'] = 'no-cache'
+      response.headers['X-Accel-Buffering'] = 'no'
+
+      Tasks::EventBus.subscribe(task.id) do |event, data|
+        response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
+      end
+
+      response.stream.write(Streaming::Sse.format_sse(event: :snapshot, data: task.to_h)) if task.status != :running
+    rescue StandardError => e
+      response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message }))
+    ensure
+      response.stream.close
     end
   end
 end

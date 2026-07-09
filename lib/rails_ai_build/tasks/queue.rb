@@ -8,6 +8,7 @@ module RailsAiBuild
     class Queue
       Task = Struct.new(
         :id, :description, :status, :skill, :verify, :result, :error,
+        :branch, :pr_url, :compare_url,
         :created_at, :started_at, :finished_at,
         keyword_init: true
       ) do
@@ -20,6 +21,9 @@ module RailsAiBuild
             verify: verify,
             result: result&.to_h,
             error: error,
+            branch: branch,
+            pr_url: pr_url,
+            compare_url: compare_url || pr_url,
             created_at: created_at,
             started_at: started_at,
             finished_at: finished_at
@@ -43,6 +47,8 @@ module RailsAiBuild
           store[task.id] = task
           metadata(task.id)[:provider] = provider
           metadata(task.id)[:model] = model
+          assign_branch!(task)
+          EventBus.emit(task.id, :queued, { id: task.id, description: task.description, branch: task.branch })
           if RailsAiBuild.configuration.sync_tasks
             run_task(task)
           else
@@ -66,6 +72,7 @@ module RailsAiBuild
 
           task.status = :cancelled
           task.finished_at = Time.zone.now
+          EventBus.emit(task.id, :cancelled, task.to_h)
           task
         end
 
@@ -77,6 +84,7 @@ module RailsAiBuild
           @store = {}
           @meta = {}
           @mutex = Mutex.new
+          EventBus.reset!
         end
 
         private
@@ -86,6 +94,15 @@ module RailsAiBuild
 
           raise ConfigurationError,
                 'Multitask queue requires multitask_enabled (Team+ recommended)'
+        end
+
+        def assign_branch!(task)
+          return unless RailsAiBuild.configuration.branch_per_task
+
+          task.branch = "ai/task-#{task.id.to_s[0, 8]}"
+          Integrations::Git.create_branch(task.branch)
+        rescue StandardError
+          task.branch = nil
         end
 
         def store
@@ -122,24 +139,44 @@ module RailsAiBuild
           task.status = :failed
           task.error = e.message
           task.finished_at = Time.zone.now
+          EventBus.emit(task.id, :error, { error: e.message })
         ensure
           spawn_workers
         end
 
         def run_task(task)
           meta = metadata(task.id)
+          EventBus.emit(task.id, :running, { id: task.id, branch: task.branch })
+
           result = Runtime.new(
             task: task.description,
             skill: task.skill,
             verify: task.verify,
             provider: meta[:provider],
-            model: meta[:model]
+            model: meta[:model],
+            task_id: task.id
           ).run!
 
           task.result = result
           task.status = result.status
           task.finished_at = Time.zone.now
+          attach_pr!(task) if result.status == :success
+          EventBus.emit(task.id, :finished, task.to_h)
           Analytics.track_basic(event: 'task.completed', metadata: { status: task.status }) if defined?(Analytics)
+        end
+
+        def attach_pr!(task)
+          return unless RailsAiBuild.configuration.auto_pr_on_complete
+
+          pr = Integrations::PullRequest.create(
+            title: "AI: #{task.description.to_s[0, 72]}",
+            existing_branch: task.branch
+          )
+          task.pr_url = pr[:pr_url]
+          task.compare_url = pr[:compare_url] || pr[:pr_url]
+          EventBus.emit(task.id, :pr_ready, { pr_url: task.pr_url, compare_url: task.compare_url, branch: pr[:branch] })
+        rescue StandardError => e
+          EventBus.emit(task.id, :pr_skipped, { reason: e.message })
         end
       end
     end

@@ -21,6 +21,10 @@ module RailsAiBuild
           in_repo { run!("git checkout -b #{Shellwords.escape(name)}") }
         end
 
+        def checkout_branch(name)
+          in_repo { run!("git checkout #{Shellwords.escape(name)}") }
+        end
+
         def commit(message:, paths: nil)
           Plans.check!(:pr_creation)
           in_repo do

@@ -171,6 +171,6 @@ end
 | Version | AI layer |
 |---------|----------|
 | **v2.1** ✅ | Ai::Driver, Session, ContextEngine, /ai/chat, /ai/stream |
-| v2.2 | Real token streaming from OpenAI/Anthropic APIs |
+| **v2.2** ✅ | Token streaming, tool_result SSE, /build/stream, /tasks/:id/stream, IDE threads |
 | v2.3 | Embeddings + semantic file retrieval (Cursor @-context) |
 | v2.4 | Model routing (cheap model plans, expensive model codes) |

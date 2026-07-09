@@ -23,6 +23,14 @@ module RailsAiBuild
         true
       end
 
+      def emit_token_deltas(content, on_delta:)
+        return unless on_delta && content.present?
+
+        content.to_s.scan(/\S+\s*|\s+/).each do |chunk|
+          on_delta.call(content: chunk) unless chunk.empty?
+        end
+      end
+
       protected
 
       def api_key

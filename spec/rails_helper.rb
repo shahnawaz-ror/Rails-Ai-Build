@@ -40,6 +40,8 @@ RSpec.configure do |config|
     RailsAiBuild.configuration.auto_mount = false
     RailsAiBuild::Models::Registry.reset!
     RailsAiBuild::Models::Registry.register_defaults
+    RailsAiBuild::Ai::Session.reset!
+    RailsAiBuild::Tasks::Queue.reset!
     ActiveJob::Base.queue_adapter = :test
     Database.reset! if defined?(Database)
     RailsAiBuild::Changes::Store.clear!

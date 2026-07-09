@@ -32,23 +32,23 @@ curl GET /rails_ai_build/tasks
 curl -X POST /rails_ai_build/orchestrate -d '{"task":"...","until_green":true}'
 ```
 
-## v2.1 — Git isolation
+## v2.1 — Git isolation ✅
 
 | Item | Detail |
 |------|--------|
-| Branch-per-task | `Integrations::Git.create_branch` on enqueue |
-| Worktrees | Optional git worktree per parallel task |
-| Merge gate | Reviewer + human HITL before merge to main |
-| PR auto-link | GitHub compare URL per completed task |
+| Branch-per-task | `Integrations::Git.create_branch` on enqueue (`branch_per_task`) |
+| PR auto-link | `auto_pr_on_complete` → GitHub compare URL per completed task |
+| Merge gate | Reviewer + human HITL before merge to main (via Changes::Store) |
+| Worktrees | Optional git worktree per parallel task (v2.3) |
 
-## v2.2 — Real-time platform
+## v2.2 — Real-time platform ✅
 
 | Item | Detail |
 |------|--------|
 | `POST /build/stream` | SSE for universal builder |
 | `POST /tasks/:id/stream` | Per-task event stream |
 | Token streaming | Provider delta events in IDE |
-| Conversation threads | Persisted multi-turn in IDE sidebar |
+| Conversation threads | `GET/POST /ai/sessions` + IDE sidebar |
 
 ## v2.3 — Rails AI Cloud
 
