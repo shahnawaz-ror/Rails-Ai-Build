@@ -103,6 +103,7 @@
   <header>
     <h1>⬥ Rails AI Build <span class="badge">LIVE DEMO</span> <span style="color:var(--muted);font-weight:400;font-size:0.8rem">v<%= @version %></span></h1>
     <nav>
+      <a href="<%= request.path.sub(%r{/demo.*}, '/ui/ide') %>">IDE</a>
       <a href="<%= request.path.sub(%r{/demo.*}, '/ui') %>">Dashboard</a>
       <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build/blob/main/docs/WEB_UI.md">Docs</a>
       <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build">GitHub</a>

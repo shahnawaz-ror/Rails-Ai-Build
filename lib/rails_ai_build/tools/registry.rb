@@ -11,6 +11,18 @@ module RailsAiBuild
         shell: ShellTool
       }.freeze
 
+      BOOST_TOOLS = {
+        application_info: ApplicationInfoTool,
+        list_routes: ListRoutesTool,
+        database_schema: DatabaseSchemaTool,
+        list_rake_tasks: ListRakeTasksTool,
+        read_settings: ReadSettingsTool,
+        read_logs: ReadLogsTool,
+        search_rails_docs: SearchRailsDocsTool
+      }.freeze
+
+      BOOST_TOOL_NAMES = BOOST_TOOLS.keys.freeze
+
       class << self
         def register(name, tool_class)
           tools[name.to_sym] = tool_class
@@ -41,8 +53,12 @@ module RailsAiBuild
 
         private
 
+        def boost_tool_names
+          BOOST_TOOL_NAMES
+        end
+
         def tools
-          @tools ||= DEFAULT_TOOLS.dup
+          @tools ||= DEFAULT_TOOLS.merge(BOOST_TOOLS)
         end
       end
     end

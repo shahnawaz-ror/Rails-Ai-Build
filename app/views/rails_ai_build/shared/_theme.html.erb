@@ -1,0 +1,219 @@
+<style>
+  /* Cursor-inspired themes — dark (default), light, enterprise */
+  :root, [data-theme="dark"] {
+    --rab-brand: #d30001;
+    --rab-accent: #0078d4;
+    --rab-accent-hover: #1a8cff;
+    --rab-bg: #0d0d0f;
+    --rab-surface: #18181b;
+    --rab-panel: #1f1f23;
+    --rab-elevated: #27272a;
+    --rab-border: #3f3f46;
+    --rab-text: #fafafa;
+    --rab-muted: #a1a1aa;
+    --rab-green: #22c55e;
+    --rab-yellow: #eab308;
+    --rab-blue: #60a5fa;
+    --rab-purple: #a78bfa;
+    --rab-red: #f87171;
+    --rab-editor-bg: #121214;
+    --rab-input-bg: #09090b;
+    --rab-github: #238636;
+    --rab-enterprise: #8957e5;
+    --rab-font-ui: "Inter", system-ui, -apple-system, sans-serif;
+    --rab-font-mono: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  [data-theme="light"] {
+    --rab-brand: #c40001;
+    --rab-accent: #0066cc;
+    --rab-bg: #f4f4f5;
+    --rab-surface: #ffffff;
+    --rab-panel: #fafafa;
+    --rab-elevated: #f4f4f5;
+    --rab-border: #e4e4e7;
+    --rab-text: #18181b;
+    --rab-muted: #71717a;
+    --rab-editor-bg: #ffffff;
+    --rab-input-bg: #ffffff;
+  }
+
+  [data-theme="enterprise"] {
+    --rab-brand: #8957e5;
+    --rab-accent: #8957e5;
+    --rab-accent-hover: #a371f7;
+    --rab-bg: #0a0a14;
+    --rab-surface: #12121f;
+    --rab-panel: #1a1a2e;
+    --rab-elevated: #252540;
+    --rab-border: #3d3d5c;
+    --rab-enterprise: #f0b429;
+    --rab-github: #2ea043;
+    --rab-editor-bg: #0e0e18;
+  }
+
+  .rab-ide-body {
+    margin: 0;
+    font-family: var(--rab-font-ui);
+    background: var(--rab-bg);
+    color: var(--rab-text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .rab-ide { display: flex; flex-direction: column; height: 100vh; }
+
+  .rab-topbar {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.5rem 1rem; background: var(--rab-surface);
+    border-bottom: 1px solid var(--rab-border); flex-shrink: 0;
+  }
+  .rab-logo { font-weight: 700; color: var(--rab-brand); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+  .rab-logo span { color: var(--rab-muted); font-weight: 400; font-size: 0.75rem; }
+  .rab-branch { font-family: var(--rab-font-mono); font-size: 0.75rem; color: var(--rab-muted); background: var(--rab-elevated); padding: 0.25rem 0.6rem; border-radius: 4px; }
+  .rab-spacer { flex: 1; }
+  .rab-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.5rem; border-radius: 4px; }
+  .rab-badge-plan { background: var(--rab-brand); color: #fff; }
+  .rab-badge-enterprise { background: var(--rab-enterprise); color: #000; }
+  .rab-badge-github { background: var(--rab-github); color: #fff; }
+  .rab-badge-role { background: var(--rab-elevated); color: var(--rab-purple); border: 1px solid var(--rab-border); }
+
+  .rab-topbar select, .rab-topbar button {
+    font-family: inherit; font-size: 0.75rem; background: var(--rab-elevated);
+    color: var(--rab-text); border: 1px solid var(--rab-border); border-radius: 6px; padding: 0.35rem 0.6rem; cursor: pointer;
+  }
+  .rab-topbar a { color: var(--rab-muted); text-decoration: none; font-size: 0.75rem; margin-left: 0.75rem; }
+  .rab-topbar a:hover { color: var(--rab-text); }
+
+  .rab-workspace { display: flex; flex: 1; overflow: hidden; }
+
+  .rab-activity {
+    width: 48px; background: var(--rab-surface); border-right: 1px solid var(--rab-border);
+    display: flex; flex-direction: column; align-items: center; padding: 0.5rem 0; gap: 0.25rem;
+  }
+  .rab-activity-btn {
+    width: 36px; height: 36px; border: none; background: transparent; color: var(--rab-muted);
+    border-radius: 6px; cursor: pointer; font-size: 1rem;
+  }
+  .rab-activity-btn.active, .rab-activity-btn:hover { background: var(--rab-elevated); color: var(--rab-text); }
+
+  .rab-sidebar {
+    width: 260px; background: var(--rab-panel); border-right: 1px solid var(--rab-border);
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  .rab-sidebar-header {
+    padding: 0.6rem 0.75rem; font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--rab-muted); border-bottom: 1px solid var(--rab-border);
+  }
+  .rab-sidebar-body { flex: 1; overflow-y: auto; padding: 0.5rem; font-size: 0.78rem; }
+
+  .rab-tree-item {
+    padding: 0.2rem 0.4rem; border-radius: 4px; cursor: pointer;
+    font-family: var(--rab-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rab-tree-item:hover { background: var(--rab-elevated); }
+  .rab-tree-item.active { background: var(--rab-accent); color: #fff; }
+  .rab-tree-dir { color: var(--rab-blue); }
+  .rab-tree-file { color: var(--rab-text); padding-left: 1rem; }
+
+  .rab-center { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+  .rab-tabs {
+    display: flex; background: var(--rab-surface); border-bottom: 1px solid var(--rab-border);
+    font-size: 0.75rem; overflow-x: auto;
+  }
+  .rab-tab {
+    padding: 0.5rem 1rem; border: none; background: transparent; color: var(--rab-muted);
+    cursor: pointer; border-bottom: 2px solid transparent; font-family: var(--rab-font-mono);
+  }
+  .rab-tab.active { color: var(--rab-text); border-bottom-color: var(--rab-accent); }
+
+  .rab-editor {
+    flex: 1; overflow: auto; background: var(--rab-editor-bg);
+    font-family: var(--rab-font-mono); font-size: 0.8rem; line-height: 1.55; padding: 1rem;
+    white-space: pre; tab-size: 2;
+  }
+  .rab-editor-empty { color: var(--rab-muted); font-family: var(--rab-font-ui); text-align: center; padding: 3rem; }
+
+  .rab-agent-panel {
+    height: 42%; min-height: 200px; border-top: 1px solid var(--rab-border);
+    display: flex; flex-direction: column; background: var(--rab-surface);
+  }
+  .rab-agent-header {
+    padding: 0.4rem 0.75rem; font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--rab-muted); border-bottom: 1px solid var(--rab-border);
+    display: flex; justify-content: space-between;
+  }
+  .rab-stream { flex: 1; overflow-y: auto; padding: 0.75rem; font-size: 0.78rem; }
+  .rab-event { margin-bottom: 0.6rem; }
+  .rab-event-tag { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 3px; margin-right: 0.4rem; font-weight: 600; }
+  .rab-tag-start { background: #1e3a5f; color: var(--rab-blue); }
+  .rab-tag-tool { background: #3d2e1a; color: var(--rab-yellow); }
+  .rab-tag-complete { background: #2e1a3d; color: var(--rab-purple); }
+  .rab-tag-error { background: #3d1a1a; color: var(--rab-red); }
+  .rab-event-body { background: var(--rab-elevated); border-radius: 6px; padding: 0.5rem 0.75rem; font-family: var(--rab-font-mono); }
+
+  .rab-prompt-bar {
+    display: flex; gap: 0.5rem; padding: 0.6rem; border-top: 1px solid var(--rab-border);
+    background: var(--rab-input-bg);
+  }
+  .rab-prompt-bar select { flex: 0 0 120px; }
+  .rab-prompt-bar textarea {
+    flex: 1; resize: none; height: 2.5rem; background: var(--rab-elevated);
+    border: 1px solid var(--rab-border); border-radius: 8px; color: var(--rab-text);
+    font-family: inherit; font-size: 0.85rem; padding: 0.5rem 0.75rem;
+  }
+  .rab-btn {
+    padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600;
+    font-size: 0.8rem; cursor: pointer; font-family: inherit;
+  }
+  .rab-btn-primary { background: var(--rab-brand); color: #fff; }
+  .rab-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .rab-btn-accent { background: var(--rab-accent); color: #fff; }
+  .rab-btn-github { background: var(--rab-github); color: #fff; }
+  .rab-btn-secondary { background: var(--rab-elevated); color: var(--rab-text); border: 1px solid var(--rab-border); }
+
+  .rab-right {
+    width: 320px; background: var(--rab-panel); border-left: 1px solid var(--rab-border);
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  .rab-right-tabs { display: flex; border-bottom: 1px solid var(--rab-border); }
+  .rab-right-tab {
+    flex: 1; padding: 0.5rem; border: none; background: transparent; color: var(--rab-muted);
+    font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .rab-right-tab.active { color: var(--rab-text); border-bottom: 2px solid var(--rab-accent); }
+  .rab-right-body { flex: 1; overflow-y: auto; padding: 0.75rem; font-size: 0.78rem; }
+
+  .rab-change-item {
+    padding: 0.5rem; border: 1px solid var(--rab-border); border-radius: 6px;
+    margin-bottom: 0.5rem; cursor: pointer;
+  }
+  .rab-change-item:hover { border-color: var(--rab-accent); }
+  .rab-change-path { font-family: var(--rab-font-mono); color: var(--rab-yellow); font-size: 0.72rem; }
+  .rab-diff-view {
+    font-family: var(--rab-font-mono); font-size: 0.68rem; line-height: 1.4;
+    background: var(--rab-editor-bg); border-radius: 6px; padding: 0.5rem;
+    max-height: 200px; overflow: auto; white-space: pre;
+  }
+  .rab-diff-add { color: var(--rab-green); }
+  .rab-diff-del { color: var(--rab-red); }
+
+  .rab-git-file { padding: 0.25rem 0; font-family: var(--rab-font-mono); font-size: 0.72rem; color: var(--rab-muted); }
+  .rab-enterprise-item { padding: 0.4rem 0; border-bottom: 1px solid var(--rab-border); }
+  .rab-locked { color: var(--rab-muted); font-size: 0.72rem; }
+  .rab-feature-on { color: var(--rab-green); }
+  .rab-feature-off { color: var(--rab-muted); opacity: 0.6; }
+
+  .rab-pulse { display: inline-block; width: 6px; height: 6px; background: var(--rab-green); border-radius: 50%; animation: rab-pulse 1s infinite; margin-right: 0.4rem; }
+  @keyframes rab-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  @media (max-width: 1100px) {
+    .rab-right { display: none; }
+    .rab-sidebar { width: 200px; }
+  }
+  @media (max-width: 768px) {
+    .rab-sidebar, .rab-activity { display: none; }
+    .rab-agent-panel { height: 50%; }
+  }
+</style>

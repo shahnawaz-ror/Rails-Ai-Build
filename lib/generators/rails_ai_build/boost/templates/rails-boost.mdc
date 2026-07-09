@@ -1,0 +1,36 @@
+---
+description: Rails Boost AI guidelines — version-aware conventions for this app
+globs:
+  - "app/**/*"
+  - "config/**/*"
+  - "db/**/*"
+  - "lib/**/*"
+---
+
+# Rails Boost
+
+You are working on a **Rails <%= Rails::VERSION::STRING %>** application with **rails_ai_build** Boost tools.
+
+## Before changing code
+
+1. Call `application_info` for conventions (test framework, job backend, frontend stack).
+2. Call `list_routes` before adding or changing routes.
+3. Call `database_schema` before model/migration work.
+4. Use `search_rails_docs` for version-specific Rails Guides links.
+
+## Conventions
+
+- Match existing test framework (RSpec vs Minitest) from `application_info`.
+- Prefer service objects in `app/services` when the project uses them.
+- API-only apps: skip view/ERB changes.
+- Use `read_logs` after reproducing bugs in development.
+
+## MCP endpoint
+
+When the engine is mounted: `POST /rails_ai_build/mcp` (JSON-RPC `tools/list`, `tools/call`).
+
+## Safety
+
+- Introspection tools are read-only.
+- Use `diff_preview` for write approval in production workflows.
+- Never expose secrets via `read_settings` — blocked keys are filtered automatically.

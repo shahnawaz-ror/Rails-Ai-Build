@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rails_ai_build_version: <%= rails_ai_build_version %>
+
 RailsAiBuild.configure do |config|
   # Default AI provider (:openai, :anthropic, or a custom registered provider)
   config.default_provider = :openai

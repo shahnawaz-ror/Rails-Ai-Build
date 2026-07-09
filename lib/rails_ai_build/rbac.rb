@@ -3,11 +3,13 @@
 module RailsAiBuild
   module Rbac
     # Role-based access control for tools (Enterprise)
+    READ_ONLY_BOOST = Tools::Registry::BOOST_TOOL_NAMES
+
     DEFAULT_ROLES = {
-      admin: %i[read_file write_file grep list_files shell],
-      developer: %i[read_file write_file grep list_files shell],
-      reviewer: %i[read_file grep list_files],
-      viewer: %i[read_file list_files]
+      admin: %i[read_file write_file grep list_files shell] + READ_ONLY_BOOST,
+      developer: %i[read_file write_file grep list_files shell] + READ_ONLY_BOOST,
+      reviewer: %i[read_file grep list_files] + READ_ONLY_BOOST,
+      viewer: %i[read_file list_files] + READ_ONLY_BOOST
     }.freeze
 
     class << self

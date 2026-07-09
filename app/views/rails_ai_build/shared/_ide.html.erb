@@ -1,0 +1,232 @@
+<script>
+(function() {
+  const root = document.getElementById('rab-ide');
+  if (!root) return;
+
+  const base = root.dataset.base;
+  const canStream = root.dataset.streaming === 'true';
+  const canPr = root.dataset.pr === 'true';
+  const canAudit = root.dataset.audit === 'true';
+
+  // Theme persistence
+  const themeSelect = document.getElementById('rab-theme');
+  const savedTheme = localStorage.getItem('rab-theme') || 'dark';
+  document.documentElement.dataset.theme = savedTheme;
+  if (themeSelect) themeSelect.value = savedTheme;
+  themeSelect?.addEventListener('change', () => {
+    document.documentElement.dataset.theme = themeSelect.value;
+    localStorage.setItem('rab-theme', themeSelect.value);
+  });
+
+  // Right panel tabs
+  document.querySelectorAll('.rab-right-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.rab-right-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      ['changes', 'git', 'enterprise'].forEach(id => {
+        const el = document.getElementById('rab-panel-' + id);
+        if (el) el.style.display = tab.dataset.right === id ? 'block' : 'none';
+      });
+    });
+  });
+
+  // Editor tabs
+  document.querySelectorAll('.rab-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.rab-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const editor = document.getElementById('rab-editor');
+      const agent = document.getElementById('rab-agent-panel');
+      if (tab.dataset.tab === 'agent') {
+        editor.style.display = 'none';
+        agent.style.height = '100%';
+      } else {
+        editor.style.display = 'block';
+        agent.style.height = '42%';
+      }
+    });
+  });
+
+  // File tree
+  async function loadTree() {
+    const treeEl = document.getElementById('rab-file-tree');
+    try {
+      const res = await fetch(base + '/workspace/tree?depth=3');
+      const data = await res.json();
+      if (data.error) { treeEl.innerHTML = '<p class="rab-locked">' + data.error + '</p>'; return; }
+      treeEl.innerHTML = renderTree(data.entries || []);
+    } catch (e) {
+      treeEl.innerHTML = '<p class="rab-locked">' + e.message + '</p>';
+    }
+  }
+
+  function renderTree(entries, indent = 0) {
+    return entries.map(e => {
+      if (e.type === 'directory') {
+        const kids = e.children?.length ? renderTree(e.children, indent + 1) : '';
+        return '<div class="rab-tree-item rab-tree-dir" style="padding-left:' + (indent * 12) + 'px">📁 ' + e.name + '</div>' + kids;
+      }
+      return '<div class="rab-tree-item rab-tree-file" data-path="' + e.path + '" style="padding-left:' + (indent * 12 + 12) + 'px">📄 ' + e.name + '</div>';
+    }).join('');
+  }
+
+  document.getElementById('rab-file-tree')?.addEventListener('click', async (ev) => {
+    const item = ev.target.closest('[data-path]');
+    if (!item) return;
+    document.querySelectorAll('.rab-tree-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const res = await fetch(base + '/workspace/file?path=' + encodeURIComponent(item.dataset.path));
+    const data = await res.json();
+    const editor = document.getElementById('rab-editor');
+    if (data.content) {
+      editor.textContent = data.content;
+    } else {
+      editor.innerHTML = '<div class="rab-editor-empty">' + (data.error || 'Cannot read file') + '</div>';
+    }
+  });
+
+  loadTree();
+
+  // SSE streaming
+  const streamEl = document.getElementById('rab-stream');
+  const runBtn = document.getElementById('rab-run-btn');
+  const statusEl = document.getElementById('rab-agent-status');
+  let running = false;
+
+  function formatEvent(event, data) {
+    const tags = { start: 'rab-tag-start', tool_call: 'rab-tag-tool', complete: 'rab-tag-complete', error: 'rab-tag-error' };
+    let body = '';
+    if (event === 'start') body = 'Starting: "' + (data.message || '') + '"';
+    else if (event === 'tool_call') body = '<strong>' + data.name + '</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + JSON.stringify(data.arguments, null, 2) + '</pre>';
+    else if (event === 'iteration') body = (data.content || '') + (data.tool_calls ? ' (' + data.tool_calls + ' tools)' : '');
+    else if (event === 'complete') {
+      body = data.content || 'Done.';
+      if (data.pending_changes?.length) refreshChanges(data.pending_changes);
+    }
+    else if (event === 'error') body = data.error;
+    return '<div class="rab-event"><span class="rab-event-tag ' + (tags[event] || 'rab-tag-error') + '">' + event + '</span><div class="rab-event-body">' + body + '</div></div>';
+  }
+
+  async function runAgent(e) {
+    e?.preventDefault();
+    if (running) return;
+    const prompt = document.getElementById('rab-prompt').value.trim();
+    if (!prompt) return;
+
+    if (!canStream) {
+      streamEl.innerHTML = formatEvent('error', { error: 'Streaming requires Pro+ plan. Using sync /chat…' });
+      const res = await fetch(base + '/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: prompt, skill: document.getElementById('rab-skill').value || undefined })
+      });
+      const data = await res.json();
+      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', data));
+      return;
+    }
+
+    running = true;
+    runBtn.disabled = true;
+    statusEl.innerHTML = '<span class="rab-pulse"></span> Running';
+    streamEl.innerHTML = '';
+
+    const body = {
+      message: prompt,
+      skill: document.getElementById('rab-skill').value || undefined,
+      provider: document.getElementById('rab-provider')?.value
+    };
+
+    try {
+      const res = await fetch(base + '/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        body: JSON.stringify(body)
+      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();
+        for (const part of parts) {
+          const em = part.match(/event: (\w+)/);
+          const dm = part.match(/data: (.+)/s);
+          if (em && dm) {
+            streamEl.insertAdjacentHTML('beforeend', formatEvent(em[1], JSON.parse(dm[1])));
+            streamEl.scrollTop = streamEl.scrollHeight;
+          }
+        }
+      }
+    } catch (err) {
+      streamEl.insertAdjacentHTML('beforeend', formatEvent('error', { error: err.message }));
+    } finally {
+      running = false;
+      runBtn.disabled = false;
+      statusEl.textContent = '';
+    }
+  }
+
+  document.getElementById('rab-prompt-form')?.addEventListener('submit', runAgent);
+
+  // Changes
+  function refreshChanges(changes) {
+    const panel = document.getElementById('rab-panel-changes');
+    if (!panel || !changes) return;
+    const list = changes.map(c =>
+      '<div class="rab-change-item"><div class="rab-change-path">' + c.path + '</div></div>'
+    ).join('');
+    panel.querySelector('h3').insertAdjacentHTML('afterend', list);
+  }
+
+  document.querySelectorAll('.rab-apply-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(base + '/changes/' + btn.dataset.id + '/apply', { method: 'POST' });
+      location.reload();
+    });
+  });
+  document.querySelectorAll('.rab-reject-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(base + '/changes/' + btn.dataset.id + '/reject', { method: 'POST' });
+      location.reload();
+    });
+  });
+  document.getElementById('rab-apply-all')?.addEventListener('click', async () => {
+    await fetch(base + '/changes/apply_all', { method: 'POST' });
+    location.reload();
+  });
+
+  document.querySelectorAll('.rab-change-item[data-change-id]').forEach(item => {
+    item.addEventListener('click', async (ev) => {
+      if (ev.target.closest('button')) return;
+      const res = await fetch(base + '/changes/' + item.dataset.changeId);
+      const data = await res.json();
+      const diffEl = document.getElementById('rab-diff-detail');
+      if (data.diff?.unified) {
+        diffEl.innerHTML = '<div class="rab-diff-view">' + data.diff.unified.replace(/^\+/gm, '<span class="rab-diff-add">+</span>').replace(/^-/gm, '<span class="rab-diff-del">-</span>') + '</div>';
+      }
+    });
+  });
+
+  // GitHub PR
+  document.getElementById('rab-create-pr')?.addEventListener('click', async () => {
+    if (!canPr) return;
+    const res = await fetch(base + '/pull_requests', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'AI: ' + document.getElementById('rab-prompt').value.slice(0, 60) })
+    });
+    const data = await res.json();
+    if (data.compare_url) window.open(data.compare_url, '_blank');
+    else alert(data.error || JSON.stringify(data));
+  });
+
+  // Audit
+  document.getElementById('rab-load-audit')?.addEventListener('click', async () => {
+    if (!canAudit) return;
+    const res = await fetch(base + '/audit');
+    const data = await res.json();
+    document.getElementById('rab-audit-log').textContent = JSON.stringify(data, null, 2);
+  });
+})();
+</script>

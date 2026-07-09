@@ -82,7 +82,8 @@ module RailsAiBuild
 
         def test_binary_file_skip(workspace)
           File.binwrite(workspace.join("binary.dat"), "\x00\x01\x02\xFF")
-          { ok: true, warnings: [] } # grep should skip gracefully
+          result = Tools::Registry.execute("grep", { "pattern" => "rails", "path" => "binary.dat" }, workspace: workspace)
+          { ok: !result.key?(:error), warnings: result[:error] ? [result[:error]] : [] }
         end
 
         def test_special_chars_filename(workspace)
