@@ -89,6 +89,10 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: false
 
+      - name: Install DB client libraries
+        if: matrix.adapter != 'sqlite3'
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev default-libmysqlclient-dev
+
       - name: Install dependencies (all DB adapters)
         env:
           INSTALL_ALL_DBS: "true"
@@ -240,7 +244,8 @@ jobs:
       - name: Install appraisal (${{ matrix.rails }})
         run: |
           bundle install
-          bundle exec appraisal ${{ matrix.rails }} install
+          GEMFILE="gemfiles/$(echo '${{ matrix.rails }}' | tr '-' '_').gemfile"
+          BUNDLE_GEMFILE="$GEMFILE" bundle install --jobs 4 --retry 3
 
       - name: Test (${{ matrix.rails }})
         run: bundle exec appraisal ${{ matrix.rails }} rspec spec/rails_ai_build spec/requests spec/jobs spec/models spec/lib
