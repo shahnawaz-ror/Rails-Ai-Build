@@ -315,12 +315,15 @@ bundle exec rspec
 
 ## Roadmap
 
-- [ ] Streaming responses (SSE/WebSocket)
-- [ ] Web UI dashboard
-- [ ] Diff preview before applying writes
-- [ ] Git integration (branch, commit, PR)
-- [ ] MCP tool protocol support
-- [ ] Multi-agent orchestration
+- [x] Streaming responses (SSE)
+- [x] Web UI dashboard (`/rails_ai_build/ui`)
+- [x] Diff preview before applying writes
+- [x] Git integration (branch, commit, PR — GitHub & GitLab)
+- [x] MCP tool protocol support
+- [x] Multi-agent orchestration (planner → coder → reviewer)
+- [x] Token usage tracking & analytics
+- [x] 100 OSS Rails repo compatibility suite
+- [x] Help, support & doctor diagnostics
 
 ## License
 

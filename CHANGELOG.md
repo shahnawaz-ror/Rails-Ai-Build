@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.0] - 2026-07-09
+
+### Added — Final scope complete
+- **SSE streaming** — `POST /rails_ai_build/stream` for real-time agent events
+- **Git integration** — status, diff, commit, branch (`GET /git/status`, `/git/diff`)
+- **GitHub & GitLab PR** support in pull request integration
+- **MCP protocol** — `POST /rails_ai_build/mcp` JSON-RPC server for tool exposure
+- **Multi-agent orchestration** — planner → coder → reviewer pipeline
+- **Slack notifications** — webhook notifications on agent completion
+- **Enterprise docs** — `docs/ENTERPRISE.md`, case study template
+- **Rake task** — `rails rails_ai_build:orchestrate[task]`
+
+### Roadmap: 100% code complete ✅
+
 ## [1.2.0] - 2026-07-09
 
 ### Added

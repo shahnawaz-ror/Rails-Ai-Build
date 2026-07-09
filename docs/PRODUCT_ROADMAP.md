@@ -51,4 +51,5 @@
 - [ ] Publish to RubyGems/PyPI/npm (set CI secrets)
 - [ ] Stripe live keys
 - [ ] Marketing launch (see LAUNCH.md)
-- [ ] SOC 2 certification (process, not code)
+
+### Code scope: ✅ 100% COMPLETE (v1.3.0)

@@ -49,6 +49,12 @@ require "rails_ai_build/compatibility/catalog"
 require "rails_ai_build/compatibility/fixtures"
 require "rails_ai_build/compatibility/edge_cases"
 
+require "rails_ai_build/streaming/sse"
+require "rails_ai_build/integrations/git"
+require "rails_ai_build/mcp/server"
+require "rails_ai_build/orchestration/coordinator"
+require "rails_ai_build/notifications/slack"
+
 require "rails_ai_build/engine" if defined?(Rails)
 
 module RailsAiBuild

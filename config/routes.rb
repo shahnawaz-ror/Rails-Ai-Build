@@ -85,4 +85,12 @@ RailsAiBuild::Engine.routes.draw do
   put "settings", to: "settings#update"
 
   get "tokens", to: "analytics#tokens"
+
+  post "stream", to: "streaming#create"
+  get "git/status", to: "git#status"
+  get "git/diff", to: "git#diff"
+  post "git/commit", to: "git#commit"
+  post "mcp", to: "mcp#handle"
+  get "mcp/tools", to: "mcp#tools"
+  post "orchestrate", to: "orchestration#create"
 end

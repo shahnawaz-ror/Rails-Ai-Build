@@ -173,4 +173,14 @@ namespace :rails_ai_build do
     end
     FileUtils.rm_rf(base)
   end
+
+  desc "Run multi-agent orchestration: rails rails_ai_build:orchestrate[task]"
+  task :orchestrate, [:task] => :environment do |_t, args|
+    task_desc = args[:task] || ENV["TASK"]
+    abort "Usage: rails rails_ai_build:orchestrate['Add health endpoint']" if task_desc.blank?
+
+    RailsAiBuild.configuration.plan = :team unless Plans.feature?(:multi_agent)
+    result = Orchestration::Coordinator.new.run_with_review(task_desc)
+    puts result.dig(:results, :reviewer, :content) || result.dig(:final, :content)
+  end
 end

@@ -191,6 +191,9 @@ curl -X POST http://localhost:3000/rails_ai_build/shared_agents/1/run \
 | PR | Status | Version |
 |----|--------|---------|
 | #1 Platform launch | ✅ Squash merged | v1.0.0 |
-| #2 Post-launch flows | ✅ Squash merged | v1.1.0 |
+| #3 Specs & compatibility | ✅ Squash merged | v1.2.0 |
+| #4 Final scope | ✅ Squash merged | v1.3.0 |
+
+**All code scopes complete.**
 
 **Code scope: 100% complete.** Remaining items are operational (publish gems, Stripe live keys, marketing).
