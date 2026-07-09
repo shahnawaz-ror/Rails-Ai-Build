@@ -2,7 +2,6 @@
 
 require 'json'
 require 'fileutils'
-require 'active_support/time'
 
 module RailsAiBuild
   module Trust
@@ -34,7 +33,7 @@ module RailsAiBuild
         def run!(apps: nil, provider: :nvidia, model: nil, workspace_base: nil)
           apps ||= CatalogSample.apps(count: 20)
           workspace_base ||= Pathname.new(Dir.mktmpdir('rails_ai_build_trust_'))
-          started = Time.zone.now
+          started = Time.now.utc
           results = apps.each_with_index.map do |repo, index|
             sleep(1) if index.positive?
             run_one(repo, workspace_base: workspace_base, provider: provider, model: model)
@@ -135,14 +134,14 @@ module RailsAiBuild
         def build_report(results, started:, provider:, model:)
           passed = results.count(&:passed)
           {
-            generated_at: Time.zone.now.iso8601,
+            generated_at: Time.now.utc.iso8601,
             provider: provider.to_s,
             model: model || ENV.fetch('NVIDIA_MODEL', 'meta/llama-3.1-8b-instruct'),
             total: results.size,
             passed: passed,
             failed: results.size - passed,
             pass_rate: results.empty? ? 0 : (passed.to_f / results.size).round(4),
-            duration_seconds: (Time.zone.now - started).round(1),
+            duration_seconds: (Time.now.utc - started).round(1),
             live: true,
             dashboard: Report.dashboard_url,
             live_api: Report.live_api_url,

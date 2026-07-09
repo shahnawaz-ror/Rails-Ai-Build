@@ -12,6 +12,7 @@ test:
   username: <%= ENV.fetch("TEST_DB_USER", "root") %>
   password: <%= ENV.fetch("TEST_DB_PASSWORD", "root") %>
   database: <%= ENV.fetch("TEST_DB_NAME", "rails_ai_build_test") %>
+  encoding: utf8mb4
 <% else %>
   database: ":memory:"
   pool: 5

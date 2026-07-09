@@ -287,8 +287,6 @@ namespace :rails_ai_build do
 
   desc "Run live trust tests on 20 Rails apps (requires NVIDIA_API_KEY)"
   task "trust:run" => :environment do
-    require 'active_support/time'
-    Time.zone = 'UTC'
     abort "Set NVIDIA_API_KEY=nvapi-..." if ENV["NVIDIA_API_KEY"].to_s.empty?
 
     puts "\n🔬 Running live trust tests on 20 Rails app archetypes (NVIDIA NIM)...\n"
