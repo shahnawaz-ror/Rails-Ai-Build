@@ -18,11 +18,11 @@ module RailsAiBuild
         return { error: 'No db/migrate directory' } unless migrations_dir.directory?
 
         files = migrations_dir.children.select { |f| f.file? && f.extname == '.rb' }
-                                .sort_by(&:basename)
-                                .last(limit)
+                                       .sort_by(&:basename)
+                              .last(limit)
 
         pending = pending_versions(files)
-        ran = ran_versions
+        ran_versions
 
         {
           total: files.size,

@@ -38,7 +38,7 @@ module RailsAiBuild
             status: :queued,
             skill: skill,
             verify: verify,
-            created_at: Time.now
+            created_at: Time.zone.now
           )
           store[task.id] = task
           metadata(task.id)[:provider] = provider
@@ -65,7 +65,7 @@ module RailsAiBuild
           return task if task.status == :running
 
           task.status = :cancelled
-          task.finished_at = Time.now
+          task.finished_at = Time.zone.now
           task
         end
 
@@ -113,7 +113,7 @@ module RailsAiBuild
           mutex.synchronize do
             task = store.values.find { |t| t.status == :queued }
             task.status = :running if task
-            task.started_at = Time.now if task
+            task.started_at = Time.zone.now if task
           end
           return unless task
 
@@ -121,7 +121,7 @@ module RailsAiBuild
         rescue StandardError => e
           task.status = :failed
           task.error = e.message
-          task.finished_at = Time.now
+          task.finished_at = Time.zone.now
         ensure
           spawn_workers
         end
@@ -138,7 +138,7 @@ module RailsAiBuild
 
           task.result = result
           task.status = result.status
-          task.finished_at = Time.now
+          task.finished_at = Time.zone.now
           Analytics.track_basic(event: 'task.completed', metadata: { status: task.status }) if defined?(Analytics)
         end
       end

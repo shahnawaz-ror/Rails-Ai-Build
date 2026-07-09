@@ -7,7 +7,7 @@ module RailsAiBuild
     end
 
     def show
-      task = Tasks::Queue.find(params[:id])
+      task = Tasks::Queue.find(params.expect(:id))
       return render json: { error: 'Not found' }, status: :not_found unless task
 
       render json: task.to_h
