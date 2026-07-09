@@ -42,6 +42,13 @@ require "rails_ai_build/rbac"
 require "rails_ai_build/auth/saml"
 require "rails_ai_build/bots/slack"
 
+require "rails_ai_build/token_usage"
+require "rails_ai_build/support"
+require "rails_ai_build/compatibility/checker"
+require "rails_ai_build/compatibility/catalog"
+require "rails_ai_build/compatibility/fixtures"
+require "rails_ai_build/compatibility/edge_cases"
+
 require "rails_ai_build/engine" if defined?(Rails)
 
 module RailsAiBuild

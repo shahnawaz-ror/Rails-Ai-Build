@@ -3,7 +3,7 @@
 module RailsAiBuild
   module Agents
     class Agent
-      attr_reader :name, :provider, :model, :system_prompt, :tools, :workspace
+      attr_reader :name, :provider, :provider_name, :model, :system_prompt, :tools, :workspace
 
       DEFAULT_SYSTEM_PROMPT = <<~PROMPT.freeze
         You are an AI coding agent integrated into a Rails application via the rails_ai_build gem.

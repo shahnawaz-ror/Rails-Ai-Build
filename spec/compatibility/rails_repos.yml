@@ -1,0 +1,901 @@
+repos:
+- slug: discourse
+  name: Discourse
+  archetype: full_stack
+  rails_version: '7.0'
+  description: forum platform
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: gitlabhq
+  name: GitLab
+  archetype: monolith
+  rails_version: '7.1'
+  description: devops platform
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: spree
+  name: Spree Commerce
+  archetype: full_stack
+  rails_version: '7.0'
+  description: e-commerce
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: solidus
+  name: Solidus
+  archetype: full_stack
+  rails_version: '7.0'
+  description: e-commerce
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: mastodon
+  name: Mastodon
+  archetype: api_only
+  rails_version: '7.1'
+  description: social network
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: openproject
+  name: OpenProject
+  archetype: monolith
+  rails_version: '7.0'
+  description: project management
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: redmine
+  name: Redmine
+  archetype: legacy
+  rails_version: '6.1'
+  description: project management
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: canvas-lms
+  name: Canvas LMS
+  archetype: monolith
+  rails_version: '7.0'
+  description: learning management
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: forem
+  name: Forem
+  archetype: full_stack
+  rails_version: '7.1'
+  description: dev community
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: chatwoot
+  name: Chatwoot
+  archetype: api_only
+  rails_version: '7.0'
+  description: customer support
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: loomio
+  name: Loomio
+  archetype: full_stack
+  rails_version: '7.0'
+  description: collaboration
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: openstreetmap-website
+  name: OpenStreetMap
+  archetype: full_stack
+  rails_version: '7.0'
+  description: mapping
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: foodsoft
+  name: Foodsoft
+  archetype: full_stack
+  rails_version: '6.1'
+  description: food coop
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: onebody
+  name: OneBody
+  archetype: full_stack
+  rails_version: '6.1'
+  description: church management
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: refinerycms
+  name: Refinery CMS
+  archetype: engine
+  rails_version: '7.0'
+  description: CMS
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: comfortable-mexican-sofa
+  name: ComfortableMexicanSofa
+  archetype: engine
+  rails_version: '6.1'
+  description: CMS
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: locomotivecms
+  name: Locomotive
+  archetype: engine
+  rails_version: '6.1'
+  description: CMS
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: alchemy_cms
+  name: Alchemy CMS
+  archetype: engine
+  rails_version: '7.0'
+  description: CMS
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: fat-free-crm
+  name: Fat Free CRM
+  archetype: full_stack
+  rails_version: '6.1'
+  description: CRM
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: open-source-billing
+  name: Open Source Billing
+  archetype: full_stack
+  rails_version: '6.1'
+  description: billing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: solid-queue
+  name: Solid Queue
+  archetype: engine
+  rails_version: '7.1'
+  description: job backend
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: mission_control-jobs
+  name: Mission Control Jobs
+  archetype: engine
+  rails_version: '7.1'
+  description: job UI
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: hotwire-livereload
+  name: Hotwire Livereload
+  archetype: engine
+  rails_version: '7.0'
+  description: dev tool
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: devise
+  name: Devise
+  archetype: engine
+  rails_version: '7.0'
+  description: authentication
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: pundit
+  name: Pundit
+  archetype: engine
+  rails_version: '7.0'
+  description: authorization
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: sidekiq
+  name: Sidekiq
+  archetype: engine
+  rails_version: '7.0'
+  description: background jobs
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: good_job
+  name: GoodJob
+  archetype: engine
+  rails_version: '7.0'
+  description: background jobs
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: shoryuken
+  name: Shoryuken
+  archetype: engine
+  rails_version: '6.1'
+  description: AWS SQS jobs
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: resque
+  name: Resque
+  archetype: engine
+  rails_version: '6.1'
+  description: background jobs
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: activeadmin
+  name: ActiveAdmin
+  archetype: engine
+  rails_version: '7.0'
+  description: admin interface
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: administrate
+  name: Administrate
+  archetype: engine
+  rails_version: '7.0'
+  description: admin interface
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: motor-admin
+  name: Motor Admin
+  archetype: engine
+  rails_version: '7.0'
+  description: admin interface
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: avo
+  name: Avo
+  archetype: engine
+  rails_version: '7.1'
+  description: admin interface
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: view_component
+  name: ViewComponent
+  archetype: engine
+  rails_version: '7.0'
+  description: UI components
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: lookbook
+  name: Lookbook
+  archetype: engine
+  rails_version: '7.0'
+  description: component preview
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: stimulus_reflex
+  name: StimulusReflex
+  archetype: engine
+  rails_version: '7.0'
+  description: realtime
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: anycable
+  name: AnyCable
+  archetype: engine
+  rails_version: '7.0'
+  description: websockets
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: actioncable
+  name: ActionCable
+  archetype: engine
+  rails_version: '7.1'
+  description: websockets
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: pay
+  name: Pay
+  archetype: engine
+  rails_version: '7.0'
+  description: payments
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: stripe_event
+  name: StripeEvent
+  archetype: engine
+  rails_version: '7.0'
+  description: stripe webhooks
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: lockbox
+  name: Lockbox
+  archetype: engine
+  rails_version: '7.0'
+  description: encryption
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: blind_index
+  name: BlindIndex
+  archetype: engine
+  rails_version: '7.0'
+  description: searchable encryption
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: paper_trail
+  name: PaperTrail
+  archetype: engine
+  rails_version: '7.0'
+  description: auditing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: audited
+  name: Audited
+  archetype: engine
+  rails_version: '7.0'
+  description: auditing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: discard
+  name: Discard
+  archetype: engine
+  rails_version: '7.0'
+  description: soft deletes
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: paranoia
+  name: Paranoia
+  archetype: engine
+  rails_version: '6.1'
+  description: soft deletes
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: friendly_id
+  name: FriendlyId
+  archetype: engine
+  rails_version: '7.0'
+  description: slugs
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: globalize
+  name: Globalize
+  archetype: engine
+  rails_version: '6.1'
+  description: i18n
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: mobility
+  name: Mobility
+  archetype: engine
+  rails_version: '7.0'
+  description: i18n
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: acts-as-taggable-on
+  name: ActsAsTaggableOn
+  archetype: engine
+  rails_version: '7.0'
+  description: tagging
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: ancestry
+  name: Ancestry
+  archetype: engine
+  rails_version: '7.0'
+  description: tree structures
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: closure_tree
+  name: ClosureTree
+  archetype: engine
+  rails_version: '7.0'
+  description: tree structures
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: aasm
+  name: AASM
+  archetype: engine
+  rails_version: '7.0'
+  description: state machines
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: statesman
+  name: Statesman
+  archetype: engine
+  rails_version: '7.0'
+  description: state machines
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: money-rails
+  name: MoneyRails
+  archetype: engine
+  rails_version: '7.0'
+  description: money
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: pretender
+  name: Pretender
+  archetype: engine
+  rails_version: '7.0'
+  description: impersonation
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rack-attack
+  name: RackAttack
+  archetype: engine
+  rails_version: '7.0'
+  description: rate limiting
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rack-cors
+  name: RackCors
+  archetype: engine
+  rails_version: '7.0'
+  description: CORS
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rack-mini-profiler
+  name: RackMiniProfiler
+  archetype: engine
+  rails_version: '7.0'
+  description: profiling
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: bullet
+  name: Bullet
+  archetype: engine
+  rails_version: '7.0'
+  description: N+1 detection
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: brakeman
+  name: Brakeman
+  archetype: engine
+  rails_version: '7.0'
+  description: security scanner
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rubocop
+  name: RuboCop
+  archetype: engine
+  rails_version: '7.0'
+  description: linting
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rspec-rails
+  name: RSpec Rails
+  archetype: engine
+  rails_version: '7.0'
+  description: testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: factory_bot
+  name: FactoryBot
+  archetype: engine
+  rails_version: '7.0'
+  description: testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: capybara
+  name: Capybara
+  archetype: engine
+  rails_version: '7.0'
+  description: testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: vcr
+  name: VCR
+  archetype: engine
+  rails_version: '7.0'
+  description: testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: webmock
+  name: WebMock
+  archetype: engine
+  rails_version: '7.0'
+  description: testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: simplecov
+  name: SimpleCov
+  archetype: engine
+  rails_version: '7.0'
+  description: coverage
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: letter_opener
+  name: LetterOpener
+  archetype: engine
+  rails_version: '7.0'
+  description: email preview
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: premailer-rails
+  name: Premailer
+  archetype: engine
+  rails_version: '7.0'
+  description: email
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: noticed
+  name: Noticed
+  archetype: engine
+  rails_version: '7.0'
+  description: notifications
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: activity_notification
+  name: ActivityNotification
+  archetype: engine
+  rails_version: '6.1'
+  description: notifications
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: ahoy
+  name: Ahoy
+  archetype: engine
+  rails_version: '7.0'
+  description: analytics
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: blazer
+  name: Blazer
+  archetype: engine
+  rails_version: '7.0'
+  description: SQL analytics
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: pghero
+  name: PgHero
+  archetype: engine
+  rails_version: '7.0'
+  description: postgres monitoring
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: strong_migrations
+  name: StrongMigrations
+  archetype: engine
+  rails_version: '7.0'
+  description: migrations
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: data_migrate
+  name: DataMigrate
+  archetype: engine
+  rails_version: '7.0'
+  description: data migrations
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: scenic
+  name: Scenic
+  archetype: engine
+  rails_version: '7.0'
+  description: database views
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: fx
+  name: Fx
+  archetype: engine
+  rails_version: '7.0'
+  description: database functions
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: marginalia
+  name: Marginalia
+  archetype: engine
+  rails_version: '7.0'
+  description: SQL comments
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: flipper
+  name: Flipper
+  archetype: engine
+  rails_version: '7.0'
+  description: feature flags
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rollout
+  name: Rollout
+  archetype: engine
+  rails_version: '6.1'
+  description: feature flags
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: split
+  name: Split
+  archetype: engine
+  rails_version: '6.1'
+  description: A/B testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: field_test
+  name: FieldTest
+  archetype: engine
+  rails_version: '7.0'
+  description: A/B testing
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: lograge
+  name: Lograge
+  archetype: engine
+  rails_version: '7.0'
+  description: logging
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: semantic_logger
+  name: SemanticLogger
+  archetype: engine
+  rails_version: '7.0'
+  description: logging
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: sentry-ruby
+  name: Sentry
+  archetype: engine
+  rails_version: '7.0'
+  description: error tracking
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: honeybadger
+  name: Honeybadger
+  archetype: engine
+  rails_version: '7.0'
+  description: error tracking
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: skylight
+  name: Skylight
+  archetype: engine
+  rails_version: '7.0'
+  description: APM
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: scout_apm
+  name: ScoutAPM
+  archetype: engine
+  rails_version: '7.0'
+  description: APM
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: newrelic_rpm
+  name: NewRelic
+  archetype: engine
+  rails_version: '7.0'
+  description: APM
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: coverband
+  name: Coverband
+  archetype: engine
+  rails_version: '7.0'
+  description: coverage production
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: rack-timeout
+  name: RackTimeout
+  archetype: engine
+  rails_version: '7.0'
+  description: timeouts
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: slowpoke
+  name: Slowpoke
+  archetype: engine
+  rails_version: '7.0'
+  description: timeouts
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: puma
+  name: Puma
+  archetype: engine
+  rails_version: '7.0'
+  description: web server
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: passenger
+  name: Passenger
+  archetype: engine
+  rails_version: '7.0'
+  description: web server
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: thruster
+  name: Thruster
+  archetype: engine
+  rails_version: '7.1'
+  description: HTTP proxy
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: kamal
+  name: Kamal
+  archetype: engine
+  rails_version: '7.1'
+  description: deployment
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: propshaft
+  name: Propshaft
+  archetype: engine
+  rails_version: '7.1'
+  description: asset pipeline
+  requires:
+  - Gemfile
+  - app
+  - config
+- slug: sprockets-rails
+  name: Sprockets
+  archetype: engine
+  rails_version: '7.0'
+  description: asset pipeline
+  requires:
+  - Gemfile
+  - app
+  - config

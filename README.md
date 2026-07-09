@@ -84,6 +84,9 @@ See our strategic plans for turning this gem into a platform company:
 - **Plan tiers** — Free, Pro ($29), Team ($99), Enterprise
 - **GitHub Action** — Run agents in CI, auto-create PRs
 - **Admin generator** — Mount team AI panel in your app
+- **Token usage** — Track prompt/completion tokens and cost estimates
+- **Help & support** — `rails rails_ai_build:doctor`, `help`, `stats`
+- **100-repo compatibility** — Validated against OSS Rails catalog
 
 ## Quick setup (5 minutes)
 

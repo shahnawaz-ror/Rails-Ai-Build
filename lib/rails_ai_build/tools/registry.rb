@@ -35,7 +35,7 @@ module RailsAiBuild
 
           tool = tools.fetch(name).new(workspace: workspace)
           result = tool.call(arguments)
-          Analytics.track(event: "tool.#{name}", metadata: { arguments: arguments.keys }) if Plans.feature?(:analytics)
+          Analytics.track_tool(tool_name: name, arguments: arguments) if defined?(Analytics)
           result
         end
 
