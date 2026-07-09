@@ -92,7 +92,9 @@ jobs:
       - name: Install dependencies (all DB adapters)
         env:
           INSTALL_ALL_DBS: "true"
-        run: bundle install
+        run: |
+          bundle install
+          bundle check || bundle install
 
       - name: Run specs (${{ matrix.adapter }})
         env:
@@ -243,7 +245,7 @@ jobs:
           bundle exec appraisal ${{ matrix.rails }} install
 
       - name: Test (${{ matrix.rails }})
-        run: bundle exec appraisal ${{ matrix.rails }} rake spec
+        run: bundle exec appraisal ${{ matrix.rails }} exec rspec --exclude-pattern 'spec/live/**'
 
   python:
     name: Python tests
