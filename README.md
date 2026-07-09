@@ -79,8 +79,25 @@ See our strategic plans for turning this gem into a platform company:
 - **Rails engine** — REST API, ActiveRecord models, background jobs
 - **Secure by default** — Workspace sandboxing, blocked dangerous shell commands
 - **Extensible** — Register custom tools and model providers
+- **Diff preview** — Review AI code changes before applying (Pro+)
+- **Rails skill packs** — CRUD, auth, API, tests, refactor
+- **Plan tiers** — Free, Pro ($29), Team ($99), Enterprise
+- **GitHub Action** — Run agents in CI, auto-create PRs
+- **Admin generator** — Mount team AI panel in your app
 
-## Installation
+## Quick setup (5 minutes)
+
+```bash
+rails generate rails_ai_build:install
+rails db:migrate
+rails rails_ai_build:setup
+
+# Run with a skill pack
+rails rails_ai_build:skill[crud,"Create a Post resource with title and body"]
+
+# Mount admin panel for your team
+rails generate rails_ai_build:admin
+```
 
 Add to your Gemfile:
 

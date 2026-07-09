@@ -10,7 +10,11 @@ module RailsAiBuild
                   :max_agent_iterations,
                   :shell_timeout,
                   :providers,
-                  :auto_mount
+                  :auto_mount,
+                  :diff_preview,
+                  :plan,
+                  :cloud_api_key,
+                  :audit_enabled
 
     def initialize
       @default_model = "gpt-4o"
@@ -22,6 +26,10 @@ module RailsAiBuild
       @shell_timeout = 30
       @providers = {}
       @auto_mount = true
+      @diff_preview = false
+      @plan = :free
+      @cloud_api_key = nil
+      @audit_enabled = false
     end
 
     def workspace_path

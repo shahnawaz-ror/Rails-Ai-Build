@@ -18,6 +18,15 @@ RailsAiBuild.configure do |config|
   config.max_agent_iterations = 25
   config.shell_timeout = 30
 
+  # Plan: :free, :pro, :team, :enterprise
+  config.plan = :free
+
+  # Diff preview — queue writes for approval (Pro+ feature)
+  # config.diff_preview = true
+
+  # Audit log — track all agent actions (Team+ feature)
+  # config.audit_enabled = true
+
   # Auto-mount engine at /rails_ai_build (set false to mount manually)
   config.auto_mount = true
 

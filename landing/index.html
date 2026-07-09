@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rails AI Build — Cursor-like AI agents for Rails</title>
+  <style>
+    :root { --red: #d30001; --dark: #1a1a2e; --light: #f8f8f8; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--dark); line-height: 1.6; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid #eee; }
+    nav .logo { font-weight: 700; font-size: 1.2rem; color: var(--red); }
+    nav a { margin-left: 1.5rem; text-decoration: none; color: var(--dark); }
+    .hero { text-align: center; padding: 5rem 2rem; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); }
+    .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+    .hero h1 span { color: var(--red); }
+    .hero p { font-size: 1.25rem; color: #555; max-width: 600px; margin: 0 auto 2rem; }
+    .cta { display: inline-block; background: var(--red); color: white; padding: 0.875rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 0.5rem; }
+    .cta.secondary { background: white; color: var(--red); border: 2px solid var(--red); }
+    .code { background: var(--dark); color: #a8ff60; padding: 1.5rem; border-radius: 8px; font-family: monospace; text-align: left; max-width: 500px; margin: 2rem auto; font-size: 0.9rem; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; padding: 4rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .feature { padding: 1.5rem; border: 1px solid #eee; border-radius: 12px; }
+    .feature h3 { margin-bottom: 0.5rem; }
+    .pricing { background: var(--light); padding: 4rem 2rem; text-align: center; }
+    .pricing h2 { margin-bottom: 2rem; }
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+    .plan { background: white; padding: 2rem; border-radius: 12px; border: 1px solid #eee; }
+    .plan.featured { border-color: var(--red); box-shadow: 0 4px 20px rgba(211,0,1,0.1); }
+    .plan .price { font-size: 2rem; font-weight: 700; color: var(--red); }
+    .waitlist { padding: 4rem 2rem; text-align: center; }
+    .waitlist input { padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 8px; width: 300px; margin-right: 0.5rem; }
+    .waitlist button { padding: 0.75rem 1.5rem; background: var(--red); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    footer { text-align: center; padding: 2rem; color: #888; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">⬥ Rails AI Build</div>
+    <div>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build">GitHub</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Forgot Cursor?<br><span>One gem. Every model.</span></h1>
+    <p>AI coding agents inside your Rails app. Your whole team shares AI — not just your laptop.</p>
+    <a href="#waitlist" class="cta">Join Cloud Waitlist</a>
+    <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build" class="cta secondary">View on GitHub</a>
+    <div class="code">
+      gem "rails_ai_build"<br>
+      rails generate rails_ai_build:install<br>
+      rails rails_ai_build:ask["Add a health endpoint"]
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="feature">
+      <h3>🤖 Multi-model agents</h3>
+      <p>OpenAI, Anthropic, Ollama, or your own models. Switch anytime.</p>
+    </div>
+    <div class="feature">
+      <h3>🛤️ Rails-native</h3>
+      <p>CRUD, auth, API, tests skill packs. Knows generators, AR, Hotwire, RSpec.</p>
+    </div>
+    <div class="feature">
+      <h3>👥 Team-first</h3>
+      <p>Admin panel, audit logs, diff preview, approval workflows.</p>
+    </div>
+    <div class="feature">
+      <h3>🔒 Self-hostable</h3>
+      <p>Enterprise keeps code on their VPC. No data leaves your network.</p>
+    </div>
+    <div class="feature">
+      <h3>🐍 Multi-language</h3>
+      <p>Ruby, Python, JavaScript SDKs. HTTP API for anything else.</p>
+    </div>
+    <div class="feature">
+      <h3>⚡ CI integration</h3>
+      <p>GitHub Action runs agents in your pipeline. Auto-creates PRs.</p>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <h2>Simple pricing</h2>
+    <div class="plans">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <p>Open-source gem<br>BYOK · All tools<br>Community support</p>
+      </div>
+      <div class="plan featured">
+        <h3>Pro</h3>
+        <div class="price">$29<span style="font-size:1rem">/mo</span></div>
+        <p>Diff preview<br>Hosted models<br>Agent memory</p>
+      </div>
+      <div class="plan">
+        <h3>Team</h3>
+        <div class="price">$99<span style="font-size:1rem">/seat</span></div>
+        <p>Dashboard · Audit log<br>Shared agents · PR bot<br>Slack integration</p>
+      </div>
+      <div class="plan">
+        <h3>Enterprise</h3>
+        <div class="price">Custom</div>
+        <p>Self-hosted · SSO<br>SOC 2 · SLA<br>Dedicated support</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="waitlist" id="waitlist">
+    <h2>Join the Cloud waitlist</h2>
+    <p style="margin: 1rem 0 2rem; color: #555;">Be first to access hosted models, team dashboard, and zero-config setup.</p>
+    <form id="waitlist-form">
+      <input type="email" placeholder="you@company.com" required id="email">
+      <button type="submit">Join Waitlist</button>
+    </form>
+    <p id="waitlist-msg" style="margin-top: 1rem; color: var(--red); display: none;"></p>
+  </section>
+
+  <footer>
+  <p>Rails AI Build · MIT License · <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build">GitHub</a></p>
+  </footer>
+
+  <script>
+    document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const msg = document.getElementById('waitlist-msg');
+      const entries = JSON.parse(localStorage.getItem('waitlist') || '[]');
+      entries.push({ email, date: new Date().toISOString() });
+      localStorage.setItem('waitlist', JSON.stringify(entries));
+      msg.style.display = 'block';
+      msg.textContent = 'Thanks! We\'ll notify you when Cloud launches.';
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

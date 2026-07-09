@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0] - 2026-07-09
+
+### Added
+- **Diff preview** — queue file writes for approval before applying (Pro+)
+- **Rails skill packs** — crud, auth, api, tests, refactor with convention-aware prompts
+- **Plan tiers** — Free, Pro, Team, Enterprise with feature gates
+- **Billing scaffolding** — Stripe checkout + webhook handlers
+- **Admin generator** — `rails generate rails_ai_build:admin`
+- **Setup task** — `rails rails_ai_build:setup` one-command onboarding
+- **Skill task** — `rails rails_ai_build:skill[crud,message]`
+- **GitHub Action** — `.github/actions/rails-ai-build` for CI
+- **Landing page** — `landing/index.html` with pricing and waitlist
+- **Audit log** — track agent actions (Team+)
+- **Changes API** — apply/reject pending diffs
+- **Dashboard, Chat, Skills, Plans API endpoints**
+
 ## [0.2.0] - 2026-07-09
 
 ### Added

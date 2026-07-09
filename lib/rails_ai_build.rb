@@ -25,6 +25,13 @@ require "rails_ai_build/agents/runner"
 
 require "rails_ai_build/chat_service"
 
+require "rails_ai_build/diff"
+require "rails_ai_build/plans"
+require "rails_ai_build/audit"
+require "rails_ai_build/changes/store"
+require "rails_ai_build/skills/registry"
+require "rails_ai_build/billing/client"
+
 require "rails_ai_build/engine" if defined?(Rails)
 
 module RailsAiBuild

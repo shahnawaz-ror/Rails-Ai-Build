@@ -1,0 +1,98 @@
+name: Rails AI Build
+description: Run AI coding agents in your Rails CI pipeline
+branding:
+  icon: code
+  color: red
+
+inputs:
+  prompt:
+    description: "What should the agent do?"
+    required: true
+  provider:
+    description: "AI provider (openai, anthropic)"
+    required: false
+    default: "openai"
+  model:
+    description: "Model name"
+    required: false
+    default: "gpt-4o"
+  skill:
+    description: "Rails skill pack (crud, auth, api, tests, refactor)"
+    required: false
+  api_key:
+    description: "API key (or set OPENAI_API_KEY / ANTHROPIC_API_KEY secrets)"
+    required: false
+  workspace:
+    description: "Project root path"
+    required: false
+    default: "."
+  create_pr:
+    description: "Create a pull request with changes"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+        bundler-cache: true
+
+    - name: Install rails_ai_build
+      shell: bash
+      run: gem install rails_ai_build
+
+    - name: Configure API key
+      shell: bash
+      env:
+        INPUT_API_KEY: ${{ inputs.api_key }}
+        INPUT_PROVIDER: ${{ inputs.provider }}
+      run: |
+        if [ -n "$INPUT_API_KEY" ]; then
+          if [ "$INPUT_PROVIDER" = "anthropic" ]; then
+            echo "ANTHROPIC_API_KEY=$INPUT_API_KEY" >> "$GITHUB_ENV"
+          else
+            echo "OPENAI_API_KEY=$INPUT_API_KEY" >> "$GITHUB_ENV"
+          fi
+        fi
+
+    - name: Run AI agent
+      shell: bash
+      env:
+        INPUT_PROMPT: ${{ inputs.prompt }}
+        INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_SKILL: ${{ inputs.skill }}
+        INPUT_WORKSPACE: ${{ inputs.workspace }}
+      run: |
+        cd "$INPUT_WORKSPACE"
+        if [ -n "$INPUT_SKILL" ]; then
+          rails rails_ai_build:skill["$INPUT_SKILL","$INPUT_PROMPT"] || \
+            ruby -e "
+              require 'rails_ai_build'
+              RailsAiBuild.configure { |c| c.api_keys[:$INPUT_PROVIDER] = ENV['OPENAI_API_KEY'] || ENV['ANTHROPIC_API_KEY'] }
+              agent = RailsAiBuild::Skills::Registry.build_agent(skill: '$INPUT_SKILL', provider: '$INPUT_PROVIDER', model: '$INPUT_MODEL')
+              puts agent.chat(ENV['INPUT_PROMPT'])[:content]
+            "
+        else
+          ruby -e "
+            require 'rails_ai_build'
+            RailsAiBuild.configure do |c|
+              c.api_keys[:openai] = ENV['OPENAI_API_KEY']
+              c.api_keys[:anthropic] = ENV['ANTHROPIC_API_KEY']
+              c.workspace_root = '$INPUT_WORKSPACE'
+            end
+            result = RailsAiBuild::ChatService.ask('$INPUT_PROMPT', provider: '$INPUT_PROVIDER', model: '$INPUT_MODEL')
+            puts result[:content]
+          "
+        fi
+
+    - name: Create pull request
+      if: inputs.create_pr == 'true'
+      uses: peter-evans/create-pull-request@v6
+      with:
+        title: "AI: ${{ inputs.prompt }}"
+        body: "Automated changes by [Rails AI Build](https://github.com/shahnawaz-ror/Rails-Ai-Build)"
+        branch: ai/rails-ai-build-${{ github.run_id }}

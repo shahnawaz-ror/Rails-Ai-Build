@@ -1,0 +1,140 @@
+# frozen_string_literal: true
+
+module RailsAiBuild
+  module Skills
+    class BaseSkill
+      class << self
+        attr_reader :skill_name, :skill_description
+
+        def name(value = nil)
+          return @skill_name if value.nil?
+          @skill_name = value.to_s
+        end
+
+        def description(value = nil)
+          return @skill_description if value.nil?
+          @skill_description = value
+        end
+      end
+
+      def self.prompt
+        raise NotImplementedError
+      end
+    end
+
+    class CrudSkill < BaseSkill
+      name "crud"
+      description "Scaffold a full Rails CRUD resource with controller, model, views, routes, and RSpec tests"
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails developer scaffolding a CRUD resource.
+          Follow these conventions strictly:
+          - snake_case file names, CamelCase class names
+          - RESTful routes via `resources`
+          - Strong parameters in controller
+          - ActiveRecord validations in model
+          - RSpec request specs + model specs with FactoryBot
+          - Hotwire (Turbo Frames) for index/show if views are needed
+          Read existing models and controllers first to match project style.
+        PROMPT
+      end
+    end
+
+    class AuthSkill < BaseSkill
+      name "auth"
+      description "Add authentication (Devise or custom) with login, logout, and protected routes"
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails developer adding authentication.
+          Check if Devise is already in the Gemfile before adding it.
+          If Devise exists, use Devise generators and conventions.
+          Otherwise implement session-based auth with has_secure_password.
+          Include: User model, sessions controller, before_action :authenticate_user!
+          Add RSpec tests for auth flows.
+        PROMPT
+      end
+    end
+
+    class ApiSkill < BaseSkill
+      name "api"
+      description "Build a JSON API with serializers, versioning, and request specs"
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails API developer.
+          Use namespace :api, version with module Api::V1.
+          Return JSON with appropriate HTTP status codes.
+          Use jbuilder or manual render json: patterns matching the project.
+          Add request specs with JSON response matchers.
+          Never expose internal errors in production responses.
+        PROMPT
+      end
+    end
+
+    class TestsSkill < BaseSkill
+      name "tests"
+      description "Write comprehensive RSpec tests for existing code"
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails test engineer.
+          Write RSpec tests using FactoryBot, shoulda-matchers if present.
+          Cover: model validations, associations, scopes, controller actions, edge cases.
+          Read the existing spec/ directory structure and match conventions.
+          Aim for meaningful tests, not trivial assertions.
+          Run tests with bundle exec rspec after writing.
+        PROMPT
+      end
+    end
+
+    class RefactorSkill < BaseSkill
+      name "refactor"
+      description "Safely refactor code following Rails best practices"
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails refactoring specialist.
+          Make minimal, focused changes. Read all affected files first.
+          Extract service objects for complex controller logic.
+          Use concerns for shared behavior. Keep fat models skinny controllers.
+          Ensure tests still pass after refactoring. Run rspec when done.
+        PROMPT
+      end
+    end
+
+    class Registry
+      SKILLS = {
+        crud: CrudSkill,
+        auth: AuthSkill,
+        api: ApiSkill,
+        tests: TestsSkill,
+        refactor: RefactorSkill
+      }.freeze
+
+      class << self
+        def all
+          SKILLS.map do |key, klass|
+            { name: key, description: klass.description }
+          end
+        end
+
+        def prompt_for(name)
+          klass = SKILLS[name.to_sym]
+          raise ConfigurationError, "Unknown skill: #{name}" unless klass
+
+          base = Agents::Agent::DEFAULT_SYSTEM_PROMPT
+          "#{base}\n\n## Skill: #{klass.name}\n#{klass.prompt}"
+        end
+
+        def build_agent(skill:, **options)
+          Agents::Agent.new(
+            system_prompt: prompt_for(skill),
+            **options
+          )
+        end
+      end
+    end
+  end
+end
