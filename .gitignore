@@ -29,3 +29,4 @@ dist/
 build/
 .pytest_cache/
 packages/python/*.egg-info/
+spec/internal/log/
