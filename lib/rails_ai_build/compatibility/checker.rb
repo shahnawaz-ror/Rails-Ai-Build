@@ -3,8 +3,9 @@
 module RailsAiBuild
   module Compatibility
     # Validates gem operations against Rails app structures
+    # rubocop:disable Metrics/ClassLength
     class Checker
-      Result = Struct.new(:repo, :status, :checks, :errors, :warnings, keyword_init: true)
+      Result = Struct.new(:repo, :slug, :status, :checks, :errors, :warnings, keyword_init: true)
 
       class << self
         def check_repo(repo_config, workspace:)
@@ -19,10 +20,15 @@ module RailsAiBuild
           checks << check_tools(workspace, errors, warnings)
           checks << check_edge_cases(workspace, errors, warnings)
 
-          status = errors.empty? ? (warnings.empty? ? :compatible : :compatible_with_warnings) : :incompatible
+          status = if errors.empty?
+                     warnings.empty? ? :compatible : :compatible_with_warnings
+                   else
+                     :incompatible
+                   end
 
           Result.new(
             repo: repo_config["name"],
+            slug: repo_config["slug"],
             status: status,
             checks: checks.compact,
             errors: errors,
@@ -30,15 +36,16 @@ module RailsAiBuild
           )
         end
 
-        def check_all(catalog: nil, fixture_base: nil)
-          catalog ||= Catalog.load
+        def check_all(catalog: nil, fixture_base: nil, mode: :full, workers: nil, slice: nil)
+          catalog ||= resolve_catalog(mode: mode)
+          catalog = apply_slice(catalog, slice) if slice
           fixture_base ||= default_fixture_base
+          workers ||= ENV.fetch("COMPAT_WORKERS", "4").to_i
 
-          catalog.map do |repo|
-            workspace = fixture_for(repo, fixture_base)
-            workspace.mkpath
-            scaffold_fixture(workspace, repo)
-            check_repo(repo, workspace: workspace)
+          if workers > 1 && catalog.size > 1
+            check_all_parallel(catalog, fixture_base: fixture_base, workers: workers)
+          else
+            catalog.map { |repo| check_one(repo, fixture_base) }
           end
         end
 
@@ -48,12 +55,70 @@ module RailsAiBuild
             compatible: results.count { |r| r.status == :compatible },
             with_warnings: results.count { |r| r.status == :compatible_with_warnings },
             incompatible: results.count { |r| r.status == :incompatible },
-            by_archetype: results.group_by { |r| r.checks.find { |c| c[:name] == "archetype" }&.dig(:value) }
-                                 .transform_values(&:size)
+            by_archetype: results.group_by { |r| archetype_for(r) }.transform_values(&:size),
+            by_check_failure: failure_counts(results),
+            failed_repos: results.select { |r| r.status == :incompatible }.map { |r| r.slug || r.repo }
           }
         end
 
         private
+
+        def resolve_catalog(mode:)
+          case mode.to_sym
+          when :smoke
+            Catalog.smoke_representatives
+          else
+            Catalog.load
+          end
+        end
+
+        def apply_slice(catalog, slice)
+          index, total = slice.to_s.split("/").map(&:to_i)
+          Catalog.slice(catalog, index: index, total: total)
+        end
+
+        def check_all_parallel(catalog, fixture_base:, workers:)
+          queue = Queue.new
+          catalog.each { |repo| queue << repo }
+          workers.times { queue << :done }
+
+          results = []
+          mutex = Mutex.new
+          threads = Array.new(workers) do
+            Thread.new do
+              loop do
+                repo = queue.pop
+                break if repo == :done
+
+                result = check_one(repo, fixture_base)
+                mutex.synchronize { results << result }
+              end
+            end
+          end
+          threads.each(&:join)
+          catalog.map { |repo| results.find { |r| r.slug == repo["slug"] } }
+        end
+
+        def check_one(repo, fixture_base)
+          workspace = fixture_for(repo, fixture_base)
+          workspace.mkpath
+          scaffold_fixture(workspace, repo)
+          check_repo(repo, workspace: workspace)
+        end
+
+        def archetype_for(result)
+          result.checks.find { |c| c[:name] == "archetype" }&.dig(:value) || "unknown"
+        end
+
+        def failure_counts(results)
+          counts = Hash.new(0)
+          results.each do |result|
+            result.checks.each do |check|
+              counts[check[:name]] += 1 if check[:status] == :fail
+            end
+          end
+          counts
+        end
 
         def default_fixture_base
           Pathname.new(Dir.mktmpdir("rails_ai_build_compat_"))
@@ -114,7 +179,7 @@ module RailsAiBuild
 
         def check_tools(workspace, errors, warnings)
           results = {}
-          %w[read_file list_files grep].each do |tool_name|
+          %w[read_file list_files grep write_file].each do |tool_name|
             result = Tools::Registry.execute(tool_name, tool_args(tool_name, workspace), workspace: workspace)
             results[tool_name] = result.key?(:error) ? :fail : :ok
             warnings << "Tool #{tool_name}: #{result[:error]}" if result[:error]
@@ -134,10 +199,12 @@ module RailsAiBuild
           when "read_file" then { "path" => "Gemfile" }
           when "list_files" then { "path" => ".", "max_results" => 10 }
           when "grep" then { "pattern" => "rails", "path" => "." }
+          when "write_file" then { "path" => "compat_test.rb", "content" => "# compat\n" }
           else {}
           end
         end
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end
