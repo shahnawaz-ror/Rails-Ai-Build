@@ -5,37 +5,40 @@ module RailsAiBuild
     class PullRequest
       # Creates a git branch, commits changes, and opens a PR (Team+ feature)
       class << self
-        def create(title:, body: nil, branch_prefix: "ai/rails-ai-build")
+        def create(title:, body: nil, branch_prefix: "ai/rails-ai-build", provider: :github)
           Plans.check!(:pr_creation)
 
           branch = "#{branch_prefix}-#{Time.now.to_i}"
           body ||= "Automated changes by [Rails AI Build](https://github.com/shahnawaz-ror/Rails-Ai-Build)"
 
-          commands = [
-            "git checkout -b #{branch}",
-            "git add -A",
-            "git commit -m #{Shellwords.escape(title)}",
-            "git push -u origin #{branch}"
-          ]
+          Git.create_branch(branch)
+          Git.commit(message: title)
+          push_result = Git.push(branch: branch)
 
-          results = commands.map { |cmd| run_shell(cmd) }
+          pr_url = case provider.to_sym
+                   when :gitlab then gitlab_mr_url(branch)
+                   else github_pr_url(branch)
+                   end
 
           {
             branch: branch,
             title: title,
             body: body,
-            steps: results,
-            pr_url: github_pr_url(branch),
-            message: "Branch pushed. Create PR at: #{github_pr_url(branch)}"
+            provider: provider,
+            push: push_result,
+            pr_url: pr_url,
+            message: "Branch pushed. Create PR at: #{pr_url}"
           }
         end
 
         private
 
-        def run_shell(command)
-          workspace = RailsAiBuild.configuration.workspace_path
-          stdout = `cd #{Shellwords.escape(workspace.to_s)} && #{command} 2>&1`
-          { command: command, output: stdout, success: $?.success? }
+        def gitlab_mr_url(branch)
+          remote = `git remote get-url origin 2>/dev/null`.strip
+          return nil if remote.empty?
+
+          repo = remote.gsub(%r{.*gitlab\.com[:/]}, "").gsub(/\.git$/, "")
+          "https://gitlab.com/#{repo}/-/merge_requests/new?merge_request[source_branch]=#{branch}"
         end
 
         def github_pr_url(branch)
