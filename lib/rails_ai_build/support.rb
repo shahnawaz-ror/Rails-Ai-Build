@@ -16,6 +16,7 @@ module RailsAiBuild
             check_providers,
             check_tools(workspace),
             check_plan_features,
+            check_upgrade(workspace),
             check_disk_space(workspace)
           ]
           {
@@ -94,6 +95,19 @@ module RailsAiBuild
         def check_plan_features
           plan = Plans.current
           ok("plan", "#{plan[:name]} plan — #{plan[:features].size} features")
+        end
+
+        def check_upgrade(workspace)
+          info = Upgrade.status(workspace: workspace)
+          if info[:installed_version].nil?
+            warn("upgrade", "Version not stamped in initializer",
+                 "Run: rails generate rails_ai_build:upgrade")
+          elsif info[:needs_upgrade]
+            warn("upgrade", "Upgrade available: #{info[:installed_version]} → #{info[:current_version]}",
+                 "bundle update rails_ai_build && rails generate rails_ai_build:upgrade")
+          else
+            ok("upgrade", "On latest version #{info[:current_version]}")
+          end
         end
 
         def check_disk_space(workspace)
@@ -200,6 +214,22 @@ module RailsAiBuild
               POST /rails_ai_build/stream
 
             Full guide: docs/WEB_UI.md
+          HELP
+        },
+        "upgrade" => {
+          title: "Upgrade rails_ai_build",
+          content: <<~HELP
+            Check status:
+              rails rails_ai_build:upgrade
+
+            Typical upgrade path:
+              1. bundle update rails_ai_build
+              2. rails generate rails_ai_build:upgrade
+              3. rails db:migrate
+              4. rails rails_ai_build:doctor
+
+            The upgrade generator stamps your initializer with the installed version.
+            Chat install → upgrade: same flow works from any version.
           HELP
         }
       }.freeze

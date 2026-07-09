@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require "json"
+require 'json'
 
+# rubocop:disable Metrics/BlockLength
 namespace :rails_ai_build do
   desc "One-command setup: configure, verify API keys, run demo"
   task setup: :environment do
@@ -118,7 +119,7 @@ namespace :rails_ai_build do
 
   desc "Remember project context: rails rails_ai_build:remember[framework,Rails 7.2]"
   task :remember, %i[key value] => :environment do |_t, args|
-    RailsAiBuild.configuration.plan = :pro unless Plans.feature?(:agent_memory)
+    RailsAiBuild.configuration.plan = :pro unless RailsAiBuild::Plans.feature?(:agent_memory)
     RailsAiBuild::Memory::Store.remember(
       workspace: RailsAiBuild.configuration.workspace_path,
       key: args[:key],
@@ -129,7 +130,7 @@ namespace :rails_ai_build do
 
   desc "Run installation diagnostics"
   task doctor: :environment do
-    result = Support::Doctor.check
+    result = RailsAiBuild::Support::Doctor.check
     puts "\n🏥 Rails AI Build Doctor — #{result[:status].to_s.upcase}\n#{'=' * 40}"
     result[:checks].each do |c|
       icon = { ok: "✅", warning: "⚠️", error: "❌" }[c[:status].to_s.to_sym] || "•"
@@ -142,11 +143,11 @@ namespace :rails_ai_build do
   desc "Show help topics"
   task :help, [:topic] => :environment do |_t, args|
     if args[:topic].present?
-      topic = Support::Help.topic(args[:topic])
+      topic = RailsAiBuild::Support::Help.topic(args[:topic])
       puts "\n#{topic[:title]}\n#{'-' * 40}\n#{topic[:content]}"
     else
       puts "\nRails AI Build Help\n#{'=' * 40}"
-      Support::Help.topics.each { |t| puts "  #{t[:id]} — #{t[:title]}" }
+      RailsAiBuild::Support::Help.topics.each { |t| puts "  #{t[:id]} — #{t[:title]}" }
       puts "\nUsage: rails rails_ai_build:help[getting-started]"
     end
   end
@@ -154,7 +155,7 @@ namespace :rails_ai_build do
   desc "Show analytics and token usage stats"
   task stats: :environment do
     puts "\n📊 Rails AI Build Stats\n#{'=' * 40}"
-    puts JSON.pretty_generate(Analytics.dashboard)
+    puts JSON.pretty_generate(RailsAiBuild::Analytics.dashboard)
   end
 
   desc "Run compatibility checks against 100 OSS Rails repos"
@@ -174,13 +175,23 @@ namespace :rails_ai_build do
     FileUtils.rm_rf(base)
   end
 
+  desc "Check upgrade status and show steps"
+  task upgrade: :environment do
+    puts "\n#{RailsAiBuild::Upgrade.chat_guide}\n"
+    info = RailsAiBuild::Upgrade.status
+    puts "Installed: #{info[:installed_version] || 'not stamped'}"
+    puts "Current:   #{info[:current_version]}"
+    puts "Needs upgrade: #{info[:needs_upgrade]}"
+  end
+
   desc "Run multi-agent orchestration: rails rails_ai_build:orchestrate[task]"
   task :orchestrate, [:task] => :environment do |_t, args|
     task_desc = args[:task] || ENV["TASK"]
     abort "Usage: rails rails_ai_build:orchestrate['Add health endpoint']" if task_desc.blank?
 
-    RailsAiBuild.configuration.plan = :team unless Plans.feature?(:multi_agent)
-    result = Orchestration::Coordinator.new.run_with_review(task_desc)
+    RailsAiBuild.configuration.plan = :team unless RailsAiBuild::Plans.feature?(:multi_agent)
+    result = RailsAiBuild::Orchestration::Coordinator.new.run_with_review(task_desc)
     puts result.dig(:results, :reviewer, :content) || result.dig(:final, :content)
   end
 end
+# rubocop:enable Metrics/BlockLength

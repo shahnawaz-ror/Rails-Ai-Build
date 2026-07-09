@@ -43,12 +43,21 @@ RSpec/DescribeClass:
     - "spec/rails_ai_build/analytics_integration_spec.rb"
     - "spec/rails_ai_build/errors_spec.rb"
     - "spec/rails_ai_build/tools/edge_cases_spec.rb"
+    - "spec/lib/tasks/**/*"
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - "spec/generators/**/*"
+
+RSpec/BeforeAfterAll:
+  Exclude:
+    - "spec/lib/tasks/**/*"
 
 RSpec/MultipleExpectations:
   Max: 5
 
 RSpec/ExampleLength:
-  Max: 15
+  Max: 16
 
 RSpec/NestedGroups:
   Max: 4

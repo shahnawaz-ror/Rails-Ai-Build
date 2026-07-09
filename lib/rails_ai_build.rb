@@ -44,6 +44,7 @@ require "rails_ai_build/bots/slack"
 
 require "rails_ai_build/token_usage"
 require "rails_ai_build/support"
+require "rails_ai_build/upgrade"
 require "rails_ai_build/compatibility/checker"
 require "rails_ai_build/compatibility/catalog"
 require "rails_ai_build/compatibility/fixtures"
