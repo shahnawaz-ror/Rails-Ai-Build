@@ -13,7 +13,8 @@ module RailsAiBuild
         params[:message],
         provider: params[:provider],
         model: params[:model],
-        skill: params[:skill]
+        skill: params[:skill],
+        session_id: params[:session_id]
       ) do |sse_data|
         response.stream.write(sse_data)
       end

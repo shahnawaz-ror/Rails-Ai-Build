@@ -4,13 +4,21 @@ module RailsAiBuild
   # High-level facade for programmatic agent usage without touching ActiveRecord.
   class ChatService
     def self.ask(prompt, provider: nil, model: nil, system_prompt: nil, workspace: nil)
-      agent = Agents::Agent.new(
-        provider: provider,
-        model: model,
-        system_prompt: system_prompt,
-        workspace: workspace
-      )
-      agent.chat(prompt)
+      if system_prompt
+        agent = Agents::Agent.new(
+          provider: provider,
+          model: model,
+          system_prompt: system_prompt,
+          workspace: workspace
+        )
+        agent.chat(prompt)
+      else
+        Ai::Driver.run(prompt, provider: provider, model: model, workspace: workspace).to_h
+      end
+    end
+
+    def self.run(prompt, **options)
+      Ai::Driver.run(prompt, **options)
     end
 
     def self.build(task, **options)

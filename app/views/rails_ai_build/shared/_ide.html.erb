@@ -93,13 +93,23 @@
   const statusEl = document.getElementById('rab-agent-status');
   let running = false;
 
+  let sessionId = localStorage.getItem('rab-session-id') || null;
+
   function formatEvent(event, data) {
-    const tags = { start: 'rab-tag-start', tool_call: 'rab-tag-tool', complete: 'rab-tag-complete', error: 'rab-tag-error' };
+    const tags = { start: 'rab-tag-start', context: 'rab-tag-start', session: 'rab-tag-start',
+      tool_call: 'rab-tag-tool', delta: 'rab-tag-iteration', iteration: 'rab-tag-iteration',
+      complete: 'rab-tag-complete', done: 'rab-tag-complete', error: 'rab-tag-error' };
     let body = '';
-    if (event === 'start') body = 'Starting: "' + (data.message || '') + '"';
+    if (event === 'session') {
+      sessionId = data.id;
+      localStorage.setItem('rab-session-id', sessionId);
+      body = 'Thread ' + sessionId.slice(0, 8) + '… (model: ' + (data.model || '') + ')';
+    } else if (event === 'context') {
+      body = 'Auto-context: Rails ' + (data.rails || '?') + ', conventions loaded';
+    } else if (event === 'start') body = 'Starting: "' + (data.message || '') + '"';
     else if (event === 'tool_call') body = '<strong>' + data.name + '</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + JSON.stringify(data.arguments, null, 2) + '</pre>';
-    else if (event === 'iteration') body = (data.content || '') + (data.tool_calls ? ' (' + data.tool_calls + ' tools)' : '');
-    else if (event === 'complete') {
+    else if (event === 'delta' || event === 'iteration') body = data.content || '';
+    else if (event === 'complete' || event === 'done') {
       body = data.content || 'Done.';
       if (data.pending_changes?.length) refreshChanges(data.pending_changes);
     }
@@ -144,11 +154,12 @@
 
     if (!canStream) {
       streamEl.innerHTML = formatEvent('error', { error: 'Streaming requires Pro+ plan. Using sync /chat…' });
-      const res = await fetch(base + '/chat', {
+      const res = await fetch(base + '/ai/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt, skill: document.getElementById('rab-skill').value || undefined })
+        body: JSON.stringify({ message: prompt, skill: document.getElementById('rab-skill').value || undefined, session_id: sessionId })
       });
       const data = await res.json();
+      if (data.session?.id) { sessionId = data.session.id; localStorage.setItem('rab-session-id', sessionId); }
       streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', data));
       return;
     }
@@ -161,11 +172,12 @@
     const body = {
       message: prompt,
       skill: document.getElementById('rab-skill').value || undefined,
-      provider: document.getElementById('rab-provider')?.value
+      provider: document.getElementById('rab-provider')?.value,
+      session_id: sessionId
     };
 
     try {
-      const res = await fetch(base + '/stream', {
+      const res = await fetch(base + '/ai/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify(body)

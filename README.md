@@ -27,6 +27,9 @@ gem "rails_ai_build"
 # rails generate rails_ai_build:install && rails db:migrate
 rails generate rails_ai_build:boost   # Laravel Boost-style introspection tools
 
+RailsAiBuild::Ai::Driver.run("Add Stripe subscriptions")  # model-first — like Cursor/Claude
+# Multi-turn: session = RailsAiBuild::Ai::Session.create; Driver.run("...", session: session)
+
 RailsAiBuild::ChatService.build("Add Stripe subscriptions with webhooks")
 # Or: rails rails_ai_build:build['Add comment system with Turbo Streams']
 

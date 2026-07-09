@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0] - 2026-07-09
+
+### Added — AI Driver (model-first, like Cursor & Claude)
+- **`Ai::Driver`** — single model-first entry point for all AI operations
+- **`Ai::Session`** — multi-turn conversation threads (Claude-style)
+- **`Ai::ContextEngine`** — auto-assembles app context before every model call
+- **`POST /ai/chat`** and **`POST /ai/stream`** — unified AI API with SSE events
+- SSE events: `session`, `context`, `delta`, `tool_call`, `done`
+- **`docs/AI_ARCHITECTURE.md`** — model-first architecture guide
+- `ChatService.ask` / `POST /stream` / `Tasks::Runtime` now route through Driver
+- IDE uses `/ai/stream` with persistent `session_id` (multi-turn threads)
+
 ## [2.0.0] - 2026-07-09
 
 ### Added — Multitask platform

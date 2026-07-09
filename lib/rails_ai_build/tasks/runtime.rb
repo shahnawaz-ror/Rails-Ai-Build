@@ -78,23 +78,19 @@ module RailsAiBuild
       end
 
       def run_agent(prompt)
-        agent = build_agent
-        agent.chat(prompt)
-      end
-
-      def build_agent
-        system_prompt = if @skill
-                          Skills::Registry.prompt_for(@skill)
-                        elsif RailsAiBuild.configuration.universal_builder
-                          Builder::Context.system_prompt(workspace: @workspace)
-                        end
-
-        Agents::Agent.new(
+        result = Ai::Driver.run(
+          prompt,
           provider: @provider,
           model: @model,
-          system_prompt: system_prompt,
+          skill: @skill,
           workspace: @workspace
         )
+        {
+          content: result.content,
+          iterations: result.iterations,
+          usage: result.usage,
+          messages: result.messages
+        }
       end
 
       def verify_workspace
