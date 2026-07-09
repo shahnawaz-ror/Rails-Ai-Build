@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.1] - 2026-07-09
+
+### Added
+- **Web UI live demo** — `/rails_ai_build/ui/demo` with real-time SSE agent replay (no API key)
+- **4 example scenarios** — health check, CRUD, fix test, API auth with scripted tool calls
+- **`docs/WEB_UI.md`** — complete user guide with curl/API examples
+- **`landing/demo.html`** — static web UI snapshot for GitHub Pages
+- Dashboard example prompt chips + link to demo
+- Help topic: `web-ui`
+
 ## [1.4.0] - 2026-07-09
 
 ### Added — Gem engineering & quality

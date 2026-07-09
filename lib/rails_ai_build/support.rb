@@ -188,6 +188,19 @@ module RailsAiBuild
             API: GET /rails_ai_build/analytics
             Detailed dashboards require Team plan.
           HELP
+        },
+        "web-ui" => {
+          title: "Web UI & Live Demo",
+          content: <<~HELP
+            After install, open in browser:
+              http://localhost:3000/rails_ai_build/ui          — dashboard (chat, changes)
+              http://localhost:3000/rails_ai_build/ui/demo     — live SSE demo (no API key)
+
+            Real-time streaming:
+              POST /rails_ai_build/stream
+
+            Full guide: docs/WEB_UI.md
+          HELP
         }
       }.freeze
 

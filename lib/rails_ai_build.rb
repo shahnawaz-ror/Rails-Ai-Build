@@ -50,6 +50,7 @@ require "rails_ai_build/compatibility/fixtures"
 require "rails_ai_build/compatibility/edge_cases"
 
 require "rails_ai_build/streaming/sse"
+require "rails_ai_build/demo/replayer"
 require "rails_ai_build/integrations/git"
 require "rails_ai_build/mcp/server"
 require "rails_ai_build/orchestration/coordinator"

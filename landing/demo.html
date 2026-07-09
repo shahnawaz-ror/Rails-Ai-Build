@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rails AI Build — Web UI Snapshot</title>
+  <style>
+    :root { --red: #d30001; --bg: #0a0a12; --card: #1a1a2e; --border: #2a2a40; --text: #e8e8f0; --muted: #888; --green: #4ade80; --yellow: #fbbf24; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: ui-monospace, monospace; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    h1 { color: var(--red); margin-bottom: 0.5rem; }
+    .sub { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .mockup { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #12121f; }
+    .mockup-bar { background: #1a1a2e; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.8rem; display: flex; gap: 1rem; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .dot-r { background: #f87171; } .dot-y { background: #fbbf24; } .dot-g { background: #4ade80; }
+    .mockup-body { display: grid; grid-template-columns: 220px 1fr 280px; min-height: 420px; }
+    .col { padding: 1rem; border-right: 1px solid var(--border); font-size: 0.75rem; }
+    .col:last-child { border-right: none; }
+    .col h3 { font-size: 0.65rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; letter-spacing: 0.08em; }
+    .scenario { padding: 0.5rem; border-radius: 6px; margin-bottom: 0.4rem; border: 1px solid var(--border); }
+    .scenario.on { border-color: var(--red); background: var(--card); }
+    .event { margin-bottom: 0.6rem; }
+    .tag { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 3px; margin-right: 0.4rem; }
+    .tag-tool { background: #3d2e1a; color: var(--yellow); }
+    .tag-ok { background: #1a2e1a; color: var(--green); }
+    .event pre { background: var(--card); padding: 0.5rem; border-radius: 4px; margin-top: 0.25rem; font-size: 0.68rem; color: var(--muted); overflow-x: auto; }
+    .curl { color: #a8ff60; font-size: 0.68rem; line-height: 1.6; white-space: pre-wrap; }
+    .cta { display: inline-block; margin-top: 2rem; background: var(--red); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    .steps { margin: 2rem 0; }
+    .steps li { margin: 0.5rem 0; color: var(--muted); font-size: 0.85rem; }
+    .steps code { color: #a8ff60; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>⬥ Web UI Snapshot</h1>
+    <p class="sub">How users interact with rails_ai_build in the browser — real-time SSE agent events, tool calls, and diff approval.</p>
+
+    <div class="mockup">
+      <div class="mockup-bar">
+        <span><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></span>
+        <span>localhost:3000/rails_ai_build/ui/demo</span>
+        <span style="margin-left:auto;color:var(--green)">● LIVE</span>
+      </div>
+      <div class="mockup-body">
+        <div class="col">
+          <h3>Scenarios</h3>
+          <div class="scenario on"><strong>Health check</strong><br><span style="color:var(--muted)">Add GET /health</span></div>
+          <div class="scenario"><strong>Post CRUD</strong><br><span style="color:var(--muted)">skill: crud</span></div>
+          <div class="scenario"><strong>Fix test</strong><br><span style="color:var(--muted)">skill: tests</span></div>
+          <div class="scenario"><strong>API auth</strong><br><span style="color:var(--muted)">orchestrate</span></div>
+        </div>
+        <div class="col">
+          <h3>SSE stream</h3>
+          <div class="event"><span class="tag tag-ok">start</span> "Add GET /health endpoint"</div>
+          <div class="event"><span class="tag tag-ok">iteration</span> Inspecting routes...</div>
+          <div class="event"><span class="tag tag-tool">tool_call</span> read_file<pre>{"path":"config/routes.rb"}</pre></div>
+          <div class="event"><span class="tag tag-tool">tool_call</span> write_file<pre>{"path":"app/controllers/health_controller.rb"}</pre></div>
+          <div class="event"><span class="tag tag-tool">tool_call</span> shell<pre>{"command":"bin/rails routes | grep health"}</pre></div>
+          <div class="event"><span class="tag tag-ok">complete</span> Done! 1620 tokens</div>
+        </div>
+        <div class="col">
+          <h3>API equivalent</h3>
+          <pre class="curl">curl -X POST \
+  localhost:3000/rails_ai_build/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Add health endpoint"}'</pre>
+          <h3 style="margin-top:1rem">Pending</h3>
+          <div style="color:var(--yellow);font-size:0.7rem">health_controller.rb</div>
+          <div style="color:var(--yellow);font-size:0.7rem">config/routes.rb</div>
+        </div>
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li><code>rails generate rails_ai_build:install</code></li>
+      <li><code>export OPENAI_API_KEY=sk-...</code></li>
+      <li>Open <code>/rails_ai_build/ui/demo</code> — simulated replay, no key needed</li>
+      <li>Open <code>/rails_ai_build/ui</code> — live agent with your API key</li>
+    </ol>
+
+    <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build/blob/main/docs/WEB_UI.md" class="cta">Full Web UI guide →</a>
+    <a href="index.html" class="cta" style="background:transparent;border:2px solid var(--red);color:var(--red);margin-left:0.5rem">← Landing</a>
+  </div>
+</body>
+</html>
