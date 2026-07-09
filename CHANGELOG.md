@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.0] - 2026-07-09
+
+### Added — Cursor-like in-app IDE (enterprise UI)
+- **`/rails_ai_build/ui/ide`** — full IDE workspace: file explorer, editor, agent SSE stream, diff review
+- **Themes** — Dark, Light, and Enterprise (GitHub × Cursor palette) with localStorage persistence
+- **Workspace API** — `GET /workspace/tree`, `GET /workspace/file` for IDE panels
+- **Enterprise panel** — plan badges, feature gates, audit log, SSO/RBAC indicators
+- **GitHub panel** — branch status, changed files, one-click PR (Team+)
+- **Root route** — engine root now opens IDE (dashboard + demo still available)
+- **`docs/IDE_UI.md`** — IDE user guide
+
+### Changed
+- Dashboard and demo link to IDE; shared `rails_ai_build` layout + theme system
+
 ## [1.7.0] - 2026-07-09
 
 ### Added — Rails Boost (Laravel/Django parity)

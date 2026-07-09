@@ -1,0 +1,151 @@
+<% content_for :title do %>Rails AI Build IDE<% end %>
+
+<div class="rab-ide" id="rab-ide"
+     data-base="<%= request.path.sub(%r{/ui/ide.*}, '') %>"
+     data-streaming="<%= @features[:streaming] %>"
+     data-pr="<%= @features[:pr_creation] %>"
+     data-audit="<%= @features[:audit_log] %>">
+
+  <header class="rab-topbar">
+    <div class="rab-logo">⬥ Rails AI Build <span>IDE v<%= @version %></span></div>
+    <% if @git[:available] && @git[:branch].present? %>
+      <span class="rab-branch">⎇ <%= @git[:branch] %></span>
+    <% end %>
+    <span class="rab-badge rab-badge-plan"><%= @plan_name %></span>
+    <% if @plan == :enterprise %>
+      <span class="rab-badge rab-badge-enterprise">Enterprise</span>
+    <% end %>
+    <% if @features[:pr_creation] %>
+      <span class="rab-badge rab-badge-github">GitHub</span>
+    <% end %>
+    <% if @enterprise[:rbac_enabled] %>
+      <span class="rab-badge rab-badge-role"><%= @enterprise[:role] %></span>
+    <% end %>
+    <div class="rab-spacer"></div>
+    <select id="rab-theme" title="Theme">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+      <option value="enterprise">Enterprise</option>
+    </select>
+    <select id="rab-provider" title="Provider">
+      <% @providers.each do |p| %>
+        <option value="<%= p %>"><%= p %></option>
+      <% end %>
+    </select>
+    <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui/demo') %>">Demo</a>
+    <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui') %>">Dashboard</a>
+  </header>
+
+  <div class="rab-workspace">
+    <nav class="rab-activity">
+      <button class="rab-activity-btn active" data-panel="files" title="Explorer">📁</button>
+      <button class="rab-activity-btn" data-panel="agent" title="Agent">🤖</button>
+      <% if @features[:git_integration] %><button class="rab-activity-btn" data-panel="git" title="Git">⎇</button><% end %>
+    </nav>
+
+    <aside class="rab-sidebar" id="rab-sidebar-files">
+      <div class="rab-sidebar-header">Explorer</div>
+      <div class="rab-sidebar-body" id="rab-file-tree">
+        <p class="rab-locked">Loading workspace…</p>
+      </div>
+    </aside>
+
+    <main class="rab-center">
+      <div class="rab-tabs" id="rab-editor-tabs">
+        <button class="rab-tab active" data-tab="editor">Editor</button>
+        <button class="rab-tab" data-tab="agent">Agent</button>
+      </div>
+
+      <div class="rab-editor" id="rab-editor">
+        <div class="rab-editor-empty">Select a file from the explorer, or ask the agent below.</div>
+      </div>
+
+      <div class="rab-agent-panel" id="rab-agent-panel">
+        <div class="rab-agent-header">
+          <span>Agent — Cursor-style SSE stream</span>
+          <span id="rab-agent-status"></span>
+        </div>
+        <div class="rab-stream" id="rab-stream"></div>
+        <form class="rab-prompt-bar" id="rab-prompt-form">
+          <select id="rab-skill">
+            <option value="">No skill</option>
+            <% @skills.each do |s| %>
+              <option value="<%= s[:name] %>"><%= s[:name] %></option>
+            <% end %>
+          </select>
+          <textarea id="rab-prompt" placeholder="Ask the agent… (e.g. Add a health check endpoint)" rows="1"></textarea>
+          <button type="submit" class="rab-btn rab-btn-primary" id="rab-run-btn">Run</button>
+        </form>
+      </div>
+    </main>
+
+    <aside class="rab-right">
+      <div class="rab-right-tabs">
+        <button class="rab-right-tab active" data-right="changes">Changes</button>
+        <button class="rab-right-tab" data-right="git">Git</button>
+        <button class="rab-right-tab" data-right="enterprise">Enterprise</button>
+      </div>
+      <div class="rab-right-body">
+        <section id="rab-panel-changes">
+          <h3 style="font-size:0.7rem;color:var(--rab-muted);margin-bottom:0.5rem">PENDING DIFFS</h3>
+          <% if @pending.any? %>
+            <% @pending.each do |c| %>
+              <div class="rab-change-item" data-change-id="<%= c.id %>">
+                <div class="rab-change-path"><%= c.path %></div>
+                <div style="margin-top:0.4rem;display:flex;gap:0.4rem">
+                  <button class="rab-btn rab-btn-secondary rab-apply-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Apply</button>
+                  <button class="rab-btn rab-btn-secondary rab-reject-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Reject</button>
+                </div>
+              </div>
+            <% end %>
+            <button class="rab-btn rab-btn-accent" id="rab-apply-all" style="width:100%;margin-top:0.5rem">Apply All</button>
+          <% else %>
+            <p class="rab-locked">No pending changes. Enable diff_preview for review workflow.</p>
+          <% end %>
+          <div id="rab-diff-detail" style="margin-top:1rem"></div>
+        </section>
+
+        <section id="rab-panel-git" style="display:none">
+          <% if @git[:available] %>
+            <p><strong>Branch:</strong> <span class="rab-branch"><%= @git[:branch] %></span></p>
+            <h3 style="font-size:0.7rem;color:var(--rab-muted);margin:0.75rem 0 0.5rem">CHANGED FILES</h3>
+            <% @git[:changed_files].to_a.first(20).each do |f| %>
+              <div class="rab-git-file"><%= f %></div>
+            <% end %>
+            <% if @features[:pr_creation] %>
+              <button class="rab-btn rab-btn-github" id="rab-create-pr" style="width:100%;margin-top:1rem">Create GitHub PR</button>
+            <% else %>
+              <p class="rab-locked" style="margin-top:1rem">GitHub PR — Team+ plan required</p>
+            <% end %>
+          <% else %>
+            <p class="rab-locked">Git not available in this workspace.</p>
+          <% end %>
+        </section>
+
+        <section id="rab-panel-enterprise" style="display:none">
+          <div class="rab-enterprise-item">
+            <strong>Plan:</strong> <%= @plan_name %>
+            <% if @plan == :enterprise %><span class="rab-badge rab-badge-enterprise" style="margin-left:0.5rem">SSO · RBAC · SOC2</span><% end %>
+          </div>
+          <% @features.each do |name, enabled| %>
+            <div class="rab-enterprise-item">
+              <span class="<%= enabled ? 'rab-feature-on' : 'rab-feature-off' %>"><%= enabled ? '✓' : '○' %></span>
+              <%= name.to_s.humanize %>
+            </div>
+          <% end %>
+          <% if @features[:audit_log] %>
+            <button class="rab-btn rab-btn-secondary" id="rab-load-audit" style="width:100%;margin-top:0.75rem">Load audit log</button>
+            <pre id="rab-audit-log" class="rab-diff-view" style="margin-top:0.5rem;max-height:160px"></pre>
+          <% end %>
+          <% if @features[:sso] %>
+            <p style="margin-top:0.75rem;font-size:0.72rem;color:var(--rab-muted)">SSO: <code>GET /auth/saml</code> — mount behind your IdP</p>
+          <% end %>
+        </section>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<% content_for :scripts do %>
+  <%= render "rails_ai_build/shared/ide" %>
+<% end %>
