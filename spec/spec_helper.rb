@@ -5,6 +5,13 @@ ENV["RAILS_ENV"] ||= "test"
 require "rails_ai_build"
 
 RSpec.configure do |config|
+  config.before do
+    RailsAiBuild.reset_configuration!
+    Analytics.reset! if RailsAiBuild::Analytics.respond_to?(:reset!)
+    TokenUsage.reset!
+    Changes::Store.clear!
+  end
+
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end

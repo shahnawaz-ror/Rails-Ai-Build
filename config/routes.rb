@@ -75,4 +75,14 @@ RailsAiBuild::Engine.routes.draw do
   end
 
   get "auth/saml", to: "auth#saml_config"
+
+  get "help", to: "help#index"
+  get "help/:id", to: "help#show"
+  get "support/doctor", to: "support#doctor"
+  get "support/contact", to: "support#contact"
+  get "settings", to: "settings#show"
+  patch "settings", to: "settings#update"
+  put "settings", to: "settings#update"
+
+  get "tokens", to: "analytics#tokens"
 end

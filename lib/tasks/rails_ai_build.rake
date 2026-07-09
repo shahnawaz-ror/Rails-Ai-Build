@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 namespace :rails_ai_build do
   desc "One-command setup: configure, verify API keys, run demo"
   task setup: :environment do
@@ -62,6 +64,10 @@ namespace :rails_ai_build do
 
       API dashboard: http://localhost:3000/rails_ai_build
       Docs: https://github.com/shahnawaz-ror/Rails-Ai-Build
+
+      Help:    rails rails_ai_build:help
+      Doctor:  rails rails_ai_build:doctor
+      Stats:   rails rails_ai_build:stats
     DONE
   end
 
@@ -119,5 +125,52 @@ namespace :rails_ai_build do
       value: args[:value]
     )
     puts "Remembered: #{args[:key]} = #{args[:value]}"
+  end
+
+  desc "Run installation diagnostics"
+  task doctor: :environment do
+    result = Support::Doctor.check
+    puts "\n🏥 Rails AI Build Doctor — #{result[:status].to_s.upcase}\n#{'=' * 40}"
+    result[:checks].each do |c|
+      icon = { ok: "✅", warning: "⚠️", error: "❌" }[c[:status].to_s.to_sym] || "•"
+      puts "#{icon} #{c[:name]}: #{c[:message]}"
+      puts "   Fix: #{c[:fix]}" if c[:fix]
+    end
+    puts "\nVersion: #{result[:version]} | Plan: #{result[:plan]}"
+  end
+
+  desc "Show help topics"
+  task :help, [:topic] => :environment do |_t, args|
+    if args[:topic].present?
+      topic = Support::Help.topic(args[:topic])
+      puts "\n#{topic[:title]}\n#{'-' * 40}\n#{topic[:content]}"
+    else
+      puts "\nRails AI Build Help\n#{'=' * 40}"
+      Support::Help.topics.each { |t| puts "  #{t[:id]} — #{t[:title]}" }
+      puts "\nUsage: rails rails_ai_build:help[getting-started]"
+    end
+  end
+
+  desc "Show analytics and token usage stats"
+  task stats: :environment do
+    puts "\n📊 Rails AI Build Stats\n#{'=' * 40}"
+    puts JSON.pretty_generate(Analytics.dashboard)
+  end
+
+  desc "Run compatibility checks against 100 OSS Rails repos"
+  task compatibility: :environment do
+    puts "\n🔍 Running compatibility checks on #{Compatibility::Catalog.count} repos..."
+    base = Pathname.new(Dir.mktmpdir("compat_"))
+    results = Compatibility::Checker.check_all(fixture_base: base)
+    summary = Compatibility::Checker.summary(results)
+    puts JSON.pretty_generate(summary)
+    incompatible = results.select { |r| r.status == :incompatible }
+    if incompatible.any?
+      puts "\n❌ Incompatible (#{incompatible.size}):"
+      incompatible.first(10).each { |r| puts "  #{r.repo}: #{r.errors.join(', ')}" }
+    else
+      puts "\n✅ All #{results.size} repos compatible!"
+    end
+    FileUtils.rm_rf(base)
   end
 end

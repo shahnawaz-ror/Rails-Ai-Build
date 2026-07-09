@@ -6,7 +6,7 @@ module RailsAiBuild
       free: {
         name: "Free",
         price: 0,
-        features: %i[local_agent byok openai anthropic custom_providers],
+        features: %i[local_agent byok openai anthropic custom_providers token_tracking basic_analytics],
         limits: { max_iterations: 15, max_agents: 3, shell: true }
       },
       pro: {

@@ -35,6 +35,13 @@ module RailsAiBuild
           @last_response = response
           fire(:on_iteration, response)
 
+          TokenUsage.track(
+            response: response,
+            provider: agent.provider_name,
+            model: agent.model,
+            event: "agent.iteration"
+          )
+
           tool_calls = response[:tool_calls] || []
 
           agent.add_message(
@@ -58,7 +65,13 @@ module RailsAiBuild
         end
 
         fire(:on_complete, @last_response)
-        build_result
+        result = build_result
+        Analytics.track_agent_run(
+          result: result,
+          provider: agent.provider_name,
+          model: agent.model
+        )
+        result
       end
 
       private

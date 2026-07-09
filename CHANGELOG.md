@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0] - 2026-07-09
+
+### Added
+- **Token usage tracking** — prompt/completion tokens, cost estimates (all plans)
+- **Enhanced analytics** — dashboard with health, tokens, events (`GET /analytics`, `GET /tokens`)
+- **Help & support** — topics API, doctor diagnostics, contact info
+- **Settings API** — `GET/PATCH /rails_ai_build/settings`
+- **100-repo compatibility suite** — validates gem against OSS Rails catalog
+- **Edge case hardening** — unicode, empty files, path traversal, binary skip
+- **Rake tasks** — `doctor`, `help`, `stats`, `compatibility`
+
+### Specs
+- 25+ spec files covering tools, agents, compatibility, analytics, support
+
 ## [1.1.0] - 2026-07-09
 
 ### Added
