@@ -10,21 +10,6 @@ rescue LoadError
   # RuboCop is optional until development gems are installed.
 end
 
-begin
-  require "combustion"
-  Combustion.path = "spec/internal"
-  Combustion.initialize! :action_controller, :action_view
-
-  APP_RAKEFILE = File.expand_path("Rakefile", __dir__)
-  Rake.application.rake_require "active_record/railties/databases.rake"
-
-  task :environment do
-    # Combustion boots the internal Rails app for database tasks.
-  end
-rescue LoadError
-  # Combustion is optional outside the test bundle.
-end
-
 RSpec::Core::RakeTask.new(:spec)
 
 namespace :spec do
