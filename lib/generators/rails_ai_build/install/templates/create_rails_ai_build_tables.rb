@@ -73,5 +73,28 @@ class CreateRailsAiBuildTables < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
     add_index :rails_ai_build_shared_agents, :name, unique: true
+
+    create_table :rails_ai_build_usage_records do |t|
+      t.string :event, null: false
+      t.string :user_identifier
+      t.integer :tokens, default: 0
+      t.json :metadata
+      t.timestamps
+    end
+    add_index :rails_ai_build_usage_records, :event
+    add_index :rails_ai_build_usage_records, :created_at
+
+    create_table :rails_ai_build_community_packs do |t|
+      t.string :name, null: false
+      t.string :slug
+      t.text :description
+      t.text :system_prompt, null: false
+      t.string :author, null: false
+      t.integer :price, default: 0
+      t.boolean :approved, null: false, default: false
+      t.json :metadata
+      t.timestamps
+    end
+    add_index :rails_ai_build_community_packs, :slug, unique: true
   end
 end

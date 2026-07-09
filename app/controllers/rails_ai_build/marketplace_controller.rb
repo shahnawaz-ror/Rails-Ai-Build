@@ -3,7 +3,11 @@
 module RailsAiBuild
   class MarketplaceController < ActionController::API
     def index
-      render json: { packs: Marketplace::Registry.all }
+      packs = Marketplace::Registry.all
+      if defined?(CommunityPackRecord)
+        packs += CommunityPackRecord.approved.map(&:to_marketplace_entry)
+      end
+      render json: { packs: packs }
     end
 
     def install

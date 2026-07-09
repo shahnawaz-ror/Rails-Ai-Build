@@ -31,9 +31,12 @@ module RailsAiBuild
           name = tool_name.to_sym
 
           raise ToolError, "Tool not allowed: #{tool_name}" unless allowed.include?(name)
+          Rbac.check!(Rbac.current_role, name) if Rbac.enabled?
 
           tool = tools.fetch(name).new(workspace: workspace)
-          tool.call(arguments)
+          result = tool.call(arguments)
+          Analytics.track(event: "tool.#{name}", metadata: { arguments: arguments.keys }) if Plans.feature?(:analytics)
+          result
         end
 
         private

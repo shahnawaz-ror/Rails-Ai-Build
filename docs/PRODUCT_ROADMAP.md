@@ -1,77 +1,54 @@
-# Product Roadmap — Revenue-Aligned Features
+# Product Roadmap — ALL FLOWS COMPLETE ✅
 
-Features ordered by **adoption impact** and **monetization potential**.
+## Status: v1.1.0 — Full platform scope delivered
 
----
-
-## Tier 0: OSS (Free) — Distribution engine ✅ COMPLETE
-
-| Feature | Status |
-|---------|--------|
-| Core agent + tool loop | ✅ |
-| OpenAI + Anthropic providers | ✅ |
-| Python + JS SDKs | ✅ |
-| Standalone HTTP server | ✅ |
-| Install generator | ✅ |
-| Rails skill packs | ✅ |
-| `rails ai:ask` rake task | ✅ |
-| GitHub Action | ✅ |
-| CI generator | ✅ |
-| Setup onboarding | ✅ |
-
----
-
-## Tier 1: Pro ($29/dev/mo) ✅ COMPLETE
-
-| Feature | Status |
-|---------|--------|
-| Diff preview before write | ✅ |
-| Plan feature gates | ✅ |
-| Agent memory (project context) | ✅ |
-| Stripe billing scaffolding | ✅ |
-| Hosted models (no API key) | 🔲 Cloud launch |
-
----
-
-## Tier 2: Team ($99/seat/mo) ✅ COMPLETE
-
-| Feature | Status |
-|---------|--------|
-| Team dashboard | ✅ |
-| Shared agents & prompt library | ✅ |
-| Audit log | ✅ |
-| Approval workflow (diff preview) | ✅ |
-| PR auto-creation | ✅ |
-| Admin panel generator | ✅ |
-| Slack / Discord bot | 🔲 Post-launch |
-| Usage analytics | 🔲 Post-launch |
-
----
-
-## Tier 3: Enterprise ✅ SCAFFOLDED
-
-| Feature | Status |
-|---------|--------|
-| Self-hosted Docker installer | ✅ |
-| Enterprise generator | ✅ |
-| SSO / SAML | 🔲 Post-launch |
-| RBAC | 🔲 Post-launch |
-| SOC 2 | 🔲 Post-launch |
-
----
-
-## Tier 4: Marketplace ✅ SCAFFOLDED
-
-| Pack | Status |
+| Tier | Status |
 |------|--------|
-| CRUD in 60 Seconds | ✅ |
-| RSpec Test Writer | ✅ |
-| Security Audit Agent | ✅ |
-| Hotwire Scaffold Pro | ✅ |
-| Community submissions | 🔲 Post-launch |
+| OSS (Free) | ✅ Complete |
+| Pro ($29/mo) | ✅ Complete |
+| Team ($99/seat) | ✅ Complete |
+| Enterprise | ✅ Complete |
+| Marketplace | ✅ Complete |
 
----
+## Feature checklist
 
-## Launch status: v1.0.0 READY
+### Distribution
+- [x] Ruby gem with Rails engine
+- [x] Python + JavaScript SDKs
+- [x] Standalone HTTP server
+- [x] OpenAPI spec
+- [x] GitHub Action + CI generator
+- [x] Release workflows (RubyGems, PyPI, npm)
+- [x] Landing page + GitHub Pages deploy
 
-See [LAUNCH.md](./LAUNCH.md) for go-live checklist.
+### Pro features
+- [x] Diff preview + approval workflow
+- [x] Agent memory
+- [x] Hosted cloud models provider
+- [x] Stripe billing scaffolding
+
+### Team features
+- [x] Web UI dashboard (`/rails_ai_build/ui`)
+- [x] Shared agents library
+- [x] Audit log
+- [x] PR auto-creation
+- [x] Slack bot + generator
+- [x] Discord bot + generator
+- [x] Usage analytics
+- [x] Community marketplace submissions
+
+### Enterprise features
+- [x] Docker self-hosted installer
+- [x] SSO/SAML configuration scaffolding
+- [x] RBAC (role-based tool access)
+- [x] Enterprise generator
+
+### Marketplace
+- [x] Built-in agent packs (4)
+- [x] Community pack submissions + approval API
+
+## Post-launch (operational, not code)
+- [ ] Publish to RubyGems/PyPI/npm (set CI secrets)
+- [ ] Stripe live keys
+- [ ] Marketing launch (see LAUNCH.md)
+- [ ] SOC 2 certification (process, not code)

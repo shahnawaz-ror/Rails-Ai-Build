@@ -14,7 +14,10 @@ module RailsAiBuild
                   :diff_preview,
                   :plan,
                   :cloud_api_key,
-                  :audit_enabled
+                  :audit_enabled,
+                  :rbac_enabled,
+                  :default_role,
+                  :saml_enabled
 
     def initialize
       @default_model = "gpt-4o"
@@ -30,6 +33,9 @@ module RailsAiBuild
       @plan = :free
       @cloud_api_key = nil
       @audit_enabled = false
+      @rbac_enabled = false
+      @default_role = :developer
+      @saml_enabled = false
     end
 
     def workspace_path
