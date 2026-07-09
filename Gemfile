@@ -4,7 +4,15 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "rspec", "~> 3.12"
-gem "rspec-rails", "~> 6.0"
-gem "rubocop", "~> 1.60"
-gem "webmock", "~> 3.19"
+group :development, :test do
+  gem "appraisal", "~> 2.5", require: false
+  gem "combustion", "~> 1.3"
+  gem "rspec", "~> 3.12"
+  gem "rspec-rails", "~> 6.0"
+  gem "rubocop", "~> 1.69", require: false
+  gem "rubocop-performance", "~> 1.23", require: false
+  gem "rubocop-rails", "~> 2.29", require: false
+  gem "rubocop-rspec", "~> 3.4", require: false
+  gem "sqlite3", "~> 1.7"
+  gem "webmock", "~> 3.19"
+end

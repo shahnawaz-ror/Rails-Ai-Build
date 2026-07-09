@@ -11,7 +11,8 @@ module RailsAiBuild
 
           runner = Agents::Runner.new(agent: agent)
           runner.on(:on_iteration) do |response|
-            emit(block, event: "iteration", data: { content: response[:content], tool_calls: response[:tool_calls]&.size || 0 })
+            emit(block, event: "iteration",
+                        data: { content: response[:content], tool_calls: response[:tool_calls]&.size || 0 })
           end
           runner.on(:on_tool_call) do |tc|
             emit(block, event: "tool_call", data: { name: tc[:name], arguments: tc[:arguments] })

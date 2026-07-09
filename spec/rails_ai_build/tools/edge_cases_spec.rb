@@ -44,8 +44,8 @@ RSpec.describe "Tool edge cases" do
   describe RailsAiBuild::Tools::ShellTool do
     it "blocks dangerous commands" do
       tool = described_class.new(workspace: workspace)
-      result = tool.call("command" => "rm -rf /")
-      expect(result[:error]).to include("blocked")
+      expect { tool.call("command" => "rm -rf /") }
+        .to raise_error(RailsAiBuild::SecurityError, /blocked/)
     end
   end
 end

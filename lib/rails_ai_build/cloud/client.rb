@@ -66,7 +66,8 @@ module RailsAiBuild
           body
         rescue Errno::ECONNREFUSED, SocketError
           # Fallback to local OpenAI when cloud is unavailable (dev mode)
-          fallback_local(messages: payload&.dig(:messages) || [], tools: payload&.dig(:tools) || [], model: payload&.dig(:model))
+          fallback_local(messages: payload&.dig(:messages) || [], tools: payload&.dig(:tools) || [],
+                         model: payload&.dig(:model))
         end
 
         def fallback_local(messages:, tools:, model:)

@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe RailsAiBuild::Skills::Registry do
   it "lists available skills" do
     skills = described_class.all
-    expect(skills.map { |s| s[:name] }).to include("crud", "auth", "api", "tests")
+    expect(skills.map { |s| s[:name].to_s }).to include("crud", "auth", "api", "tests")
   end
 
   it "builds skill-specific prompts" do

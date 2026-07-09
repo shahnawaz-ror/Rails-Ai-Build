@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  ruby:
+  rubocop:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,11 +17,46 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
+      - name: RuboCop
+        run: bundle exec rubocop --parallel
+
+  ruby:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.1", "3.2", "3.3"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
       - name: Install dependencies
         run: bundle install
 
       - name: Run specs
         run: bundle exec rspec
+
+  appraisal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install appraisal matrix
+        run: |
+          bundle install
+          bundle exec appraisal install
+
+      - name: Test against multiple Rails versions
+        run: bundle exec appraisal rake spec
 
   python:
     runs-on: ubuntu-latest

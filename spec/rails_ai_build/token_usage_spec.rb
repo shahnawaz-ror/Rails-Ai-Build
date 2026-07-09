@@ -37,7 +37,12 @@ RSpec.describe RailsAiBuild::TokenUsage do
   end
 
   it "estimates cost" do
-    cost = described_class.estimated_cost(model: "gpt-4o", prompt_tokens: 1000, completion_tokens: 500)
+    cost = described_class.estimated_cost(
+      model: "gpt-4o",
+      total_tokens: 1500,
+      prompt_tokens: 1000,
+      completion_tokens: 500
+    )
     expect(cost).to be > 0
   end
 

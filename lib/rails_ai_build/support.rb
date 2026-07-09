@@ -40,9 +40,12 @@ module RailsAiBuild
           cloud = RailsAiBuild.configuration.cloud_api_key
 
           if openai.present? || anthropic.present? || cloud.present?
-            ok("api_keys", "API key configured (#{[openai && 'openai', anthropic && 'anthropic', cloud && 'cloud'].compact.join(', ')})")
+            ok("api_keys",
+               "API key configured (#{[openai && 'openai', anthropic && 'anthropic',
+                                       cloud && 'cloud'].compact.join(', ')})")
           else
-            warn("api_keys", "No API keys set", "export OPENAI_API_KEY=sk-... or set in config/initializers/rails_ai_build.rb")
+            warn("api_keys", "No API keys set",
+                 "export OPENAI_API_KEY=sk-... or set in config/initializers/rails_ai_build.rb")
           end
         end
 
@@ -229,11 +232,14 @@ module RailsAiBuild
         end
 
         def update(params)
+          normalized = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
+          normalized = normalized.transform_keys(&:to_sym)
+
           allowed = %i[plan default_provider default_model diff_preview audit_enabled
                        max_agent_iterations auto_mount]
           RailsAiBuild.configure do |c|
             allowed.each do |key|
-              c.send("#{key}=", params[key]) if params.key?(key)
+              c.send("#{key}=", normalized[key]) if normalized.key?(key)
             end
           end
           current

@@ -81,7 +81,7 @@ module RailsAiBuild
         end
 
         def test_binary_file_skip(workspace)
-          workspace.join("binary.dat").binmode.write("\x00\x01\x02\xFF")
+          File.binwrite(workspace.join("binary.dat"), "\x00\x01\x02\xFF")
           { ok: true, warnings: [] } # grep should skip gracefully
         end
 

@@ -16,7 +16,7 @@ module RailsAiBuild
                  required: %w[command]
 
       BLOCKED_PATTERNS = [
-        /\brm\s+-rf\s+\/\b/,
+        /\brm\s+-rf\s+\/\s*$/,
         /\bmkfs\b/,
         /\bdd\s+if=/,
         /\b>\s*\/dev\/sd/,
