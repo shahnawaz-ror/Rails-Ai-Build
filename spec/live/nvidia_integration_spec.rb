@@ -7,7 +7,7 @@
 require 'rails_helper'
 require 'tmpdir'
 
-RSpec.describe 'NVIDIA live integration', :live do # rubocop:disable RSpec/DescribeClass
+RSpec.describe 'NVIDIA live integration', :live do
   let(:workspace) { Pathname.new(Dir.mktmpdir) }
   let(:write_file_tool) do
     {

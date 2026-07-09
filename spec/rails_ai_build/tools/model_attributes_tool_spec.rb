@@ -23,6 +23,6 @@ RSpec.describe RailsAiBuild::Tools::ModelAttributesTool do
   it 'parses model attributes from file' do
     result = tool.call('model' => 'Post')
     expect(result[:model]).to eq('Post')
-    expect(result[:associations].map { |a| a[:name] }).to include('user', 'comments')
+    expect(result[:associations].pluck(:name)).to include('user', 'comments')
   end
 end

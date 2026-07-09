@@ -26,10 +26,16 @@
 
 ### Added — Live Trust (20 real Rails apps)
 - **`Trust::Runner`** — NVIDIA live tests on 20 catalog app archetypes
+- **`Trust::AppSandbox`** — per-app preview UI + `POST /apps/:slug/run` API
 - **`spec/live/trust_20_apps_spec.rb`** — 20-app proof suite (19/20+ pass target)
+- **README** — table of 20 live preview URLs with gem pre-installed
 - **[Trust Dashboard](https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/)** — GitHub Pages public report
 - **`render.yaml`** — free Render deploy for live trust API
-- `rails rails_ai_build:trust:run` — regenerate `landing/trust/results.json`
+- `rails rails_ai_build:trust:manifest` / `trust:run` — manifest + results
+
+### Fixed
+- **Appraisal CI** — replace `install_if` lambda in Gemfile (Appraisal-incompatible); optional `pg`/`mysql2` via `INSTALL_ALL_DBS`
+- **Sinatra routes** — `/apps/:slug` param routes (Mustermann compile error with `$` anchor)
 
 ## [2.1.0] - 2026-07-09
 

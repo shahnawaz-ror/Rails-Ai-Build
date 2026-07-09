@@ -18,6 +18,7 @@ AllCops:
     - "packages/**/*"
     - "server/**/*"
     - "landing/**/*"
+    - "trust-apps/**/*"
     - "gemfiles/**/*"
     - "lib/generators/**/templates/**/*"
     - ".simplecov"

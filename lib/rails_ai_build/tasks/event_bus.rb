@@ -18,7 +18,7 @@ module RailsAiBuild
 
         def subscribe(task_id, &block)
           listeners(task_id.to_s) << block
-          buffer(task_id).each { |entry| block.call(entry[:event].to_sym, entry[:data]) }
+          buffer(task_id).each { |entry| yield(entry[:event].to_sym, entry[:data]) }
         end
 
         def clear(task_id)

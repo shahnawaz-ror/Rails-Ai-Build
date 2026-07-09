@@ -44,25 +44,22 @@ class RailsAiBuildServer < Sinatra::Base
     { apps: RailsAiBuild::Trust::AppSandbox.manifest, base_url: RailsAiBuild::Trust::AppSandbox.base_url }.to_json
   end
 
-  get %r{/apps/([^/]+)\.json} do
-    slug = params[:captures].first
-    info = RailsAiBuild::Trust::AppSandbox.info(slug)
+  get '/apps/:slug.json' do
+    info = RailsAiBuild::Trust::AppSandbox.info(params['slug'])
     halt 404, { error: 'App not found' }.to_json unless info
 
     info.to_json
   end
 
-  get %r{/apps/([^/]+)/?$} do
-    slug = params[:captures].first
-    html = RailsAiBuild::Trust::AppSandbox.preview_html(slug)
+  get '/apps/:slug' do
+    html = RailsAiBuild::Trust::AppSandbox.preview_html(params['slug'])
     halt 404, 'App not found' unless html
 
     content_type :html
     html
   end
 
-  post %r{/apps/([^/]+)/run} do
-    slug = params[:captures].first
+  post '/apps/:slug/run' do
     body = begin
       JSON.parse(request.body.read)
     rescue StandardError
@@ -73,7 +70,7 @@ class RailsAiBuildServer < Sinatra::Base
       return { error: 'NVIDIA_API_KEY required for live changes' }.to_json
     end
 
-    RailsAiBuild::Trust::AppSandbox.run_change(slug, body['message']).to_json
+    RailsAiBuild::Trust::AppSandbox.run_change(params['slug'], body['message']).to_json
   rescue ArgumentError => e
     status 404
     { error: e.message }.to_json
@@ -156,7 +153,8 @@ class RailsAiBuildServer < Sinatra::Base
   private
 
   def html_route?
-    request.path_info == '/trust' || request.path_info.match?(%r{\A/apps/[^/]+/?\z})
+    request.path_info == '/trust' ||
+      (request.path_info.match?(%r{\A/apps/[^/]+/?\z}) && !request.path_info.end_with?('.json'))
   end
 
   def setup_config!

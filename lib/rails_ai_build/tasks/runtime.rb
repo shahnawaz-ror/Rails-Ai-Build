@@ -98,37 +98,31 @@ module RailsAiBuild
       end
 
       def run_agent(prompt, emit)
-        if emit
-          result = Ai::Driver.stream(
-            prompt,
-            provider: @provider,
-            model: @model,
-            skill: @skill,
-            workspace: @workspace
-          ) do |event, data|
-            emit.call(event, data)
-          end
-          {
-            content: result.content,
-            iterations: result.iterations,
-            usage: result.usage,
-            messages: result.messages
-          }
-        else
-          result = Ai::Driver.run(
-            prompt,
-            provider: @provider,
-            model: @model,
-            skill: @skill,
-            workspace: @workspace
-          )
-          {
-            content: result.content,
-            iterations: result.iterations,
-            usage: result.usage,
-            messages: result.messages
-          }
-        end
+        result = if emit
+                   Ai::Driver.stream(
+                     prompt,
+                     provider: @provider,
+                     model: @model,
+                     skill: @skill,
+                     workspace: @workspace
+                   ) do |event, data|
+                     emit.call(event, data)
+                   end
+                 else
+                   Ai::Driver.run(
+                     prompt,
+                     provider: @provider,
+                     model: @model,
+                     skill: @skill,
+                     workspace: @workspace
+                   )
+                 end
+        {
+          content: result.content,
+          iterations: result.iterations,
+          usage: result.usage,
+          messages: result.messages
+        }
       end
 
       def verify_workspace

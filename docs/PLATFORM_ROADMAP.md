@@ -2,17 +2,21 @@
 
 > **Vision:** Every Rails application gets a full AI platform — build anything, multitask like Cursor, enterprise-ready like GitHub.
 
-## Stack today (v1.9)
+## Stack today (v2.2)
 
 | Layer | Status |
 |-------|--------|
 | Universal Builder | ✅ verify-and-restart loop |
+| AI Driver (model-first) | ✅ `Ai::Driver`, sessions, context engine |
+| Cursor parity | ✅ SSE streaming, threads, git isolation, Composer |
+| NVIDIA NIM provider | ✅ live specs + 20-app trust sandboxes |
 | Rails Boost MCP | ✅ 9 introspection tools |
-| In-app IDE | ✅ dark/light/enterprise themes |
+| In-app IDE | ✅ dark/light/enterprise themes + task polling |
 | 1000-repo compatibility | ✅ catalog + smoke CI |
+| Live trust previews | ✅ 20 app URLs + Render deploy (`render.yaml`) |
 | Enterprise gates | ✅ SSO/RBAC/audit/GitHub PR |
 
-## v2.0 — Multitask platform (this release)
+## v2.0 — Multitask platform ✅
 
 | Deliverable | Description |
 |-------------|-------------|
@@ -32,16 +36,16 @@ curl GET /rails_ai_build/tasks
 curl -X POST /rails_ai_build/orchestrate -d '{"task":"...","until_green":true}'
 ```
 
-## v2.1 — Git isolation ✅
+## v2.1 — AI Driver (model-first) ✅
 
 | Item | Detail |
 |------|--------|
-| Branch-per-task | `Integrations::Git.create_branch` on enqueue (`branch_per_task`) |
-| PR auto-link | `auto_pr_on_complete` → GitHub compare URL per completed task |
-| Merge gate | Reviewer + human HITL before merge to main (via Changes::Store) |
-| Worktrees | Optional git worktree per parallel task (v2.3) |
+| `Ai::Driver` | Single brain for chat, build, tasks, IDE |
+| `Ai::Session` | Multi-turn conversation threads |
+| `Ai::ContextEngine` | Auto-assembled app context per call |
+| `POST /ai/chat`, `/ai/stream` | Unified AI API with SSE events |
 
-## v2.2 — Real-time platform ✅
+## v2.2 — Real-time platform + live trust ✅
 
 | Item | Detail |
 |------|--------|
@@ -49,6 +53,10 @@ curl -X POST /rails_ai_build/orchestrate -d '{"task":"...","until_green":true}'
 | `POST /tasks/:id/stream` | Per-task event stream |
 | Token streaming | Provider delta events in IDE |
 | Conversation threads | `GET/POST /ai/sessions` + IDE sidebar |
+| Composer mode | Multi-file plan-first builds in IDE |
+| Git isolation | `branch_per_task`, `auto_pr_on_complete` |
+| **20 live app previews** | README URLs → `rails_ai_build` sandboxes on Render |
+| **NVIDIA NIM** | `Models::NvidiaProvider` + live trust suite |
 
 ## v2.3 — Rails AI Cloud
 

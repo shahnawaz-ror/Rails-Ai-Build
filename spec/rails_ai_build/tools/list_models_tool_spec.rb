@@ -16,6 +16,6 @@ RSpec.describe RailsAiBuild::Tools::ListModelsTool do
 
   it 'lists models from app/models' do
     result = tool.call({})
-    expect(result[:models].map { |m| m[:name] }).to include('Post')
+    expect(result[:models].pluck(:name)).to include('Post')
   end
 end

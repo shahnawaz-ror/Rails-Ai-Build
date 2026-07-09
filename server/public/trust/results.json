@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-07-09T23:11:54Z",
+  "generated_at": "2026-07-09T23:22:18Z",
   "provider": "nvidia",
   "model": "meta/llama-3.1-8b-instruct",
   "total": 20,
   "passed": 20,
   "failed": 0,
   "pass_rate": 1.0,
-  "duration_seconds": 51.6,
+  "duration_seconds": 52.4,
   "live": true,
   "dashboard": "https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/",
   "live_api": "https://rails-ai-build-trust.onrender.com",
@@ -20,8 +20,8 @@
       "github": "https://github.com/basecamp/fizzy",
       "passed": true,
       "marker_path": "trust/basecamp-fizzy_verified.txt",
-      "duration_ms": 1071,
-      "model_response": "The write_file function was used exactly once to create the file trust/basecamp-fizzy_verified.txt with the content \"TRUST_OK\"."
+      "duration_ms": 1398,
+      "model_response": "The write_file function has been called with the specified arguments, creating the file trust/basecamp-fizzy_verified.txt with the content TRUST_OK."
     },
     {
       "slug": "presidentbeef-brakeman",
@@ -32,8 +32,8 @@
       "github": "https://github.com/presidentbeef/brakeman",
       "passed": true,
       "marker_path": "trust/presidentbeef-brakeman_verified.txt",
-      "duration_ms": 1218,
-      "model_response": "The function call with the proper arguments that best answers the given prompt is a call to the `write_file` function with the path `trust/presidentbeef-brakeman_verified.txt` and content `TRUST_OK`."
+      "duration_ms": 1663,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is a call to the `write_file` function with the file path `trust/presidentbeef-brakeman_verified.txt` and the content `TR"
     },
     {
       "slug": "paper-trail-gem-paper-trail",
@@ -44,8 +44,8 @@
       "github": "https://github.com/paper-trail-gem/paper_trail",
       "passed": true,
       "marker_path": "trust/paper-trail-gem-paper-trail_verified.txt",
-      "duration_ms": 1274,
-      "model_response": "The file \"trust/paper-trail-gem-paper-trail_verified.txt\" has been created with the content \"TRUST_OK\"."
+      "duration_ms": 892,
+      "model_response": "The function call has been executed successfully."
     },
     {
       "slug": "sj26-mailcatcher",
@@ -56,8 +56,8 @@
       "github": "https://github.com/sj26/mailcatcher",
       "passed": true,
       "marker_path": "trust/sj26-mailcatcher_verified.txt",
-      "duration_ms": 1203,
-      "model_response": "The write_file function has been called with the specified arguments, creating a file named trust/sj26-mailcatcher_verified.txt with the content TRUST_OK."
+      "duration_ms": 1112,
+      "model_response": "This function call will create a file named `trust/sj26-mailcatcher_verified.txt` in the Rails application workspace with the content `TRUST_OK` on one line."
     },
     {
       "slug": "ankane-searchkick",
@@ -68,8 +68,8 @@
       "github": "https://github.com/ankane/searchkick",
       "passed": true,
       "marker_path": "trust/ankane-searchkick_verified.txt",
-      "duration_ms": 1789,
-      "model_response": "The function call with its proper arguments that best answers the given prompt is the one that creates the file trust/ankane-searchkick_verified.txt with the content TRUST_OK."
+      "duration_ms": 1027,
+      "model_response": "This function call creates a new file named `ankane-searchkick_verified.txt` in the `trust` directory with the content `TRUST_OK` on one line."
     },
     {
       "slug": "norman-friendly-id",
@@ -80,8 +80,8 @@
       "github": "https://github.com/norman/friendly_id",
       "passed": true,
       "marker_path": "trust/norman-friendly-id_verified.txt",
-      "duration_ms": 1279,
-      "model_response": "The function call with its proper arguments that best answers the given prompt is the write_file function with the path \"trust/norman-friendly-id_verified.txt\" and the content \"TRUST_OK\"."
+      "duration_ms": 978,
+      "model_response": "The write_file function has been used exactly once to create the specified file."
     },
     {
       "slug": "ryanb-cancan",
@@ -92,8 +92,8 @@
       "github": "https://github.com/ryanb/cancan",
       "passed": true,
       "marker_path": "trust/ryanb-cancan_verified.txt",
-      "duration_ms": 1106,
-      "model_response": "I will not make any further function calls."
+      "duration_ms": 1180,
+      "model_response": "This function call creates the file `trust/ryanb-cancan_verified.txt` in the Rails application workspace with the content `TRUST_OK` on one line."
     },
     {
       "slug": "activerecord-hackery-ransack",
@@ -104,8 +104,8 @@
       "github": "https://github.com/activerecord-hackery/ransack",
       "passed": true,
       "marker_path": "trust/activerecord-hackery-ransack_verified.txt",
-      "duration_ms": 1330,
-      "model_response": "The write_file function has been used to create a new file with the specified content and path."
+      "duration_ms": 1216,
+      "model_response": "The output indicates that the file has been successfully created."
     },
     {
       "slug": "railsadminteam-rails-admin",
@@ -116,8 +116,8 @@
       "github": "https://github.com/railsadminteam/rails_admin",
       "passed": true,
       "marker_path": "trust/railsadminteam-rails-admin_verified.txt",
-      "duration_ms": 1080,
-      "model_response": "The function call creates a file with the specified content in the specified path."
+      "duration_ms": 1392,
+      "model_response": "This response creates a new file named 'trust/railsadminteam-rails-admin_verified.txt' with the content 'TRUST_OK' in a single line."
     },
     {
       "slug": "thoughtbot-clearance",
@@ -128,8 +128,8 @@
       "github": "https://github.com/thoughtbot/clearance",
       "passed": true,
       "marker_path": "trust/thoughtbot-clearance_verified.txt",
-      "duration_ms": 1062,
-      "model_response": "This response uses the `write_file` function to create the file `trust/thoughtbot-clearance_verified.txt` with the content \"TRUST_OK\" on one line."
+      "duration_ms": 1034,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is to write a file named \"trust/thoughtbot-clearance_verified.txt\" with the content \"TRUST_OK\"."
     },
     {
       "slug": "kpumuk-meta-tags",
@@ -140,8 +140,8 @@
       "github": "https://github.com/kpumuk/meta-tags",
       "passed": true,
       "marker_path": "trust/kpumuk-meta-tags_verified.txt",
-      "duration_ms": 1109,
-      "model_response": "The function `write_file` is used to create a file named `kpumuk-meta-tags_verified.txt` in the `trust` directory with the content `TRUST_OK`."
+      "duration_ms": 1285,
+      "model_response": "The file trust/kpumuk-meta-tags_verified.txt has been created with the content TRUST_OK."
     },
     {
       "slug": "comfy-comfortable-mexican-sofa",
@@ -152,8 +152,8 @@
       "github": "https://github.com/comfy/comfortable-mexican-sofa",
       "passed": true,
       "marker_path": "trust/comfy-comfortable-mexican-sofa_verified.txt",
-      "duration_ms": 1102,
-      "model_response": "The file trust/comfy-comfortable-mexican-sofa_verified.txt has been created with the content TRUST_OK."
+      "duration_ms": 1478,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is to use the `write_file` function with the content \"TRUST_OK\" and the path \"trust/comfy-comfortable-mexican-sofa_verifi"
     },
     {
       "slug": "rails-rails",
@@ -164,8 +164,8 @@
       "github": "https://github.com/rails/rails",
       "passed": true,
       "marker_path": "trust/rails-rails_verified.txt",
-      "duration_ms": 1000,
-      "model_response": "This function call creates a file named `rails-rails_verified.txt` in the `trust` directory with the content `TRUST_OK`."
+      "duration_ms": 1397,
+      "model_response": "The write_file function has been called with the specified arguments, creating a file in the Rails application workspace."
     },
     {
       "slug": "discourse-discourse",
@@ -176,8 +176,8 @@
       "github": "https://github.com/discourse/discourse",
       "passed": true,
       "marker_path": "trust/discourse-discourse_verified.txt",
-      "duration_ms": 1480,
-      "model_response": "The write_file function was used to create the file \"trust/discourse-discourse_verified.txt\" with the content \"TRUST_OK\" on one line."
+      "duration_ms": 1190,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is to use the `write_file` function to create a file named `discourse-discourse_verified.txt` in the `trust` directory wi"
     },
     {
       "slug": "chatwoot-chatwoot",
@@ -188,8 +188,8 @@
       "github": "https://github.com/chatwoot/chatwoot",
       "passed": true,
       "marker_path": "trust/chatwoot-chatwoot_verified.txt",
-      "duration_ms": 917,
-      "model_response": "The write_file function has been called with the correct arguments to create the file trust/chatwoot-chatwoot_verified.txt with the content TRUST_OK."
+      "duration_ms": 1373,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is a call to the \"write_file\" function with the \"content\" argument set to \"TRUST_OK\" and the \"path\" argument set to \"trus"
     },
     {
       "slug": "zammad-zammad",
@@ -200,8 +200,8 @@
       "github": "https://github.com/zammad/zammad",
       "passed": true,
       "marker_path": "trust/zammad-zammad_verified.txt",
-      "duration_ms": 1348,
-      "model_response": "This function call creates a new file at the specified path with the given content."
+      "duration_ms": 1115,
+      "model_response": "This response creates the file `trust/zammad-zammad_verified.txt` with the content `TRUST_OK` using the `write_file` function."
     },
     {
       "slug": "rmosolgo-graphql-ruby",
@@ -212,8 +212,8 @@
       "github": "https://github.com/rmosolgo/graphql-ruby",
       "passed": true,
       "marker_path": "trust/rmosolgo-graphql-ruby_verified.txt",
-      "duration_ms": 835,
-      "model_response": "The file has been created with the specified content."
+      "duration_ms": 1202,
+      "model_response": "The output indicates that the file has been successfully created."
     },
     {
       "slug": "rails-api-rails-api",
@@ -224,8 +224,8 @@
       "github": "https://github.com/rails-api/rails-api",
       "passed": true,
       "marker_path": "trust/rails-api-rails-api_verified.txt",
-      "duration_ms": 1105,
-      "model_response": "This function call will create a file named `rails-api-rails-api_verified.txt` in the `trust` directory with the content `TRUST_OK`."
+      "duration_ms": 1335,
+      "model_response": "The function call with its proper arguments that best answers the given prompt is a call to the write_file function with the content \"TRUST_OK\" and the path \"trust/rails-api-rails-api_verified.txt\"."
     },
     {
       "slug": "refinery-refinerycms",
@@ -236,8 +236,8 @@
       "github": "https://github.com/refinery/refinerycms",
       "passed": true,
       "marker_path": "trust/refinery-refinerycms_verified.txt",
-      "duration_ms": 1198,
-      "model_response": "This function call will create a new file named `refinery-refinerycms_verified.txt` in the `trust` directory with the content `TRUST_OK`."
+      "duration_ms": 1105,
+      "model_response": "This function call will create a new file at the specified path with the exact content provided."
     },
     {
       "slug": "edavis10-redmine",
@@ -248,8 +248,8 @@
       "github": "https://github.com/edavis10/redmine",
       "passed": true,
       "marker_path": "trust/edavis10-redmine_verified.txt",
-      "duration_ms": 1444,
-      "model_response": "This response uses the `write_file` function to create the specified file with the given content."
+      "duration_ms": 1174,
+      "model_response": "No further actions are required. The file trust/edavis10-redmine_verified.txt has been created with the specified content."
     }
   ]
 }

@@ -3,7 +3,7 @@
 module RailsAiBuild
   class WorkspaceController < ActionController::API
     def tree
-      result = Workspace::Browser.tree(path: params[:path] || ".", depth: depth_param)
+      result = Workspace::Browser.tree(path: params[:path] || '.', depth: depth_param)
       status = result[:error] ? :not_found : :ok
       render json: result, status: status
     rescue SecurityError => e

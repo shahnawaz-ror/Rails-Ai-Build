@@ -36,3 +36,8 @@ build/
 .pytest_cache/
 packages/python/*.egg-info/
 spec/internal/log/
+
+# Trust sandboxes + server local bundle
+/trust-apps/
+/server/vendor/
+/server/.bundle/

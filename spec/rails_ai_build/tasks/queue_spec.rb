@@ -11,7 +11,7 @@ RSpec.describe RailsAiBuild::Tasks::Queue do
   end
 
   before do
-    RailsAiBuild::Tasks::Queue.reset!
+    described_class.reset!
     RailsAiBuild.configure do |c|
       c.sync_tasks = true
       c.multitask_enabled = true
