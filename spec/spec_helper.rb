@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-if ENV["COVERAGE"] == "true"
-  require "simplecov"
-end
+require "simplecov" if ENV["COVERAGE"] == "true"
 
 ENV["RAILS_ENV"] ||= "test"
 
