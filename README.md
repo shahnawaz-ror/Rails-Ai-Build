@@ -89,7 +89,7 @@ See our strategic plans for turning this gem into a platform company:
 - **Admin generator** — Mount team AI panel in your app
 - **Token usage** — Track prompt/completion tokens and cost estimates
 - **Help & support** — `rails rails_ai_build:doctor`, `help`, `stats`
-- **100-repo compatibility** — Validated against OSS Rails catalog
+- **1000-repo compatibility** — GitHub-discovered catalog; smoke (5 archetypes) on PR CI, full 1000 via rake
 
 ## Quick setup (5 minutes)
 

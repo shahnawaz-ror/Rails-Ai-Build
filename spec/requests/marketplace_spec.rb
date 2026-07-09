@@ -19,7 +19,8 @@ RSpec.describe 'Marketplace API', type: :request do
 
   describe 'POST /rails_ai_build/marketplace/:id/install' do
     it 'installs a pack and runs chat' do
-      pack_id = RailsAiBuild::Marketplace::Registry.first[:id]
+      packs = RailsAiBuild::Marketplace::Registry.all
+      pack_id = packs.first[:id]
       post "/rails_ai_build/marketplace/#{pack_id}/install", params: { message: 'Start' }
       expect(response).to have_http_status(:ok)
       expect(json_response[:content]).to include('Pack installed')

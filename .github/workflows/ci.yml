@@ -103,6 +103,18 @@ jobs:
           TEST_DB_NAME: rails_ai_build_test
         run: bundle exec rspec
 
+  compatibility-smoke:
+    name: Compatibility smoke (5 archetypes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run compatibility smoke
+        run: bundle exec rake rails_ai_build:compatibility:smoke
+
   coverage-ruby:
     name: Coverage (Ruby)
     runs-on: ubuntu-latest

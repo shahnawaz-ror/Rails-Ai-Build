@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'tmpdir'
+require 'fileutils'
 
 # rubocop:disable Metrics/BlockLength
 namespace :rails_ai_build do
@@ -158,12 +160,55 @@ namespace :rails_ai_build do
     puts JSON.pretty_generate(RailsAiBuild::Analytics.dashboard)
   end
 
-  desc "Run compatibility checks against 100 OSS Rails repos"
+  namespace :compatibility do
+    desc "Discover Rails repos from GitHub and refresh catalog"
+    task discover: :environment do
+      path = RailsAiBuild::Compatibility::Catalog::PRIMARY_PATH
+      FileUtils.mkdir_p(File.dirname(path))
+      RailsAiBuild::Compatibility::GithubDiscovery.write_catalog!(
+        path: path,
+        target: ENV.fetch("COMPAT_DISCOVER_TARGET", "1000").to_i
+      )
+      puts "✅ Wrote #{RailsAiBuild::Compatibility::Catalog.count} repos to #{path}"
+    end
+
+    desc "Smoke check (5 archetype representatives)"
+    task smoke: :environment do
+      run_compatibility_check(mode: :smoke)
+    end
+
+    desc "Print improvement plan from catalog + smoke results"
+    task plan: :environment do
+      puts RailsAiBuild::Compatibility::ImprovementPlan.report
+    end
+
+    desc "Detect conventions in current workspace"
+    task conventions: :environment do
+      profile = RailsAiBuild::Compatibility::ConventionDetector.detect
+      puts JSON.pretty_generate(profile.to_h)
+      puts "\nRecommendations:"
+      RailsAiBuild::Compatibility::ConventionDetector.recommendations(profile).each do |r|
+        puts "  • #{r}"
+      end
+    end
+  end
+
+  desc "Run compatibility checks (full catalog, use COMPAT_SLICE=1/4 to shard)"
   task compatibility: :environment do
-    puts "\n🔍 Running compatibility checks on #{Compatibility::Catalog.count} repos..."
+    mode = ENV["COMPAT_MODE"]&.to_sym || :full
+    run_compatibility_check(mode: mode)
+  end
+
+  def run_compatibility_check(mode:)
+    count = mode == :smoke ? 5 : RailsAiBuild::Compatibility::Catalog.count
+    puts "\n🔍 Running compatibility checks (#{mode}, #{count} repos)..."
     base = Pathname.new(Dir.mktmpdir("compat_"))
-    results = Compatibility::Checker.check_all(fixture_base: base)
-    summary = Compatibility::Checker.summary(results)
+    results = RailsAiBuild::Compatibility::Checker.check_all(
+      fixture_base: base,
+      mode: mode,
+      slice: ENV["COMPAT_SLICE"]
+    )
+    summary = RailsAiBuild::Compatibility::Checker.summary(results)
     puts JSON.pretty_generate(summary)
     incompatible = results.select { |r| r.status == :incompatible }
     if incompatible.any?
@@ -173,6 +218,12 @@ namespace :rails_ai_build do
       puts "\n✅ All #{results.size} repos compatible!"
     end
     FileUtils.rm_rf(base)
+  end
+
+  desc "Run compatibility checks against OSS Rails catalog (alias)"
+  task 'compatibility:full': :environment do
+    ENV["COMPAT_MODE"] = "full"
+    Rake::Task["rails_ai_build:compatibility"].invoke
   end
 
   desc "Check upgrade status and show steps"

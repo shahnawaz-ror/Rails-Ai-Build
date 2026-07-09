@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0] - 2026-07-09
+
+### Added — 1000-repo GitHub compatibility program
+- **GitHub discovery** — `GithubDiscovery` fetches 1000 public Rails repos via GitHub API
+- **Expanded catalog** — `lib/rails_ai_build/compatibility/data/rails_repos.yml` (1000 entries with stars, topics, github URL)
+- **Tiered checker** — `:smoke` (5 archetypes) vs `:full` (1000), parallel workers, `COMPAT_SLICE` sharding
+- **Improvement plan** — `ImprovementPlan` + `rails rails_ai_build:compatibility:plan` from catalog analytics
+- **Convention detector** — RSpec/Minitest, Sidekiq, Hotwire, API-only detection from Gemfile
+- **Docs** — `docs/COMPATIBILITY_ROADMAP.md` (broad plan from 1000-repo analysis)
+- **CI** — `compatibility-smoke` job on every PR
+- **Rake** — `compatibility:discover`, `:smoke`, `:plan`, `:conventions`
+- Fixed `grep` binary edge-case test; added `write_file` to compat tool checks
+
 ## [1.5.0] - 2026-07-09
 
 ### Added — Full developer workflow specs & upgrade path

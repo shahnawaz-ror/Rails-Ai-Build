@@ -30,3 +30,9 @@ task default: %i[rubocop spec]
 
 desc "CI gate: style + full test suite"
 task ci: %i[rubocop spec]
+
+# Load rails_ai_build tasks for gem development (no host Rails app required)
+load File.expand_path("lib/tasks/rails_ai_build.rake", __dir__)
+Rake::Task.define_task(:environment) do
+  require "rails_ai_build"
+end
