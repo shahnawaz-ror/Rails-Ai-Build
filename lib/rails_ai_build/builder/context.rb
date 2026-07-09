@@ -4,7 +4,7 @@ module RailsAiBuild
   module Builder
     # Auto-detected application context injected into every universal build.
     class Context
-      UNIVERSAL_PROMPT = <<~PROMPT.freeze
+      UNIVERSAL_PROMPT = <<~PROMPT
         You are a senior Rails engineer with full access to this codebase via tools.
         You can build ANYTHING in this Rails application:
 

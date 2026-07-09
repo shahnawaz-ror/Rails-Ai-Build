@@ -21,7 +21,7 @@ module RailsAiBuild
       status = result.status == :success ? :ok : :unprocessable_entity
       render json: result.to_h, status: status
     rescue Error => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 end

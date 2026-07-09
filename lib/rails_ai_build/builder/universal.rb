@@ -24,7 +24,7 @@ module RailsAiBuild
           task = if path.present?
                    "Write or fix tests for: #{path}. Run them with run_rails_check."
                  else
-                   "Audit test coverage and add missing tests for recent changes."
+                   'Audit test coverage and add missing tests for recent changes.'
                  end
           build(task, skill: :tests, **options)
         end

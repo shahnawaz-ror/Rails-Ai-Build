@@ -42,7 +42,7 @@ module RailsAiBuild
       end
 
       def run!
-        context = +""
+        context = +''
         last_result = nil
 
         @max_attempts.times do |i|
@@ -58,9 +58,7 @@ module RailsAiBuild
           }
           @attempts << attempt_record
 
-          if verify_result[:passed]
-            return success_result(last_result, verify_result)
-          end
+          return success_result(last_result, verify_result) if verify_result[:passed]
 
           context << "\n\n## Attempt #{i + 1} failed verification\n"
           context << format_verify_failure(verify_result)
@@ -101,7 +99,7 @@ module RailsAiBuild
 
       def verify_workspace
         tool = Tools::RunRailsCheckTool.new(workspace: @workspace)
-        result = tool.call({ "checks" => %w[zeitwerk test] })
+        result = tool.call({ 'checks' => %w[zeitwerk test] })
         { passed: result[:passed], checks: result[:checks], output: result }
       rescue StandardError => e
         { passed: false, error: e.message }
