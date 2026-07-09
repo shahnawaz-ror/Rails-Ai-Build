@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.0.0] - 2026-07-09
+
+### Added
+- **Agent memory** — persist project context across sessions (Pro+)
+- **Marketplace** — agent packs catalog with install API
+- **Shared agents** — team prompt library (Team+)
+- **PR integration** — auto-branch and GitHub PR URL (Team+)
+- **CI generator** — `rails generate rails_ai_build:ci`
+- **Enterprise generator** — Docker self-hosted installer
+- **GitHub workflows** — CI, release (RubyGems/PyPI/npm), landing deploy
+- **Launch checklist** — docs/LAUNCH.md
+
+### Complete platform
+- Ruby gem, Python SDK, JavaScript SDK, HTTP server
+- Diff preview, skill packs, plan tiers, billing, admin generator
+- Business plan, GTM playbook, product roadmap
+
 ## [0.3.0] - 2026-07-09
 
 ### Added

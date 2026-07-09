@@ -27,7 +27,14 @@ module RailsAiBuild
         @system_prompt = system_prompt || DEFAULT_SYSTEM_PROMPT
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
         @tools = tools || Tools::Registry.build_all(workspace: @workspace)
-        @messages = [Message.system(@system_prompt)]
+        @messages = [Message.system(build_system_prompt)]
+      end
+
+      def build_system_prompt
+        parts = [@system_prompt]
+        memory_context = Memory::Store.context_for(workspace: @workspace) rescue nil
+        parts << memory_context if memory_context
+        parts.compact.join("\n\n")
       end
 
       def chat(user_message)

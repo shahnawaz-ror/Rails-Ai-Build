@@ -109,4 +109,15 @@ namespace :rails_ai_build do
     results = RailsAiBuild::Changes::Store.apply_all
     puts "Applied #{results.size} change(s)."
   end
+
+  desc "Remember project context: rails rails_ai_build:remember[framework,Rails 7.2]"
+  task :remember, %i[key value] => :environment do |_t, args|
+    RailsAiBuild.configuration.plan = :pro unless Plans.feature?(:agent_memory)
+    RailsAiBuild::Memory::Store.remember(
+      workspace: RailsAiBuild.configuration.workspace_path,
+      key: args[:key],
+      value: args[:value]
+    )
+    puts "Remembered: #{args[:key]} = #{args[:value]}"
+  end
 end

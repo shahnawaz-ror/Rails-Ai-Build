@@ -97,6 +97,10 @@ rails rails_ai_build:skill[crud,"Create a Post resource with title and body"]
 
 # Mount admin panel for your team
 rails generate rails_ai_build:admin
+
+# Add CI workflow + enterprise Docker setup
+rails generate rails_ai_build:ci
+rails generate rails_ai_build:enterprise
 ```
 
 Add to your Gemfile:

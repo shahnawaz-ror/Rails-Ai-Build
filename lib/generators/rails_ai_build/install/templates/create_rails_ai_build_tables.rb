@@ -50,5 +50,28 @@ class CreateRailsAiBuildTables < ActiveRecord::Migration<%= migration_version %>
 
     add_index :rails_ai_build_model_configs, :name, unique: true
     add_index :rails_ai_build_model_configs, :enabled
+
+    create_table :rails_ai_build_audit_logs do |t|
+      t.string :action, null: false
+      t.string :path
+      t.string :user_identifier
+      t.json :metadata
+      t.timestamps
+    end
+    add_index :rails_ai_build_audit_logs, :action
+    add_index :rails_ai_build_audit_logs, :created_at
+
+    create_table :rails_ai_build_shared_agents do |t|
+      t.string :name, null: false
+      t.text :description
+      t.string :provider, default: "openai"
+      t.string :model_name
+      t.text :system_prompt, null: false
+      t.boolean :published, null: false, default: true
+      t.string :author
+      t.json :metadata
+      t.timestamps
+    end
+    add_index :rails_ai_build_shared_agents, :name, unique: true
   end
 end

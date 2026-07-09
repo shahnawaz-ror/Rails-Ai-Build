@@ -1,0 +1,60 @@
+name: Rails AI Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "What should the agent do?"
+        required: true
+        type: string
+      skill:
+        description: "Skill pack (crud, auth, api, tests, refactor)"
+        required: false
+        type: string
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "app/**"
+      - "lib/**"
+      - "config/**"
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: AI code review
+        uses: ./.github/actions/rails-ai-build
+        with:
+          prompt: "Review this PR for Rails best practices, security issues, and missing tests. Be concise."
+          provider: openai
+          model: gpt-4o
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+  ai-task:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Run AI agent
+        uses: ./.github/actions/rails-ai-build
+        with:
+          prompt: ${{ github.event.inputs.prompt }}
+          skill: ${{ github.event.inputs.skill }}
+          create_pr: "true"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

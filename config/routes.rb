@@ -47,4 +47,18 @@ RailsAiBuild::Engine.routes.draw do
 
   post "billing/checkout", to: "billing#checkout"
   post "billing/webhook", to: "billing#webhook"
+
+  resources :marketplace, only: [:index] do
+    member do
+      post :install
+    end
+  end
+
+  resources :shared_agents, only: %i[index create] do
+    member do
+      post :run
+    end
+  end
+
+  post "pull_requests", to: "pull_requests#create"
 end

@@ -32,6 +32,10 @@ require "rails_ai_build/changes/store"
 require "rails_ai_build/skills/registry"
 require "rails_ai_build/billing/client"
 
+require "rails_ai_build/memory/store"
+require "rails_ai_build/marketplace/registry"
+require "rails_ai_build/integrations/pull_request"
+
 require "rails_ai_build/engine" if defined?(Rails)
 
 module RailsAiBuild

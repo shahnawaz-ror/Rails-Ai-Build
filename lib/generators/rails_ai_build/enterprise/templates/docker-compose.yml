@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  rails-ai-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.rails-ai-build
+    ports:
+      - "9292:9292"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WORKSPACE_ROOT=/workspace
+      - RAILS_AI_BUILD_PLAN=enterprise
+    volumes:
+      - .:/workspace:ro
+    restart: unless-stopped
