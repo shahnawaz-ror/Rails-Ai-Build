@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+services:
+  - type: web
+    name: rails-ai-build-trust
+    runtime: ruby
+    rootDir: server
+    buildCommand: bundle install
+    startCommand: bundle exec rackup -p $PORT -o 0.0.0.0
+    healthCheckPath: /health
+    envVars:
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_MODEL
+        value: meta/llama-3.1-8b-instruct
+      - key: TRUST_DASHBOARD_URL
+        value: https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/
+      - key: TRUST_LIVE_API_URL
+        value: https://rails-ai-build-trust.onrender.com
+      - key: RACK_ENV
+        value: production

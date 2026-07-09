@@ -83,7 +83,11 @@ require "rails_ai_build/mcp/server"
 require "rails_ai_build/orchestration/coordinator"
 require "rails_ai_build/notifications/slack"
 
-require "rails_ai_build/engine" if defined?(Rails)
+require "rails_ai_build/trust/catalog_sample"
+require "rails_ai_build/trust/scaffold"
+require "rails_ai_build/trust/app_sandbox"
+require "rails_ai_build/trust/runner"
+require "rails_ai_build/trust/report"
 
 module RailsAiBuild
   Providers = Models::Providers

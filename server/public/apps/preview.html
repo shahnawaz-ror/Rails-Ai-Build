@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>__NAME__ — rails_ai_build preview</title>
+  <style>
+    :root { --red:#d30001; --bg:#0a0a12; --card:#14141f; --border:#2a2a40; --text:#e8e8f0; --muted:#888; --green:#4ade80; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:ui-monospace,monospace;background:var(--bg);color:var(--text);padding:1.5rem}
+    h1{color:var(--red);font-size:1.3rem} .meta{color:var(--muted);font-size:.8rem;margin:.5rem 0 1rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:800px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem}
+    .card h2{font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:.75rem}
+    textarea,button,input{width:100%;font-family:inherit;font-size:.8rem}
+    textarea{background:#0d0d18;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:.6rem;min-height:80px}
+    button{background:var(--red);color:#fff;border:none;border-radius:6px;padding:.6rem;margin-top:.5rem;cursor:pointer}
+    pre{background:#0d0d18;padding:.75rem;border-radius:6px;font-size:.72rem;overflow:auto;max-height:280px}
+    a{color:#a8ff60} .ok{color:var(--green)} .badge{font-size:.65rem;background:#1f2937;padding:.15rem .4rem;border-radius:4px}
+  </style>
+</head>
+<body>
+  <h1>⬥ __NAME__</h1>
+  <p class="meta">
+    <span class="badge">__ARCHETYPE__</span>
+    <span class="badge">Rails __RAILS__</span>
+    <span class="badge">rails_ai_build ✓</span>
+    · <a href="__GITHUB__" target="_blank">Upstream repo</a>
+    · <a href="__BASE__/trust/">All 20 apps</a>
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h2>Test AI change (NVIDIA)</h2>
+      <textarea id="prompt" placeholder="e.g. Add GET /health endpoint in config/routes.rb"></textarea>
+      <button id="run">Run Ai::Driver on this app</button>
+      <p id="status" class="meta"></p>
+    </div>
+    <div class="card">
+      <h2>Workspace files</h2>
+      <pre id="files">Loading…</pre>
+    </div>
+  </div>
+  <div class="card" style="margin-top:1rem">
+    <h2>Agent response</h2>
+    <pre id="output">Run a prompt to preview changes.</pre>
+  </div>
+  <script>
+    const slug = '__SLUG__';
+    const base = '__BASE__';
+    async function loadInfo() {
+      const res = await fetch(base + '/apps/' + slug + '.json');
+      const data = await res.json();
+      document.getElementById('files').textContent = (data.files || []).map(f => f.path).join('\n') || '(no files)';
+    }
+    document.getElementById('run').onclick = async () => {
+      const status = document.getElementById('status');
+      status.textContent = 'Running…';
+      const res = await fetch(base + '/apps/' + slug + '/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: document.getElementById('prompt').value })
+      });
+      const data = await res.json();
+      status.textContent = data.error ? 'Error' : 'Done in ' + (data.duration_ms||0) + 'ms';
+      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      loadInfo();
+    };
+    loadInfo();
+  </script>
+</body>
+</html>

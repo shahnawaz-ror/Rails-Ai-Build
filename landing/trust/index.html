@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rails AI Build — Live Trust Report</title>
+  <style>
+    :root { --red: #d30001; --bg: #0a0a12; --card: #14141f; --border: #2a2a40; --text: #e8e8f0; --muted: #888; --green: #4ade80; --yellow: #fbbf24; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: ui-monospace, monospace; background: var(--bg); color: var(--text); line-height: 1.5; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 { color: var(--red); font-size: 1.6rem; margin-bottom: 0.25rem; }
+    .sub { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+    .stat b { display: block; font-size: 1.8rem; color: var(--green); }
+    .stat.fail b { color: #f87171; }
+    .stat span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 0.65rem; text-transform: uppercase; }
+    .ok { color: var(--green); } .bad { color: #f87171; }
+    .badge { font-size: 0.62rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: #1f2937; color: var(--muted); }
+    .links { margin: 1rem 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+    .links a { color: #a8ff60; font-size: 0.8rem; }
+    .loading { color: var(--muted); padding: 2rem; text-align: center; }
+    footer { margin-top: 2rem; font-size: 0.72rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>⬥ Live Trust Report</h1>
+    <p class="sub">Real NVIDIA NIM API tests — 20 Rails app archetypes from our 1000-repo catalog. Each test uses <code>Ai::Driver</code> + <code>write_file</code> to prove the gem changes applications.</p>
+    <div class="links">
+      <a href="results.json">results.json</a>
+      <a href="apps.json">apps.json (20 preview URLs)</a>
+      <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build">GitHub</a>
+      <a id="live-api" href="#">Live API</a>
+    </div>
+    <div id="stats" class="stats"></div>
+    <div id="table-wrap"><p class="loading">Loading trust results…</p></div>
+    <footer id="meta"></footer>
+  </div>
+  <script>
+    async function load() {
+      const res = await fetch('results.json?' + Date.now());
+      const data = await res.json();
+      const base = (data.live_api || 'https://rails-ai-build-trust.onrender.com').replace(/\/$/, '');
+      const previewUrl = (slug) => base + '/apps/' + slug;
+      document.getElementById('live-api').href = (data.live_api || 'https://rails-ai-build-trust.onrender.com') + '/health';
+      const rate = Math.round((data.pass_rate || 0) * 100);
+      document.getElementById('stats').innerHTML = `
+        <div class="stat"><b>${data.passed}/${data.total}</b><span>Apps passed</span></div>
+        <div class="stat"><b>${rate}%</b><span>Pass rate</span></div>
+        <div class="stat"><b>${data.provider}</b><span>Provider</span></div>
+        <div class="stat"><b>${(data.duration_seconds||0)}s</b><span>Run time</span></div>`;
+      const rows = (data.apps || []).map(a => `
+        <tr>
+          <td class="${a.passed ? 'ok' : 'bad'}">${a.passed ? '✓' : '✗'}</td>
+          <td><strong>${a.name}</strong><br><span class="badge">${a.slug}</span></td>
+          <td>${a.archetype}</td>
+          <td>Rails ${a.rails_version || '?'}</td>
+          <td>${a.duration_ms || 0}ms</td>
+          <td><a href="${previewUrl(a.slug)}" target="_blank">Preview</a></td>
+          <td>${a.error || '—'}</td>
+        </tr>`).join('');
+      document.getElementById('table-wrap').innerHTML = `
+        <table><thead><tr><th></th><th>App</th><th>Archetype</th><th>Version</th><th>Time</th><th>Test</th><th>Note</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+      document.getElementById('meta').textContent =
+        `Generated ${data.generated_at} · Model: ${data.model} · Live NVIDIA API · Not mocked`;
+    }
+    load().catch(e => { document.getElementById('table-wrap').innerHTML = '<p class="loading">Failed: ' + e.message + '</p>'; });
+  </script>
+</body>
+</html>

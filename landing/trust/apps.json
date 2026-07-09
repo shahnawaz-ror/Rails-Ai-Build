@@ -1,0 +1,227 @@
+{
+  "generated_at": "2026-07-09T23:12:39Z",
+  "base_url": "https://rails-ai-build-trust.onrender.com",
+  "total": 20,
+  "apps": [
+    {
+      "slug": "basecamp-fizzy",
+      "name": "fizzy",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 7928,
+      "github": "https://github.com/basecamp/fizzy",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/basecamp-fizzy",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/basecamp-fizzy/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/basecamp-fizzy.json"
+    },
+    {
+      "slug": "presidentbeef-brakeman",
+      "name": "brakeman",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 7251,
+      "github": "https://github.com/presidentbeef/brakeman",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/presidentbeef-brakeman",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/presidentbeef-brakeman/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/presidentbeef-brakeman.json"
+    },
+    {
+      "slug": "paper-trail-gem-paper-trail",
+      "name": "paper_trail",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 7026,
+      "github": "https://github.com/paper-trail-gem/paper_trail",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/paper-trail-gem-paper-trail",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/paper-trail-gem-paper-trail/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/paper-trail-gem-paper-trail.json"
+    },
+    {
+      "slug": "sj26-mailcatcher",
+      "name": "mailcatcher",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 6765,
+      "github": "https://github.com/sj26/mailcatcher",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/sj26-mailcatcher",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/sj26-mailcatcher/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/sj26-mailcatcher.json"
+    },
+    {
+      "slug": "ankane-searchkick",
+      "name": "searchkick",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 6718,
+      "github": "https://github.com/ankane/searchkick",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/ankane-searchkick",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/ankane-searchkick/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/ankane-searchkick.json"
+    },
+    {
+      "slug": "norman-friendly-id",
+      "name": "friendly_id",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 6226,
+      "github": "https://github.com/norman/friendly_id",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/norman-friendly-id",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/norman-friendly-id/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/norman-friendly-id.json"
+    },
+    {
+      "slug": "ryanb-cancan",
+      "name": "cancan",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 6210,
+      "github": "https://github.com/ryanb/cancan",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/ryanb-cancan",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/ryanb-cancan/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/ryanb-cancan.json"
+    },
+    {
+      "slug": "activerecord-hackery-ransack",
+      "name": "ransack",
+      "archetype": "full_stack",
+      "rails_version": "7.0",
+      "stars": 5864,
+      "github": "https://github.com/activerecord-hackery/ransack",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/activerecord-hackery-ransack",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/activerecord-hackery-ransack/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/activerecord-hackery-ransack.json"
+    },
+    {
+      "slug": "railsadminteam-rails-admin",
+      "name": "rails_admin",
+      "archetype": "engine",
+      "rails_version": "7.0",
+      "stars": 7957,
+      "github": "https://github.com/railsadminteam/rails_admin",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/railsadminteam-rails-admin",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/railsadminteam-rails-admin/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/railsadminteam-rails-admin.json"
+    },
+    {
+      "slug": "thoughtbot-clearance",
+      "name": "clearance",
+      "archetype": "engine",
+      "rails_version": "7.0",
+      "stars": 3735,
+      "github": "https://github.com/thoughtbot/clearance",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/thoughtbot-clearance",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/thoughtbot-clearance/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/thoughtbot-clearance.json"
+    },
+    {
+      "slug": "kpumuk-meta-tags",
+      "name": "meta-tags",
+      "archetype": "engine",
+      "rails_version": "7.0",
+      "stars": 2797,
+      "github": "https://github.com/kpumuk/meta-tags",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/kpumuk-meta-tags",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/kpumuk-meta-tags/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/kpumuk-meta-tags.json"
+    },
+    {
+      "slug": "comfy-comfortable-mexican-sofa",
+      "name": "comfortable-mexican-sofa",
+      "archetype": "engine",
+      "rails_version": "6.1",
+      "stars": 2710,
+      "github": "https://github.com/comfy/comfortable-mexican-sofa",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/comfy-comfortable-mexican-sofa",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/comfy-comfortable-mexican-sofa/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/comfy-comfortable-mexican-sofa.json"
+    },
+    {
+      "slug": "rails-rails",
+      "name": "rails",
+      "archetype": "monolith",
+      "rails_version": "7.0",
+      "stars": 58715,
+      "github": "https://github.com/rails/rails",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/rails-rails",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/rails-rails/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/rails-rails.json"
+    },
+    {
+      "slug": "discourse-discourse",
+      "name": "discourse",
+      "archetype": "monolith",
+      "rails_version": "7.0",
+      "stars": 47432,
+      "github": "https://github.com/discourse/discourse",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/discourse-discourse",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/discourse-discourse/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/discourse-discourse.json"
+    },
+    {
+      "slug": "chatwoot-chatwoot",
+      "name": "chatwoot",
+      "archetype": "monolith",
+      "rails_version": "7.0",
+      "stars": 34258,
+      "github": "https://github.com/chatwoot/chatwoot",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/chatwoot-chatwoot",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/chatwoot-chatwoot/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/chatwoot-chatwoot.json"
+    },
+    {
+      "slug": "zammad-zammad",
+      "name": "zammad",
+      "archetype": "api_only",
+      "rails_version": "7.0",
+      "stars": 5749,
+      "github": "https://github.com/zammad/zammad",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/zammad-zammad",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/zammad-zammad/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/zammad-zammad.json"
+    },
+    {
+      "slug": "rmosolgo-graphql-ruby",
+      "name": "graphql-ruby",
+      "archetype": "api_only",
+      "rails_version": "7.0",
+      "stars": 5449,
+      "github": "https://github.com/rmosolgo/graphql-ruby",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/rmosolgo-graphql-ruby",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/rmosolgo-graphql-ruby/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/rmosolgo-graphql-ruby.json"
+    },
+    {
+      "slug": "rails-api-rails-api",
+      "name": "rails-api",
+      "archetype": "api_only",
+      "rails_version": "7.0",
+      "stars": 5131,
+      "github": "https://github.com/rails-api/rails-api",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/rails-api-rails-api",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/rails-api-rails-api/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/rails-api-rails-api.json"
+    },
+    {
+      "slug": "refinery-refinerycms",
+      "name": "refinerycms",
+      "archetype": "legacy",
+      "rails_version": "6.1",
+      "stars": 3908,
+      "github": "https://github.com/refinery/refinerycms",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/refinery-refinerycms",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/refinery-refinerycms/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/refinery-refinerycms.json"
+    },
+    {
+      "slug": "edavis10-redmine",
+      "name": "redmine",
+      "archetype": "legacy",
+      "rails_version": "7.0",
+      "stars": 2438,
+      "github": "https://github.com/edavis10/redmine",
+      "preview_url": "https://rails-ai-build-trust.onrender.com/apps/edavis10-redmine",
+      "api_run_url": "https://rails-ai-build-trust.onrender.com/apps/edavis10-redmine/run",
+      "api_info_url": "https://rails-ai-build-trust.onrender.com/apps/edavis10-redmine.json"
+    }
+  ]
+}

@@ -41,18 +41,7 @@ RSpec.describe 'NVIDIA live integration', :live do # rubocop:disable RSpec/Descr
       provider = RailsAiBuild::Models::Registry.build(:nvidia)
       response = provider.chat(
         messages: [{ role: :user, content: 'Use write_file to create hello.txt with content Hi' }],
-        tools: [{
-          name: 'write_file',
-          description: 'Write a file',
-          parameters: {
-            type: 'object',
-            properties: {
-              path: { type: 'string' },
-              content: { type: 'string' }
-            },
-            required: %w[path content]
-          }
-        }],
+        tools: [write_file_tool],
         max_tokens: 128
       )
 

@@ -24,6 +24,13 @@
 - **`spec/live/nvidia_integration_spec.rb`** — real API tests (skipped unless `NVIDIA_API_KEY` set)
 - Live specs verify: chat, tool calling, `Ai::Driver` file writes, SSE stream, `POST /ai/chat`
 
+### Added — Live Trust (20 real Rails apps)
+- **`Trust::Runner`** — NVIDIA live tests on 20 catalog app archetypes
+- **`spec/live/trust_20_apps_spec.rb`** — 20-app proof suite (19/20+ pass target)
+- **[Trust Dashboard](https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/)** — GitHub Pages public report
+- **`render.yaml`** — free Render deploy for live trust API
+- `rails rails_ai_build:trust:run` — regenerate `landing/trust/results.json`
+
 ## [2.1.0] - 2026-07-09
 
 ### Added — AI Driver (model-first, like Cursor & Claude)

@@ -54,6 +54,52 @@ end
 NVIDIA_API_KEY=nvapi-... bundle exec rspec spec/live
 ```
 
+### 20 Live App Previews — `rails_ai_build` installed, test changes with NVIDIA
+
+Each link opens a **live sandbox** with `rails_ai_build` configured (initializer + Gemfile). You can preview the workspace, run `Ai::Driver` prompts, and see file changes in real time.
+
+**Base server:** [https://rails-ai-build-trust.onrender.com](https://rails-ai-build-trust.onrender.com) · **Local:** `cd server && bundle exec rackup` → `http://localhost:9292/apps/{slug}`
+
+| # | App | Archetype | Rails | Preview & test changes | Upstream |
+|---|-----|-----------|-------|------------------------|----------|
+| 1 | [fizzy](https://rails-ai-build-trust.onrender.com/apps/basecamp-fizzy) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/basecamp-fizzy) | [GitHub](https://github.com/basecamp/fizzy) |
+| 2 | [brakeman](https://rails-ai-build-trust.onrender.com/apps/presidentbeef-brakeman) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/presidentbeef-brakeman) | [GitHub](https://github.com/presidentbeef/brakeman) |
+| 3 | [paper_trail](https://rails-ai-build-trust.onrender.com/apps/paper-trail-gem-paper-trail) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/paper-trail-gem-paper-trail) | [GitHub](https://github.com/paper-trail-gem/paper_trail) |
+| 4 | [mailcatcher](https://rails-ai-build-trust.onrender.com/apps/sj26-mailcatcher) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/sj26-mailcatcher) | [GitHub](https://github.com/sj26/mailcatcher) |
+| 5 | [searchkick](https://rails-ai-build-trust.onrender.com/apps/ankane-searchkick) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/ankane-searchkick) | [GitHub](https://github.com/ankane/searchkick) |
+| 6 | [friendly_id](https://rails-ai-build-trust.onrender.com/apps/norman-friendly-id) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/norman-friendly-id) | [GitHub](https://github.com/norman/friendly_id) |
+| 7 | [cancan](https://rails-ai-build-trust.onrender.com/apps/ryanb-cancan) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/ryanb-cancan) | [GitHub](https://github.com/ryanb/cancan) |
+| 8 | [ransack](https://rails-ai-build-trust.onrender.com/apps/activerecord-hackery-ransack) | full_stack | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/activerecord-hackery-ransack) | [GitHub](https://github.com/activerecord-hackery/ransack) |
+| 9 | [rails_admin](https://rails-ai-build-trust.onrender.com/apps/railsadminteam-rails-admin) | engine | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/railsadminteam-rails-admin) | [GitHub](https://github.com/railsadminteam/rails_admin) |
+| 10 | [clearance](https://rails-ai-build-trust.onrender.com/apps/thoughtbot-clearance) | engine | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/thoughtbot-clearance) | [GitHub](https://github.com/thoughtbot/clearance) |
+| 11 | [meta-tags](https://rails-ai-build-trust.onrender.com/apps/kpumuk-meta-tags) | engine | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/kpumuk-meta-tags) | [GitHub](https://github.com/kpumuk/meta-tags) |
+| 12 | [comfortable-mexican-sofa](https://rails-ai-build-trust.onrender.com/apps/comfy-comfortable-mexican-sofa) | engine | 6.1 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/comfy-comfortable-mexican-sofa) | [GitHub](https://github.com/comfy/comfortable-mexican-sofa) |
+| 13 | [rails](https://rails-ai-build-trust.onrender.com/apps/rails-rails) | monolith | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/rails-rails) | [GitHub](https://github.com/rails/rails) |
+| 14 | [discourse](https://rails-ai-build-trust.onrender.com/apps/discourse-discourse) | monolith | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/discourse-discourse) | [GitHub](https://github.com/discourse/discourse) |
+| 15 | [chatwoot](https://rails-ai-build-trust.onrender.com/apps/chatwoot-chatwoot) | monolith | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/chatwoot-chatwoot) | [GitHub](https://github.com/chatwoot/chatwoot) |
+| 16 | [zammad](https://rails-ai-build-trust.onrender.com/apps/zammad-zammad) | api_only | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/zammad-zammad) | [GitHub](https://github.com/zammad/zammad) |
+| 17 | [graphql-ruby](https://rails-ai-build-trust.onrender.com/apps/rmosolgo-graphql-ruby) | api_only | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/rmosolgo-graphql-ruby) | [GitHub](https://github.com/rmosolgo/graphql-ruby) |
+| 18 | [rails-api](https://rails-ai-build-trust.onrender.com/apps/rails-api-rails-api) | api_only | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/rails-api-rails-api) | [GitHub](https://github.com/rails-api/rails-api) |
+| 19 | [refinerycms](https://rails-ai-build-trust.onrender.com/apps/refinery-refinerycms) | legacy | 6.1 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/refinery-refinerycms) | [GitHub](https://github.com/refinery/refinerycms) |
+| 20 | [redmine](https://rails-ai-build-trust.onrender.com/apps/edavis10-redmine) | legacy | 7.0 | [Open preview](https://rails-ai-build-trust.onrender.com/apps/edavis10-redmine) | [GitHub](https://github.com/edavis10/redmine) |
+
+**How to test an app:**
+
+1. Open any **Preview** link above
+2. Enter a prompt (e.g. `Add GET /health endpoint`)
+3. Click **Run Ai::Driver** — NVIDIA NIM applies real file changes in that app's workspace
+4. Or use the API: `curl -X POST https://rails-ai-build-trust.onrender.com/apps/discourse-discourse/run -H 'Content-Type: application/json' -d '{"message":"Add health check"}'`
+
+**Trust report:** [Dashboard](https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/) · [apps.json](https://shahnawaz-ror.github.io/Rails-Ai-Build/trust/apps.json) · Deploy server: `render.yaml` + `NVIDIA_API_KEY`
+
+```bash
+# Regenerate preview URL manifest
+bundle exec rake rails_ai_build:trust:manifest
+
+# Re-run 20-app live verification
+NVIDIA_API_KEY=nvapi-... bundle exec rake rails_ai_build:trust:run
+```
+
 **Build anything** in any Rails 7.0–8.1 app — multitask queue, IDE, verify loop. See [`docs/UNIVERSAL_BUILDER.md`](./docs/UNIVERSAL_BUILDER.md) and [`docs/PLATFORM_ROADMAP.md`](./docs/PLATFORM_ROADMAP.md).
 
 ### Python

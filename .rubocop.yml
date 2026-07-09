@@ -40,14 +40,25 @@ RSpec/DescribeClass:
   Exclude:
     - "spec/requests/**/*"
     - "spec/integration/**/*"
+    - "spec/live/**/*"
     - "spec/rails_ai_build/analytics_integration_spec.rb"
     - "spec/rails_ai_build/errors_spec.rb"
     - "spec/rails_ai_build/tools/edge_cases_spec.rb"
     - "spec/lib/tasks/**/*"
 
+Metrics/ClassLength:
+  Exclude:
+    - "lib/rails_ai_build/trust/app_sandbox.rb"
+    - "lib/rails_ai_build/trust/runner.rb"
+
 RSpec/SpecFilePathFormat:
   Exclude:
     - "spec/generators/**/*"
+    - "spec/live/**/*"
+
+RSpec/DescribeMethod:
+  Exclude:
+    - "spec/live/**/*"
 
 RSpec/BeforeAfterAll:
   Exclude:

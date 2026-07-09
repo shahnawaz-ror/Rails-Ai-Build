@@ -279,6 +279,25 @@ namespace :rails_ai_build do
     end
   end
 
+  desc "Write landing/trust/apps.json with 20 preview URLs"
+  task "trust:manifest" => :environment do
+    RailsAiBuild::Trust::AppSandbox.write_manifest!
+    puts "📋 Wrote landing/trust/apps.json (#{RailsAiBuild::Trust::AppSandbox.manifest.size} apps)"
+  end
+
+  desc "Run live trust tests on 20 Rails apps (requires NVIDIA_API_KEY)"
+  task "trust:run" => :environment do
+    require 'active_support/time'
+    Time.zone = 'UTC'
+    abort "Set NVIDIA_API_KEY=nvapi-..." if ENV["NVIDIA_API_KEY"].to_s.empty?
+
+    puts "\n🔬 Running live trust tests on 20 Rails app archetypes (NVIDIA NIM)...\n"
+    report = RailsAiBuild::Trust::Runner.run!
+    puts "✅ #{report[:passed]}/#{report[:total]} passed (#{(report[:pass_rate] * 100).round(1)}%)"
+    puts "📊 Dashboard: #{report[:dashboard]}"
+    puts "📁 Results: landing/trust/results.json\n"
+  end
+
   desc "Run multi-agent orchestration: rails rails_ai_build:orchestrate[task]"
   task :orchestrate, [:task] => :environment do |_t, args|
     task_desc = args[:task] || ENV["TASK"]
