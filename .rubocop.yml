@@ -31,6 +31,10 @@ Style/FrozenStringLiteralComment:
 Rails/FilePath:
   Enabled: false
 
+Rails/ApplicationController:
+  Exclude:
+    - "app/controllers/rails_ai_build/**/*"
+
 RSpec/DescribeClass:
   Exclude:
     - "spec/requests/**/*"

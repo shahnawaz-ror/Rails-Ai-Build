@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class DemoController < ApplicationController
+  class DemoController < ActionController::Base
     layout false
 
     SCENARIOS = {
