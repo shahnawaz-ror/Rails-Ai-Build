@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0] - 2026-07-09
+
+### Added — Full developer workflow specs & upgrade path
+- **ActiveRecord test harness** — Combustion with full schema, model/job/request coverage
+- **Upgrade system** — `RailsAiBuild::Upgrade`, `rails generate rails_ai_build:upgrade`, `rails rails_ai_build:upgrade`
+- **Version stamping** — install generator stamps `rails_ai_build_version` in initializer
+- **Doctor upgrade check** — diagnostics detect outdated installs
+- **Help topic** — `upgrade` for chat-based install → upgrade flows
+- **80+ new specs** — models, CRUD APIs, chat, changes, git, billing, marketplace, orchestration, generators, rake tasks
+- **Multi-DB CI** — sqlite3, PostgreSQL, MySQL matrix (`TEST_DB_ADAPTER`)
+- **Ruby 3.4** added to CI matrix (3.1 → 3.4)
+
 ## [1.4.2] - 2026-07-09
 
 ### Added — CI/CD coverage

@@ -7,6 +7,10 @@ RSpec.describe RailsAiBuild::Support::Doctor do
 
   before do
     workspace.join("Gemfile").write('gem "rails_ai_build"\n')
+    FileUtils.mkdir_p(workspace.join("config/initializers"))
+    workspace.join("config/initializers/rails_ai_build.rb").write(
+      "# rails_ai_build_version: #{RailsAiBuild::VERSION}\n"
+    )
     RailsAiBuild.configuration.workspace_root = workspace
     RailsAiBuild.configuration.api_keys[:openai] = "test-key"
   end

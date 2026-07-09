@@ -9,6 +9,5 @@ module RailsAiBuild
     enum :role, { system: 0, user: 1, assistant: 2, tool: 3 }
 
     serialize :tool_calls, coder: JSON
-    serialize :metadata, coder: JSON
   end
 end
