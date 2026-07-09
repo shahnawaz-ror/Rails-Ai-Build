@@ -19,6 +19,11 @@
 - `PullRequest.create` accepts `existing_branch` for branch-per-task flow
 - IDE Build mode uses SSE instead of blocking JSON
 
+### Added — NVIDIA NIM provider + live specs
+- **`Models::NvidiaProvider`** — OpenAI-compatible `https://integrate.api.nvidia.com/v1`
+- **`spec/live/nvidia_integration_spec.rb`** — real API tests (skipped unless `NVIDIA_API_KEY` set)
+- Live specs verify: chat, tool calling, `Ai::Driver` file writes, SSE stream, `POST /ai/chat`
+
 ## [2.1.0] - 2026-07-09
 
 ### Added — AI Driver (model-first, like Cursor & Claude)

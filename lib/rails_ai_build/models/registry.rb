@@ -27,6 +27,7 @@ module RailsAiBuild
 
         def register_defaults
           register(:openai, OpenaiProvider)
+          register(:nvidia, NvidiaProvider)
           register(:anthropic, AnthropicProvider)
           register(:cloud, Cloud::HostedProvider) if defined?(Cloud::HostedProvider)
         end

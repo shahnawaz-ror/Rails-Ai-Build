@@ -38,6 +38,22 @@ RailsAiBuild::ChatService.build("Add Stripe subscriptions with webhooks")
 RailsAiBuild::ChatService.ask("Add a health check endpoint")
 ```
 
+**NVIDIA NIM** (free-tier cloud models at `integrate.api.nvidia.com`):
+
+```ruby
+RailsAiBuild.configure do |config|
+  config.api_keys[:nvidia] = ENV["NVIDIA_API_KEY"]  # nvapi-… from build.nvidia.com
+  config.default_provider = :nvidia
+  config.default_model = "meta/llama-3.1-8b-instruct"
+end
+```
+
+**Live specs** — prove real API + file writes (never commit keys):
+
+```bash
+NVIDIA_API_KEY=nvapi-... bundle exec rspec spec/live
+```
+
 **Build anything** in any Rails 7.0–8.1 app — multitask queue, IDE, verify loop. See [`docs/UNIVERSAL_BUILDER.md`](./docs/UNIVERSAL_BUILDER.md) and [`docs/PLATFORM_ROADMAP.md`](./docs/PLATFORM_ROADMAP.md).
 
 ### Python

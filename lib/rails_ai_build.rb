@@ -6,6 +6,7 @@ require "rails_ai_build/errors"
 
 require "rails_ai_build/models/base_provider"
 require "rails_ai_build/models/openai_provider"
+require "rails_ai_build/models/nvidia_provider"
 require "rails_ai_build/models/anthropic_provider"
 require "rails_ai_build/models/custom_provider"
 require "rails_ai_build/models/registry"
