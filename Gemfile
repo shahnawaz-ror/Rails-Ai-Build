@@ -4,6 +4,8 @@ source "https://rubygems.org"
 
 gemspec
 
+gem "sqlite3", ">= 2.1"
+
 group :development, :test do
   gem "appraisal", "~> 2.5", require: false
   gem "combustion", "~> 1.3"
@@ -19,6 +21,5 @@ group :development, :test do
   gem "rubocop-rspec", "~> 3.4", require: false
   gem "simplecov", "~> 0.22", require: false
   gem "simplecov-cobertura", "~> 3.2", require: false
-  gem "sqlite3", ">= 2.1"
   gem "webmock", "~> 3.19"
 end

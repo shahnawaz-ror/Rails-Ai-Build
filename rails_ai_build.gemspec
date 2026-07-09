@@ -51,6 +51,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop-rspec", "~> 2.26"
   spec.add_development_dependency "simplecov", "~> 0.22"
   spec.add_development_dependency "simplecov-cobertura", "~> 3.2"
-  spec.add_development_dependency "sqlite3", ">= 2.1"
   spec.add_development_dependency "webmock", "~> 3.19"
 end

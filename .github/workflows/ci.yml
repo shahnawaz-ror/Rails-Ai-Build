@@ -87,14 +87,12 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
-          bundler-cache: true
+          bundler-cache: false
 
       - name: Install dependencies (all DB adapters)
         env:
           INSTALL_ALL_DBS: "true"
-        run: |
-          bundle install
-          bundle check || bundle install
+        run: bundle install
 
       - name: Run specs (${{ matrix.adapter }})
         env:
@@ -237,7 +235,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
-          bundler-cache: true
+          bundler-cache: false
 
       - name: Install appraisal (${{ matrix.rails }})
         run: |
@@ -245,7 +243,7 @@ jobs:
           bundle exec appraisal ${{ matrix.rails }} install
 
       - name: Test (${{ matrix.rails }})
-        run: bundle exec appraisal ${{ matrix.rails }} exec rspec --exclude-pattern 'spec/live/**'
+        run: bundle exec appraisal ${{ matrix.rails }} rspec spec/rails_ai_build spec/requests spec/jobs spec/models spec/lib
 
   python:
     name: Python tests

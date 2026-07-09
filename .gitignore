@@ -41,3 +41,5 @@ spec/internal/log/
 /trust-apps/
 /server/vendor/
 /server/.bundle/
+/gemfiles/vendor/
+/gemfiles/.bundle/
