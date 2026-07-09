@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0] - 2026-07-09
+
+### Added
+- **Cloud hosted models** — `Cloud::HostedProvider` for Pro+ (no BYOK required)
+- **Usage analytics** — track events, tokens, daily breakdown (Team+)
+- **RBAC** — role-based tool access (Enterprise)
+- **SSO/SAML** — configuration scaffolding (Enterprise)
+- **Slack bot** — slash command webhook + generator
+- **Discord bot** — interactions webhook + generator
+- **Community marketplace** — submit and approve agent packs
+- **Web UI dashboard** — `/rails_ai_build/ui` with chat, diff approval, analytics
+
 ## [1.0.0] - 2026-07-09
 
 ### Added

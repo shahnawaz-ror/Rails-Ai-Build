@@ -1,5 +1,7 @@
 RailsAiBuild::Engine.routes.draw do
-  root to: "dashboard#show"
+  root to: "ui#dashboard"
+  get "api", to: "dashboard#show"
+  get "ui", to: "ui#dashboard"
 
   post "chat", to: "chat#create"
 
@@ -61,4 +63,16 @@ RailsAiBuild::Engine.routes.draw do
   end
 
   post "pull_requests", to: "pull_requests#create"
+
+  get "analytics", to: "analytics#show"
+  post "slack/command", to: "slack#command"
+  post "discord/interactions", to: "discord#interactions"
+
+  resources :community_packs, only: %i[index create], path: "community" do
+    member do
+      post :approve
+    end
+  end
+
+  get "auth/saml", to: "auth#saml_config"
 end

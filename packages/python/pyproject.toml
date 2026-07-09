@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rails-ai-build"
-version = "1.0.0"
+version = "1.1.0"
 description = "Cursor-like AI coding agents for any Python project"
 readme = "README.md"
 license = "MIT"
