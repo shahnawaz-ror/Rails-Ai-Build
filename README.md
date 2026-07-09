@@ -25,9 +25,12 @@ All packages share the same agent architecture and can work **standalone** (no R
 ```ruby
 gem "rails_ai_build"
 # rails generate rails_ai_build:install && rails db:migrate
+rails generate rails_ai_build:boost   # Laravel Boost-style introspection tools
 
 RailsAiBuild::ChatService.ask("Add a health check endpoint")
 ```
+
+**Rails 7.0–8.1** supported via Appraisal CI matrix. See [`docs/FRAMEWORK_PARITY_ROADMAP.md`](./docs/FRAMEWORK_PARITY_ROADMAP.md).
 
 ### Python
 
@@ -89,7 +92,7 @@ See our strategic plans for turning this gem into a platform company:
 - **Admin generator** — Mount team AI panel in your app
 - **Token usage** — Track prompt/completion tokens and cost estimates
 - **Help & support** — `rails rails_ai_build:doctor`, `help`, `stats`
-- **100-repo compatibility** — Validated against OSS Rails catalog
+- **1000-repo compatibility** — GitHub-discovered catalog; smoke (5 archetypes) on PR CI, full 1000 via rake
 
 ## Quick setup (5 minutes)
 
@@ -268,6 +271,24 @@ RailsAiBuild::ChatService.register_custom_provider(
 
 ## Custom Tools
 
+Built-in **Rails Boost** introspection tools (Laravel Boost / Django AI Boost parity):
+
+```bash
+rails generate rails_ai_build:boost
+```
+
+| Tool | Purpose |
+|------|---------|
+| `application_info` | Rails/Ruby versions, convention profile |
+| `list_routes` | HTTP routes |
+| `database_schema` | Tables and columns |
+| `list_rake_tasks` | `rails -T` tasks |
+| `read_settings` | Safe config (dot notation) |
+| `read_logs` | Tail development logs |
+| `search_rails_docs` | Version-aware Guides links |
+
+## Register custom tools
+
 ```ruby
 class MySchemaTool < RailsAiBuild::Tools::BaseTool
   name "db_schema"
@@ -305,7 +326,9 @@ RailsAiBuild.configuration.allowed_tools << :db_schema
 │  Tools                                                   │
 │  ├── read_file / write_file                              │
 │  ├── grep / list_files                                   │
-│  └── shell (sandboxed)                                   │
+│  ├── shell (sandboxed)                                   │
+│  └── Rails Boost (MCP introspection)                     │
+│      application_info, list_routes, database_schema, …   │
 └─────────────────────────────────────────────────────────┘
 ```
 

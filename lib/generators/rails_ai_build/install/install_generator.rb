@@ -34,6 +34,10 @@ module RailsAiBuild
       def migration_version
         "[#{Rails::VERSION::MAJOR}.#{Rails::VERSION::MINOR}]"
       end
+
+      def rails_ai_build_version
+        RailsAiBuild::VERSION
+      end
     end
   end
 end

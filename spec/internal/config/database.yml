@@ -1,0 +1,18 @@
+test:
+  adapter: <%= ENV.fetch("TEST_DB_ADAPTER", "sqlite3") %>
+<% if ENV.fetch("TEST_DB_ADAPTER", "sqlite3") == "postgresql" %>
+  host: <%= ENV.fetch("TEST_DB_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("TEST_DB_PORT", "5432") %>
+  username: <%= ENV.fetch("TEST_DB_USER", "postgres") %>
+  password: <%= ENV.fetch("TEST_DB_PASSWORD", "postgres") %>
+  database: <%= ENV.fetch("TEST_DB_NAME", "rails_ai_build_test") %>
+<% elsif ENV.fetch("TEST_DB_ADAPTER", "sqlite3") == "mysql2" %>
+  host: <%= ENV.fetch("TEST_DB_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("TEST_DB_PORT", "3306") %>
+  username: <%= ENV.fetch("TEST_DB_USER", "root") %>
+  password: <%= ENV.fetch("TEST_DB_PASSWORD", "root") %>
+  database: <%= ENV.fetch("TEST_DB_NAME", "rails_ai_build_test") %>
+<% else %>
+  database: ":memory:"
+  pool: 5
+<% end %>

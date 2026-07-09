@@ -1,0 +1,19 @@
+Rails Boost installed!
+
+Boost adds MCP introspection tools to your rails_ai_build agent:
+
+  application_info   — versions, gems, convention profile
+  list_routes        — HTTP routes
+  database_schema    — tables and columns
+  list_rake_tasks    — rake / rails -T tasks
+  read_settings      — safe config keys (dot notation)
+  read_logs          — tail development logs
+  search_rails_docs  — version-aware Rails Guides links
+
+Next steps:
+
+  1. Restart your Rails server
+  2. Point your MCP client at POST /rails_ai_build/mcp
+  3. See docs/FRAMEWORK_PARITY_ROADMAP.md for the full parity plan
+
+Docs: https://github.com/shahnawaz-ror/Rails-Ai-Build

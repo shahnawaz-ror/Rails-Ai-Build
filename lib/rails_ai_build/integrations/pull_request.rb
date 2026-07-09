@@ -34,7 +34,7 @@ module RailsAiBuild
         private
 
         def gitlab_mr_url(branch)
-          remote = `git remote get-url origin 2>/dev/null`.strip
+          remote = remote_url
           return nil if remote.empty?
 
           repo = remote.gsub(%r{.*gitlab\.com[:/]}, "").gsub(/\.git$/, "")
@@ -42,11 +42,16 @@ module RailsAiBuild
         end
 
         def github_pr_url(branch)
-          remote = `git remote get-url origin 2>/dev/null`.strip
+          remote = remote_url
           return nil if remote.empty?
 
           repo = remote.gsub(%r{.*github\.com[:/]}, "").gsub(/\.git$/, "")
           "https://github.com/#{repo}/compare/#{branch}?expand=1"
+        end
+
+        def remote_url
+          workspace = RailsAiBuild.configuration.workspace_path
+          Dir.chdir(workspace) { `git remote get-url origin 2>/dev/null`.strip }
         end
       end
     end
