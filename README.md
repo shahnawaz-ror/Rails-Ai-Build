@@ -60,6 +60,14 @@ curl -X POST http://localhost:9292/chat \
 
 See [`packages/core-protocol/openapi.yaml`](./packages/core-protocol/openapi.yaml) for the full API spec.
 
+## Building a business?
+
+See our strategic plans for turning this gem into a platform company:
+
+- [Business Plan](./docs/BUSINESS_PLAN.md) — market, revenue model, path to $1M+ ARR
+- [Product Roadmap](./docs/PRODUCT_ROADMAP.md) — revenue-aligned feature tiers
+- [Go-to-Market Playbook](./docs/GTM_PLAYBOOK.md) — "Forgot Cursor?" launch strategy
+
 ---
 
 ## Features
