@@ -1,0 +1,22 @@
+=========================================================
+  rails_ai_build installed!
+
+  Next steps:
+
+  1. Run migrations:
+       rails db:migrate
+
+  2. Set your API keys in config/initializers/rails_ai_build.rb
+     or via environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
+
+  3. The engine is mounted at /rails_ai_build (disable auto_mount to change).
+
+  4. Create an agent via API or console:
+
+       agent = RailsAiBuild::Agents::Agent.new(
+         provider: :openai,
+         model: "gpt-4o"
+       )
+       result = agent.chat("Add a health check endpoint to config/routes.rb")
+
+  See README for full documentation.
