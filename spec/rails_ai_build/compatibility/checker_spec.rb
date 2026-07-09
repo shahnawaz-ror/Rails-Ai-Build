@@ -20,9 +20,9 @@ RSpec.describe RailsAiBuild::Compatibility::Checker do
   after { FileUtils.rm_rf(fixture_base) }
 
   it "checks a single repo as compatible" do
-    repo = Compatibility::Catalog.find("discourse")
+    repo = RailsAiBuild::Compatibility::Catalog.find("discourse")
     workspace = fixture_base.join("discourse")
-    Compatibility::Fixtures::FullStack.call(workspace, repo)
+    RailsAiBuild::Compatibility::Fixtures::FullStack.call(workspace, repo)
     result = described_class.check_repo(repo, workspace: workspace)
     expect(result.status).not_to eq(:incompatible)
     expect(result.errors).to be_empty

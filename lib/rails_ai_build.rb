@@ -58,7 +58,5 @@ require "rails_ai_build/notifications/slack"
 require "rails_ai_build/engine" if defined?(Rails)
 
 module RailsAiBuild
-  class << self
-    delegate :configure, :configuration, to: :RailsAiBuild
-  end
+  Providers = Models::Providers
 end

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0] - 2026-07-09
+
+### Added — Gem engineering & quality
+- **RuboCop** — `.rubocop.yml` with rubocop-rails, rubocop-rspec, rubocop-performance
+- **Rakefile** — `rake` runs RuboCop + RSpec; `rake ci` for CI parity
+- **Combustion internal app** — `spec/internal/` for engine integration/request specs
+- **Request specs** — HTTP coverage for help, plans, settings, doctor, MCP, dashboard
+- **Expanded unit specs** — configuration, registry, OpenAI provider (WebMock), errors, engine
+- **Appraisal** — multi-Rails matrix (7.0, 7.1, 7.2, 8.0)
+- **Contributor docs** — `CONTRIBUTING.md`, `SECURITY.md`, `.ruby-version`, `bin/setup`, `bin/console`
+- **CI** — dedicated RuboCop job, Ruby 3.1–3.3 matrix, appraisal job
+
+### Fixed
+- `RailsAiBuild::Providers` top-level alias (engine initializer)
+- Settings API accepts string keys from `ActionController::Parameters`
+- Version spec drift (`rails_ai_build_spec` expected `0.1.0`)
+- Gemspec metadata (homepage, changelog URI, MFA flag)
+
 ## [1.3.0] - 2026-07-09
 
 ### Added — Final scope complete

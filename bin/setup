@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "== Installing dependencies =="
+bundle install
+
+if command -v appraisal >/dev/null 2>&1 || bundle exec appraisal -v >/dev/null 2>&1; then
+  echo "== Installing appraisal gemfiles =="
+  bundle exec appraisal install || true
+fi
+
+echo "== Preparing test database (if Rails specs enabled) =="
+if [ -f spec/internal/config/database.yml ]; then
+  RAILS_ENV=test bundle exec rake db:create db:migrate 2>/dev/null || true
+fi
+
+echo "== Setup complete =="
+echo "Run: bundle exec rake (rubocop + rspec)"

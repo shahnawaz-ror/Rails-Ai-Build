@@ -1,0 +1,52 @@
+inherit_from: .rubocop_todo.yml
+
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-performance
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+    - "spec/internal/**/*"
+    - "spec/dummy/**/*"
+    - "tmp/**/*"
+    - "node_modules/**/*"
+    - "packages/**/*"
+    - "server/**/*"
+    - "landing/**/*"
+    - "gemfiles/**/*"
+    - "lib/generators/**/templates/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Rails/FilePath:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Exclude:
+    - "spec/requests/**/*"
+    - "spec/integration/**/*"
+    - "spec/rails_ai_build/analytics_integration_spec.rb"
+    - "spec/rails_ai_build/errors_spec.rb"
+    - "spec/rails_ai_build/tools/edge_cases_spec.rb"
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/ExampleLength:
+  Max: 15
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive

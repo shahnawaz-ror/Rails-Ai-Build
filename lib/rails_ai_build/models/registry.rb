@@ -31,6 +31,10 @@ module RailsAiBuild
           register(:cloud, Cloud::HostedProvider) if defined?(Cloud::HostedProvider)
         end
 
+        def reset!
+          @registry = {}
+        end
+
         private
 
         def registry

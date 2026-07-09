@@ -13,10 +13,10 @@ module RailsAiBuild
     end
 
     initializer "rails_ai_build.mount_routes" do |app|
-      if RailsAiBuild.configuration.auto_mount
-        app.routes.prepend do
-          mount RailsAiBuild::Engine => "/rails_ai_build", as: :rails_ai_build
-        end
+      next unless RailsAiBuild.configuration.auto_mount
+
+      app.routes.prepend do
+        mount RailsAiBuild::Engine => "/rails_ai_build", as: :rails_ai_build
       end
     end
   end
