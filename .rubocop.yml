@@ -20,6 +20,7 @@ AllCops:
     - "landing/**/*"
     - "gemfiles/**/*"
     - "lib/generators/**/templates/**/*"
+    - ".simplecov"
 
 Style/Documentation:
   Enabled: false

@@ -3,6 +3,12 @@
 /.yardoc
 /_yardoc/
 /coverage/
+/coverage.xml
+*.lcov
+.coverage
+htmlcov/
+packages/python/coverage.xml
+packages/python/.coverage
 /doc/
 /pkg/
 /spec/reports/

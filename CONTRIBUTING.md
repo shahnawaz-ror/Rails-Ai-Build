@@ -16,6 +16,7 @@ bin/setup
 bundle exec rake          # RuboCop + full RSpec suite
 bundle exec rubocop       # Style only
 bundle exec rspec         # Tests only
+COVERAGE=true bundle exec rspec  # With SimpleCov report in coverage/
 bundle exec appraisal rake spec  # Multi-Rails matrix
 ```
 
@@ -35,12 +36,22 @@ bundle exec appraisal rake spec  # Multi-Rails matrix
 
 Add specs for new features. Request specs are preferred for engine HTTP endpoints.
 
+### Coverage
+
+CI posts a **coverage summary comment** on every PR (Ruby gem + Python SDK).
+
+```bash
+COVERAGE=true bundle exec rspec   # opens coverage/index.html
+```
+
+Optional: add `CODECOV_TOKEN` repo secret for [Codecov](https://codecov.io) dashboards.
+
 ## Pull requests
 
 1. Branch from `main`
 2. Add tests and changelog entry under `[Unreleased]` or the next version
 3. Ensure `bundle exec rake` passes locally
-4. Open a PR with a clear description of behavior changes
+4. Check the PR coverage comment — avoid lowering line coverage
 
 ## Release process (maintainers)
 
