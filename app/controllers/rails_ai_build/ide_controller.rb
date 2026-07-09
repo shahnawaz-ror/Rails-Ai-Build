@@ -2,7 +2,7 @@
 
 module RailsAiBuild
   class IdeController < ActionController::Base
-    layout "rails_ai_build"
+    layout 'rails_ai_build'
 
     def show
       @version = RailsAiBuild::VERSION

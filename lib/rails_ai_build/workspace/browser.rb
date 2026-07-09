@@ -13,7 +13,7 @@ module RailsAiBuild
       MAX_ENTRIES = 500
 
       class << self
-        def tree(workspace: nil, path: ".", depth: MAX_DEPTH)
+        def tree(workspace: nil, path: '.', depth: MAX_DEPTH)
           workspace ||= RailsAiBuild.configuration.workspace_path
           root = resolve(workspace, path)
           return { error: "Not a directory: #{path}" } unless root.directory?
@@ -25,10 +25,10 @@ module RailsAiBuild
           }
         end
 
-        def read_file(workspace: nil, path:)
+        def read_file(path:, workspace: nil)
           workspace ||= RailsAiBuild.configuration.workspace_path
           tool = Tools::ReadFileTool.new(workspace: workspace)
-          tool.call("path" => path)
+          tool.call('path' => path)
         end
 
         private
@@ -40,7 +40,7 @@ module RailsAiBuild
             break [] if counter[:n] >= MAX_ENTRIES
 
             name = entry.basename.to_s
-            next if name.start_with?(".") && name != ".ruby-version"
+            next if name.start_with?('.') && name != '.ruby-version'
             next if entry.directory? && SKIP_DIRS.include?(relative_path(workspace, entry))
 
             counter[:n] += 1
@@ -49,11 +49,11 @@ module RailsAiBuild
               {
                 name: name,
                 path: rel,
-                type: "directory",
+                type: 'directory',
                 children: depth > 1 ? build_entries(workspace, entry, depth: depth - 1, counter: counter) : []
               }
             else
-              { name: name, path: rel, type: "file" }
+              { name: name, path: rel, type: 'file' }
             end
           end
         end
@@ -63,11 +63,9 @@ module RailsAiBuild
         end
 
         def resolve(workspace, path)
-          full = workspace.join(path.to_s.sub(%r{\A/}, ""))
+          full = workspace.join(path.to_s.delete_prefix('/'))
           resolved = full.expand_path
-          unless resolved.to_s.start_with?(workspace.expand_path.to_s)
-            raise SecurityError, "Path escapes workspace: #{path}"
-          end
+          raise SecurityError, "Path escapes workspace: #{path}" unless resolved.to_s.start_with?(workspace.expand_path.to_s)
 
           resolved
         end
