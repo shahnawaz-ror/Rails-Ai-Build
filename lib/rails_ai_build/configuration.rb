@@ -20,7 +20,10 @@ module RailsAiBuild
                   :saml_enabled,
                   :universal_builder,
                   :verify_builds,
-                  :build_max_attempts
+                  :build_max_attempts,
+                  :multitask_enabled,
+                  :max_concurrent_tasks,
+                  :sync_tasks
 
     def initialize
       @default_model = "gpt-4o"
@@ -42,6 +45,9 @@ module RailsAiBuild
       @universal_builder = true
       @verify_builds = true
       @build_max_attempts = 3
+      @multitask_enabled = true
+      @max_concurrent_tasks = 2
+      @sync_tasks = false
     end
 
     def workspace_path

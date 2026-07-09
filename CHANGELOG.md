@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0] - 2026-07-09
+
+### Added — Multitask platform
+- **`Tasks::Queue`** — background task queue with parallel workers (`max_concurrent_tasks: 2`)
+- **`POST /tasks`** — enqueue builds; `GET /tasks`, `GET /tasks/:id`, `DELETE /tasks/:id`
+- **Tools** — `list_migrations` (pending detection), `model_attributes` (columns/associations)
+- **`Coordinator#run_until_green`** — orchestrate until zeitwerk passes (`until_green: true`)
+- **IDE** — Tasks panel, Build/Queue/Agent modes in prompt bar
+- **`docs/PLATFORM_ROADMAP.md`** — v2.0–v2.4 platform vision
+- Config: `multitask_enabled`, `max_concurrent_tasks`, `sync_tasks` (test mode)
+
 ## [1.9.0] - 2026-07-09
 
 ### Added — Universal Builder (build anything)

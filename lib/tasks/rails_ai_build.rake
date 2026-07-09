@@ -269,6 +269,16 @@ namespace :rails_ai_build do
     puts "Needs upgrade: #{info[:needs_upgrade]}"
   end
 
+  desc "List queued/completed tasks"
+  task tasks: :environment do
+    list = RailsAiBuild::Tasks::Queue.all
+    if list.empty?
+      puts "No tasks."
+    else
+      list.each { |t| puts "#{t[:id][0, 8]}… #{t[:status]} — #{t[:description].to_s[0, 60]}" }
+    end
+  end
+
   desc "Run multi-agent orchestration: rails rails_ai_build:orchestrate[task]"
   task :orchestrate, [:task] => :environment do |_t, args|
     task_desc = args[:task] || ENV["TASK"]

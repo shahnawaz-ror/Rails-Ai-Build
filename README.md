@@ -33,7 +33,7 @@ RailsAiBuild::ChatService.build("Add Stripe subscriptions with webhooks")
 RailsAiBuild::ChatService.ask("Add a health check endpoint")
 ```
 
-**Build anything** in any Rails 7.0–8.1 app — see [`docs/UNIVERSAL_BUILDER.md`](./docs/UNIVERSAL_BUILDER.md).
+**Build anything** in any Rails 7.0–8.1 app — multitask queue, IDE, verify loop. See [`docs/UNIVERSAL_BUILDER.md`](./docs/UNIVERSAL_BUILDER.md) and [`docs/PLATFORM_ROADMAP.md`](./docs/PLATFORM_ROADMAP.md).
 
 ### Python
 
