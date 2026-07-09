@@ -1,0 +1,30 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/tmp/
+*.gem
+*.rbc
+.DS_Store
+.env
+.env.*
+!.env.example
+Gemfile.lock
+
+# JavaScript
+node_modules/
+packages/javascript/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+packages/python/*.egg-info/
