@@ -14,6 +14,8 @@ unless defined?(RAILS_AI_BUILD_COMBUSTION_BOOTED)
 
   Dir[RailsAiBuild::Engine.root.join("app/controllers/**/*.rb")].sort.each { |file| require file }
 
+  ActionController::Base.prepend_view_path(RailsAiBuild::Engine.root.join("app/views"))
+
   Rails.application.reload_routes!
 end
 

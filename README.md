@@ -177,6 +177,31 @@ curl -X POST http://localhost:3000/rails_ai_build/agents/1/run \
 curl http://localhost:3000/rails_ai_build/models/providers
 ```
 
+## Web UI — Live Demo
+
+After install, open the browser UI:
+
+| URL | Purpose |
+|-----|---------|
+| `/rails_ai_build/ui` | Dashboard — chat, pending changes, analytics |
+| `/rails_ai_build/ui/demo` | **Live demo** — real-time SSE replay (no API key needed) |
+
+```bash
+bin/rails server
+open http://localhost:3000/rails_ai_build/ui/demo
+```
+
+Pick a scenario (health check, CRUD, fix test, API auth) and click **Run Live Example** — watch `tool_call` events stream in real time, same format as production `POST /stream`.
+
+Full guide: [docs/WEB_UI.md](docs/WEB_UI.md) · Static snapshot: [landing/demo.html](landing/demo.html)
+
+```bash
+# Production streaming (requires API key)
+curl -N -X POST http://localhost:3000/rails_ai_build/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Add a health check endpoint"}'
+```
+
 ## Configuration
 
 ```ruby

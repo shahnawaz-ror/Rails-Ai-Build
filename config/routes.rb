@@ -2,6 +2,8 @@ RailsAiBuild::Engine.routes.draw do
   root to: "ui#dashboard"
   get "api", to: "dashboard#show"
   get "ui", to: "ui#dashboard"
+  get "ui/demo", to: "demo#show"
+  post "demo/stream", to: "demo#stream"
 
   post "chat", to: "chat#create"
 

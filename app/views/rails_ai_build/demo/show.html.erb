@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rails AI Build — Live Demo</title>
+  <style>
+    :root {
+      --red: #d30001;
+      --bg: #0a0a12;
+      --surface: #12121f;
+      --card: #1a1a2e;
+      --border: #2a2a40;
+      --text: #e8e8f0;
+      --muted: #8888a0;
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --blue: #60a5fa;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    header h1 { font-size: 1.1rem; color: var(--red); font-weight: 700; letter-spacing: -0.02em; }
+    header nav a { color: var(--muted); text-decoration: none; margin-left: 1.5rem; font-size: 0.85rem; }
+    header nav a:hover { color: var(--text); }
+    .badge { background: var(--red); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; margin-left: 0.75rem; }
+
+    .layout { display: grid; grid-template-columns: 280px 1fr 340px; min-height: calc(100vh - 57px); }
+
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; overflow-y: auto; }
+    .sidebar h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; }
+    .scenario {
+      padding: 0.875rem 1rem; border-radius: 8px; cursor: pointer; margin-bottom: 0.5rem;
+      border: 1px solid transparent; transition: all 0.15s;
+    }
+    .scenario:hover { background: var(--card); border-color: var(--border); }
+    .scenario.active { background: var(--card); border-color: var(--red); }
+    .scenario strong { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    .scenario span { font-size: 0.75rem; color: var(--muted); }
+
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .prompt-bar { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .prompt-bar .label { font-size: 0.7rem; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .prompt-text { font-size: 0.95rem; line-height: 1.5; color: var(--text); }
+    .skill-tag { display: inline-block; background: #2d1f3d; color: #c084fc; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem; }
+
+    .stream { flex: 1; overflow-y: auto; padding: 1.5rem; }
+    .event { margin-bottom: 1rem; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .event-time { font-size: 0.65rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .event-tag { display: inline-block; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 3px; margin-right: 0.5rem; font-weight: 600; }
+    .tag-start { background: #1e3a5f; color: var(--blue); }
+    .tag-iteration { background: #1a2e1a; color: var(--green); }
+    .tag-tool { background: #3d2e1a; color: var(--yellow); }
+    .tag-complete { background: #2e1a2e; color: #e879f9; }
+    .tag-error { background: #3d1a1a; color: #f87171; }
+    .event-body { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.875rem 1rem; font-size: 0.8rem; line-height: 1.6; }
+    .tool-name { color: var(--yellow); font-weight: 600; }
+    .tool-args { color: var(--muted); margin-top: 0.25rem; }
+    .usage { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); }
+
+    .actions { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; background: var(--surface); }
+    .btn {
+      padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;
+      font-family: inherit; font-size: 0.85rem; transition: opacity 0.15s;
+    }
+    .btn-primary { background: var(--red); color: white; flex: 1; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+    .panel { background: var(--surface); border-left: 1px solid var(--border); padding: 1.5rem 1rem; overflow-y: auto; }
+    .panel h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; }
+    .panel section { margin-bottom: 1.5rem; }
+    .curl {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem; font-size: 0.72rem; line-height: 1.7; white-space: pre-wrap; word-break: break-all;
+      color: #a8ff60;
+    }
+    .steps { list-style: none; }
+    .steps li { font-size: 0.78rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .steps li strong { color: var(--text); }
+    .pending-file { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; font-size: 0.78rem; border-bottom: 1px solid var(--border); }
+    .pending-file .path { color: var(--yellow); }
+    .pending-file .status { color: var(--muted); font-size: 0.7rem; }
+
+    .empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 3rem 1rem; }
+    .pulse { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 0.5rem; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar, .panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⬥ Rails AI Build <span class="badge">LIVE DEMO</span> <span style="color:var(--muted);font-weight:400;font-size:0.8rem">v<%= @version %></span></h1>
+    <nav>
+      <a href="<%= request.path.sub(%r{/demo.*}, '/ui') %>">Dashboard</a>
+      <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build/blob/main/docs/WEB_UI.md">Docs</a>
+      <a href="https://github.com/shahnawaz-ror/Rails-Ai-Build">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Example scenarios</h2>
+      <% @scenarios.each do |id, s| %>
+        <div class="scenario<%= ' active' if id == 'health-check' %>" data-id="<%= id %>" data-prompt="<%= s[:prompt] %>" data-skill="<%= s[:skill] %>" data-curl="<%= s[:curl] %>">
+          <strong><%= s[:title] %></strong>
+          <span><%= s[:prompt].to_s.length > 60 ? "#{s[:prompt].to_s[0, 57]}..." : s[:prompt] %></span>
+        </div>
+      <% end %>
+      <p style="font-size:0.7rem;color:var(--muted);margin-top:1.5rem;line-height:1.5">
+        Simulated agent replay — same SSE events as <code>POST /stream</code>. Set <code>OPENAI_API_KEY</code> on the dashboard for live runs.
+      </p>
+    </aside>
+
+    <main class="main">
+      <div class="prompt-bar">
+        <div class="label">User prompt</div>
+        <div class="prompt-text" id="prompt-display">
+          Add a GET /health endpoint that returns { status: ok, version: Rails.version }
+          <span class="skill-tag" id="skill-tag" style="display:none"></span>
+        </div>
+      </div>
+
+      <div class="stream" id="stream">
+        <div class="empty" id="empty-state">
+          Click <strong>Run Live Example</strong> to watch the agent work in real time — tool calls, file writes, and completion events stream via SSE.
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="run-btn">▶ Run Live Example</button>
+        <button class="btn btn-secondary" id="clear-btn">Clear</button>
+      </div>
+    </main>
+
+    <aside class="panel">
+      <section>
+        <h2>API equivalent</h2>
+        <pre class="curl" id="curl-display"><%= @scenarios["health-check"][:curl] %></pre>
+      </section>
+      <section>
+        <h2>How users access it</h2>
+        <ol class="steps">
+          <li><strong>Install</strong> — <code>rails generate rails_ai_build:install</code></li>
+          <li><strong>Open</strong> — <code>/rails_ai_build/ui/demo</code></li>
+          <li><strong>Or API</strong> — <code>POST /rails_ai_build/stream</code></li>
+          <li><strong>Approve</strong> — pending changes in dashboard</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Pending changes</h2>
+        <div id="pending-list">
+          <p style="font-size:0.78rem;color:var(--muted)">Run an example to see diff preview queue</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const base = window.location.pathname.replace(/\/ui\/demo.*/, '');
+    let activeScenario = 'health-check';
+    let running = false;
+
+    const scenarios = document.querySelectorAll('.scenario');
+    scenarios.forEach(el => {
+      el.addEventListener('click', () => {
+        if (running) return;
+        scenarios.forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        activeScenario = el.dataset.id;
+        document.getElementById('prompt-display').innerHTML = el.dataset.prompt +
+          (el.dataset.skill ? ` <span class="skill-tag">skill: ${el.dataset.skill}</span>` : '');
+        document.getElementById('curl-display').textContent = el.dataset.curl;
+        clearStream(false);
+      });
+    });
+
+    function clearStream(showEmpty = true) {
+      const stream = document.getElementById('stream');
+      stream.innerHTML = showEmpty
+        ? '<div class="empty" id="empty-state">Click <strong>Run Live Example</strong> to watch the agent work in real time.</div>'
+        : '';
+      document.getElementById('pending-list').innerHTML =
+        '<p style="font-size:0.78rem;color:var(--muted)">Run an example to see diff preview queue</p>';
+    }
+
+    function tagClass(event) {
+      if (event === 'start') return 'tag-start';
+      if (event === 'iteration') return 'tag-iteration';
+      if (event === 'tool_call') return 'tag-tool';
+      if (event === 'complete') return 'tag-complete';
+      return 'tag-error';
+    }
+
+    function formatEvent(event, data) {
+      const time = new Date().toLocaleTimeString();
+      let body = '';
+
+      if (event === 'start') {
+        body = `Starting agent with: "${data.message}"` + (data.skill ? ` [skill: ${data.skill}]` : '');
+      } else if (event === 'iteration') {
+        body = data.content + (data.tool_calls ? ` <span style="color:var(--muted)">(${data.tool_calls} tool call${data.tool_calls > 1 ? 's' : ''})</span>` : '');
+      } else if (event === 'tool_call') {
+        body = `<span class="tool-name">${data.name}</span><div class="tool-args">${JSON.stringify(data.arguments, null, 2)}</div>`;
+      } else if (event === 'complete') {
+        body = data.content;
+        if (data.usage) {
+          body += `<div class="usage">Tokens: ${data.usage.total_tokens} (${data.usage.prompt_tokens} in / ${data.usage.completion_tokens} out)</div>`;
+        }
+        if (data.pending_changes?.length) {
+          const list = document.getElementById('pending-list');
+          list.innerHTML = data.pending_changes.map(c =>
+            `<div class="pending-file"><span class="path">${c.path}</span><span class="status">${c.status}</span></div>`
+          ).join('');
+        }
+      } else if (event === 'error') {
+        body = data.error;
+      }
+
+      return `<div class="event"><div class="event-time">${time}</div><span class="event-tag ${tagClass(event)}">${event}</span><div class="event-body">${body}</div></div>`;
+    }
+
+    document.getElementById('run-btn').addEventListener('click', async () => {
+      if (running) return;
+      running = true;
+      const btn = document.getElementById('run-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="pulse"></span> Streaming...';
+
+      clearStream(false);
+      const stream = document.getElementById('stream');
+
+      try {
+        const res = await fetch(base + '/demo/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+          body: JSON.stringify({ scenario: activeScenario })
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop();
+
+          for (const part of parts) {
+            const eventMatch = part.match(/event: (\w+)/);
+            const dataMatch = part.match(/data: (.+)/s);
+            if (eventMatch && dataMatch) {
+              const event = eventMatch[1];
+              const data = JSON.parse(dataMatch[1]);
+              stream.insertAdjacentHTML('beforeend', formatEvent(event, data));
+              stream.scrollTop = stream.scrollHeight;
+            }
+          }
+        }
+      } catch (err) {
+        stream.insertAdjacentHTML('beforeend', formatEvent('error', { error: err.message }));
+      } finally {
+        running = false;
+        btn.disabled = false;
+        btn.textContent = '▶ Run Live Example';
+      }
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => clearStream(true));
+  </script>
+</body>
+</html>

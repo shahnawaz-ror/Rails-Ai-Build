@@ -25,6 +25,7 @@
 <body>
   <h1>⬥ Rails AI Build</h1>
   <span class="plan"><%= @plan.to_s.upcase %> PLAN</span>
+  <a href="<%= request.path.sub(%r{/ui.*}, '/ui/demo') %>" style="margin-left:1rem;color:#60a5fa;font-size:0.85rem;text-decoration:none">→ Live demo & examples</a>
 
   <div class="grid">
     <div class="card">
@@ -37,6 +38,11 @@
           <% end %>
         </select>
         <textarea id="prompt" rows="3" placeholder="Add a health check endpoint..."></textarea>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0">
+          <button type="button" class="example-chip" data-prompt="Add GET /health returning JSON status" style="width:auto;padding:0.35rem 0.75rem;font-size:0.75rem;background:#222;border:1px solid #444">Health check</button>
+          <button type="button" class="example-chip" data-prompt="Create Post CRUD with title and body" data-skill="crud" style="width:auto;padding:0.35rem 0.75rem;font-size:0.75rem;background:#222;border:1px solid #444">Post CRUD</button>
+          <button type="button" class="example-chip" data-prompt="Write RSpec for UsersController" data-skill="tests" style="width:auto;padding:0.35rem 0.75rem;font-size:0.75rem;background:#222;border:1px solid #444">Write tests</button>
+        </div>
         <button type="submit">Run Agent</button>
       </form>
       <div id="result"></div>
@@ -71,6 +77,13 @@
 
   <script>
     const base = window.location.pathname.replace(/\/ui.*/, '');
+
+    document.querySelectorAll('.example-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.getElementById('prompt').value = chip.dataset.prompt;
+        if (chip.dataset.skill) document.getElementById('skill').value = chip.dataset.skill;
+      });
+    });
 
     document.getElementById('chat-form').addEventListener('submit', async (e) => {
       e.preventDefault();
