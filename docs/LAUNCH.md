@@ -1,13 +1,15 @@
-# Launch Checklist — Rails AI Build v1.0.0
+# Launch Checklist — Rails AI Build v1.1.0
 
-Complete these steps to go live commercially.
+**Code scope: 100% complete.** See [FLOWS.md](./FLOWS.md) for all integration flows.
 
 ## Distribution (Day 1)
 
 - [ ] Set `RUBYGEMS_API_KEY` secret in GitHub → publish gem
 - [ ] Set `PYPI_API_TOKEN` secret → publish Python package
 - [ ] Set `NPM_TOKEN` secret → publish `@rails-ai-build/sdk`
-- [ ] Tag release: `git tag v1.0.0 && git push origin v1.0.0`
+- [x] Tag releases: v1.0.0, v1.1.0
+- [x] GitHub workflows: CI, release, landing deploy
+- [x] All product flows implemented (see FLOWS.md)
 - [ ] Enable GitHub Pages for landing site
 
 ## Stripe (Week 1)
