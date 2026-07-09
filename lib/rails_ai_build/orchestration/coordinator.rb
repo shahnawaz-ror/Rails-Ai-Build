@@ -59,7 +59,49 @@ module RailsAiBuild
         run(task, roles: %i[planner coder reviewer])
       end
 
+      def run_until_green(task, max_rounds: 3)
+        current_task = task.to_s
+        rounds = []
+
+        max_rounds.times do |i|
+          result = run_with_review(current_task)
+          verify = verify_workspace
+          round = { round: i + 1, orchestration: result, verify: verify }
+          rounds << round
+          return { task: task, status: :success, rounds: rounds, final: result } if verify[:passed]
+
+          current_task = <<~FIX
+            Fix verification failures from round #{i + 1}:
+
+            #{format_verify_failure(verify)}
+
+            Original task: #{task}
+          FIX
+        end
+
+        { task: task, status: :failed, rounds: rounds, final: rounds.last[:orchestration] }
+      end
+
       private
+
+      def verify_workspace
+        workspace = RailsAiBuild.configuration.workspace_path
+        tool = Tools::RunRailsCheckTool.new(workspace: workspace)
+        result = tool.call({ 'checks' => %w[zeitwerk] })
+        { passed: result[:passed], checks: result[:checks] }
+      rescue StandardError => e
+        { passed: false, error: e.message }
+      end
+
+      def format_verify_failure(verify)
+        return verify[:error].to_s unless verify[:checks]
+
+        verify[:checks].filter_map do |name, check|
+          next if check[:passed]
+
+          "#{name}: #{check[:stdout].to_s[0, 1000]}"
+        end.join("\n")
+      end
 
       def build_agent(role)
         config = AGENT_ROLES.fetch(role)

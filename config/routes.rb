@@ -12,6 +12,8 @@ RailsAiBuild::Engine.routes.draw do
   post "chat", to: "chat#create"
   post "build", to: "build#create"
 
+  resources :tasks, only: %i[index show create destroy]
+
   resources :agents do
     member do
       post :run

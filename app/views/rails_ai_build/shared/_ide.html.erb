@@ -23,7 +23,7 @@
     tab.addEventListener('click', () => {
       document.querySelectorAll('.rab-right-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      ['changes', 'git', 'enterprise'].forEach(id => {
+      ['tasks', 'changes', 'git', 'enterprise'].forEach(id => {
         const el = document.getElementById('rab-panel-' + id);
         if (el) el.style.display = tab.dataset.right === id ? 'block' : 'none';
       });
@@ -112,6 +112,35 @@
     if (running) return;
     const prompt = document.getElementById('rab-prompt').value.trim();
     if (!prompt) return;
+    const mode = document.getElementById('rab-mode')?.value || 'stream';
+
+    if (mode === 'queue') {
+      const res = await fetch(base + '/tasks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
+      });
+      const data = await res.json();
+      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', { content: 'Queued task ' + data.id }));
+      loadTasks();
+      return;
+    }
+
+    if (mode === 'build') {
+      running = true;
+      runBtn.disabled = true;
+      statusEl.textContent = 'Building…';
+      const res = await fetch(base + '/build', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
+      });
+      const data = await res.json();
+      streamEl.insertAdjacentHTML('beforeend', formatEvent(data.status === 'success' ? 'complete' : 'error', { content: data.content || data.error }));
+      running = false;
+      runBtn.disabled = false;
+      statusEl.textContent = '';
+      loadTasks();
+      return;
+    }
 
     if (!canStream) {
       streamEl.innerHTML = formatEvent('error', { error: 'Streaming requires Pro+ plan. Using sync /chat…' });
@@ -228,5 +257,21 @@
     const data = await res.json();
     document.getElementById('rab-audit-log').textContent = JSON.stringify(data, null, 2);
   });
+
+  async function loadTasks() {
+    const el = document.getElementById('rab-task-list');
+    if (!el) return;
+    try {
+      const res = await fetch(base + '/tasks');
+      const data = await res.json();
+      if (!data.tasks?.length) { el.innerHTML = '<p class="rab-locked">No tasks queued</p>'; return; }
+      el.innerHTML = data.tasks.map(t =>
+        '<div class="rab-change-item"><div class="rab-change-path">' + t.status + '</div><div style="font-size:0.72rem">' + (t.description || '').slice(0, 60) + '</div></div>'
+      ).join('');
+    } catch (e) { el.innerHTML = '<p class="rab-locked">' + e.message + '</p>'; }
+  }
+
+  document.getElementById('rab-refresh-tasks')?.addEventListener('click', loadTasks);
+  loadTasks();
 })();
 </script>

@@ -8,7 +8,9 @@ module RailsAiBuild
         model: params[:model]
       )
 
-      result = if params[:review] == true || params[:review] == "true"
+      result = if params[:until_green] == true || params[:until_green] == 'true'
+                 coordinator.run_until_green(params[:task])
+               elsif params[:review] == true || params[:review] == 'true'
                  coordinator.run_with_review(params[:task])
                else
                  coordinator.run(params[:task], roles: parse_roles(params[:roles]))

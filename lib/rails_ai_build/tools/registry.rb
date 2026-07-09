@@ -20,7 +20,9 @@ module RailsAiBuild
         read_logs: ReadLogsTool,
         search_rails_docs: SearchRailsDocsTool,
         list_models: ListModelsTool,
-        run_rails_check: RunRailsCheckTool
+        run_rails_check: RunRailsCheckTool,
+        list_migrations: ListMigrationsTool,
+        model_attributes: ModelAttributesTool
       }.freeze
 
       BUILD_TOOL_NAMES = %i[list_models run_rails_check].freeze

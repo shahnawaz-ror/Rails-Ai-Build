@@ -67,6 +67,11 @@
         </div>
         <div class="rab-stream" id="rab-stream"></div>
         <form class="rab-prompt-bar" id="rab-prompt-form">
+          <select id="rab-mode" title="Mode">
+            <option value="stream">Agent</option>
+            <option value="build">Build (verify)</option>
+            <option value="queue">Queue task</option>
+          </select>
           <select id="rab-skill">
             <option value="">No skill</option>
             <% @skills.each do |s| %>
@@ -81,11 +86,17 @@
 
     <aside class="rab-right">
       <div class="rab-right-tabs">
+        <button class="rab-right-tab" data-right="tasks">Tasks</button>
         <button class="rab-right-tab active" data-right="changes">Changes</button>
         <button class="rab-right-tab" data-right="git">Git</button>
         <button class="rab-right-tab" data-right="enterprise">Enterprise</button>
       </div>
       <div class="rab-right-body">
+        <section id="rab-panel-tasks" style="display:none">
+          <button class="rab-btn rab-btn-secondary" id="rab-refresh-tasks" style="width:100%;margin-bottom:0.5rem">Refresh</button>
+          <div id="rab-task-list"><p class="rab-locked">No tasks queued</p></div>
+        </section>
+
         <section id="rab-panel-changes">
           <h3 style="font-size:0.7rem;color:var(--rab-muted);margin-bottom:0.5rem">PENDING DIFFS</h3>
           <% if @pending.any? %>
