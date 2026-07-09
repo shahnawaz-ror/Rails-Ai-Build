@@ -86,6 +86,7 @@ module RailsAiBuild
         end
 
         def infer_rails_version(text, topics)
+          return '8.1' if text.match?(/rails\s*8\.1/i) || topics.include?('rails81')
           return '8.0' if text.match?(/rails\s*8/i) || topics.include?('rails8')
           return '7.2' if text.match?(/rails\s*7\.2/i)
           return '7.1' if text.match?(/rails\s*7\.1/i)

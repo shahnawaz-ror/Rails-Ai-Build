@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.0] - 2026-07-09
+
+### Added — Rails Boost (Laravel/Django parity)
+- **7 introspection MCP tools** — `application_info`, `list_routes`, `database_schema`, `list_rake_tasks`, `read_settings`, `read_logs`, `search_rails_docs`
+- **`rails generate rails_ai_build:boost`** — enables Boost tools, Cursor rules, MCP client config
+- **`docs/FRAMEWORK_PARITY_ROADMAP.md`** — Rails release matrix + competitor parity plan
+- **Rails 8.1 appraisal** — full matrix 7.0 → 8.1
+- **CI** — per-appraisal matrix job (blocking)
+- **GitHub discovery** — infers Rails 8.1 from repo metadata
+
+### Changed
+- RBAC roles include read-only Boost tools for viewer/reviewer roles
+- Tools work with file-based fallbacks when Rails is not loaded
+
 ## [1.6.0] - 2026-07-09
 
 ### Added — 1000-repo GitHub compatibility program
