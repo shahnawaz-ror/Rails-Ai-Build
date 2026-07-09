@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+if ENV["COVERAGE"] == "true"
+  require "simplecov"
+end
+
 ENV["RAILS_ENV"] ||= "test"
 
 require "tmpdir"
@@ -7,27 +11,3 @@ require "fileutils"
 require "rails_ai_build"
 require_relative "support/webmock"
 require_relative "support/request_helpers"
-
-RSpec.configure do |config|
-  config.before do
-    RailsAiBuild.reset_configuration!
-    RailsAiBuild::Analytics.reset! if RailsAiBuild::Analytics.respond_to?(:reset!)
-    RailsAiBuild::TokenUsage.reset!
-    RailsAiBuild::Changes::Store.clear!
-  end
-
-  config.expect_with :rspec do |expectations|
-    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
-  end
-
-  config.mock_with :rspec do |mocks|
-    mocks.verify_partial_doubles = true
-  end
-
-  config.shared_context_metadata_behavior = :apply_to_host_groups
-  config.filter_run_when_matching :focus
-  config.example_status_persistence_file_path = "spec/examples.txt"
-  config.disable_monkey_patching!
-  config.order = :random
-  Kernel.srand config.seed
-end

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.2] - 2026-07-09
+
+### Added — CI/CD coverage
+- **SimpleCov** + Cobertura XML for Ruby (`COVERAGE=true bundle exec rspec`)
+- **pytest-cov** for Python SDK
+- **PR coverage comment** — sticky markdown table (Ruby + Python lines/branches)
+- **Codecov upload** (optional `CODECOV_TOKEN` secret)
+- CI best practices: concurrency groups, job names, coverage artifacts
+
 ## [1.4.1] - 2026-07-09
 
 ### Added

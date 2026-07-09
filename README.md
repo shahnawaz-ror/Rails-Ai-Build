@@ -1,3 +1,6 @@
+[![CI](https://github.com/shahnawaz-ror/Rails-Ai-Build/actions/workflows/ci.yml/badge.svg)](https://github.com/shahnawaz-ror/Rails-Ai-Build/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/shahnawaz-ror/Rails-Ai-Build/graph/badge.svg)](https://codecov.io/gh/shahnawaz-ror/Rails-Ai-Build)
+
 # Rails AI Build
 
 **Cursor-like AI coding agents for any project — Ruby, Python, JavaScript, and more.**
