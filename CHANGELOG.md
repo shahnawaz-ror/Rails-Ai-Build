@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.9.0] - 2026-07-09
+
+### Added — Universal Builder (build anything)
+- **`Builder::Universal`** — build any feature in any Rails app with verify-and-restart loop
+- **`Tasks::Runtime`** — Cursor-style explore → build → verify → fix (max 3 attempts)
+- **`POST /build`** — API for universal builder with optional verify
+- **Rake** — `rails_ai_build:build`, `:fix`, `:test`
+- **Tools** — `list_models`, `run_rails_check` (zeitwerk, rspec/minitest, rubocop)
+- **Skills** — `build`, `fix`, `feature`, `migration`
+- **Auto context** — ConventionDetector + universal prompt injected into every agent (configurable)
+- **`ChatService.build` / `.fix`** — programmatic entry points
+- **Docs** — `docs/UNIVERSAL_BUILDER.md`
+
+### Changed
+- Default `universal_builder: true`, `verify_builds: true`, `build_max_attempts: 3`
+
 ## [1.8.0] - 2026-07-09
 
 ### Added — Cursor-like in-app IDE (enterprise UI)

@@ -17,7 +17,10 @@ module RailsAiBuild
                   :audit_enabled,
                   :rbac_enabled,
                   :default_role,
-                  :saml_enabled
+                  :saml_enabled,
+                  :universal_builder,
+                  :verify_builds,
+                  :build_max_attempts
 
     def initialize
       @default_model = "gpt-4o"
@@ -36,6 +39,9 @@ module RailsAiBuild
       @rbac_enabled = false
       @default_role = :developer
       @saml_enabled = false
+      @universal_builder = true
+      @verify_builds = true
+      @build_max_attempts = 3
     end
 
     def workspace_path
