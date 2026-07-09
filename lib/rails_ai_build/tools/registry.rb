@@ -18,8 +18,12 @@ module RailsAiBuild
         list_rake_tasks: ListRakeTasksTool,
         read_settings: ReadSettingsTool,
         read_logs: ReadLogsTool,
-        search_rails_docs: SearchRailsDocsTool
+        search_rails_docs: SearchRailsDocsTool,
+        list_models: ListModelsTool,
+        run_rails_check: RunRailsCheckTool
       }.freeze
+
+      BUILD_TOOL_NAMES = %i[list_models run_rails_check].freeze
 
       BOOST_TOOL_NAMES = BOOST_TOOLS.keys.freeze
 

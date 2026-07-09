@@ -10,6 +10,7 @@ RailsAiBuild::Engine.routes.draw do
   get "workspace/file", to: "workspace#file"
 
   post "chat", to: "chat#create"
+  post "build", to: "build#create"
 
   resources :agents do
     member do

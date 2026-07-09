@@ -104,13 +104,70 @@ module RailsAiBuild
       end
     end
 
+    class MigrationSkill < BaseSkill
+      name 'migration'
+      description 'Create and run database migrations safely'
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails database engineer.
+          Read database_schema and list_models first.
+          Generate migrations with reversible up/down.
+          Add indexes for foreign keys. Use appropriate column types.
+          Run rails db:migrate via shell if appropriate, then run_rails_check.
+        PROMPT
+      end
+    end
+
+    class BuildSkill < BaseSkill
+      name 'build'
+      description 'Build any feature in this Rails application'
+
+      def self.prompt
+        Builder::Context.system_prompt
+      end
+    end
+
+    class FixSkill < BaseSkill
+      name 'fix'
+      description 'Diagnose and fix bugs, failing tests, or errors'
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails debugger.
+          Read logs (read_logs), failing test output (run_rails_check), and relevant source files.
+          Identify root cause, apply minimal fix, verify with run_rails_check.
+          Do not refactor unrelated code.
+        PROMPT
+      end
+    end
+
+    class FeatureSkill < BaseSkill
+      name 'feature'
+      description 'Add a new product feature end-to-end (model → API/UI → tests)'
+
+      def self.prompt
+        <<~PROMPT
+          You are a senior Rails product engineer shipping a complete feature.
+          Explore routes, models, and conventions first.
+          Deliver: migration (if needed), model, controller, routes, views/API, tests.
+          Match Hotwire/API-only patterns detected in the app.
+          Verify with run_rails_check before finishing.
+        PROMPT
+      end
+    end
+
     class Registry
       SKILLS = {
         crud: CrudSkill,
         auth: AuthSkill,
         api: ApiSkill,
         tests: TestsSkill,
-        refactor: RefactorSkill
+        refactor: RefactorSkill,
+        migration: MigrationSkill,
+        build: BuildSkill,
+        fix: FixSkill,
+        feature: FeatureSkill
       }.freeze
 
       class << self

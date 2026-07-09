@@ -101,6 +101,40 @@ namespace :rails_ai_build do
     puts result[:content]
   end
 
+  desc "Build anything: rails rails_ai_build:build[Add Stripe subscriptions]"
+  task :build, [:task] => :environment do |_t, args|
+    task_desc = args[:task] || ENV["TASK"]
+    abort "Usage: rails rails_ai_build:build['Add user avatars with Active Storage']" if task_desc.blank?
+
+    RailsAiBuild::Plans.apply_limits!
+    result = RailsAiBuild::Builder::Universal.build(task_desc)
+    puts result.content
+    puts "\nStatus: #{result.status} (#{result.attempts.size} attempt(s))"
+    if result.status == :failed
+      puts "Verification: #{result.verify.inspect}"
+      exit 1
+    end
+  end
+
+  desc "Fix an issue: rails rails_ai_build:fix[Failing User spec]"
+  task :fix, [:issue] => :environment do |_t, args|
+    issue = args[:issue] || ENV["ISSUE"]
+    abort "Usage: rails rails_ai_build:fix['NoMethodError in PostsController#show']" if issue.blank?
+
+    RailsAiBuild::Plans.apply_limits!
+    result = RailsAiBuild::Builder::Universal.fix(issue)
+    puts result.content
+    exit(result.status == :failed ? 1 : 0)
+  end
+
+  desc "Write/fix tests: rails rails_ai_build:test[spec/models/user_spec.rb]"
+  task :test, [:path] => :environment do |_t, args|
+    RailsAiBuild::Plans.apply_limits!
+    result = RailsAiBuild::Builder::Universal.test(args[:path])
+    puts result.content
+    exit(result.status == :failed ? 1 : 0)
+  end
+
   desc "List pending code changes"
   task :pending => :environment do
     changes = RailsAiBuild::Changes::Store.all(status: :pending)

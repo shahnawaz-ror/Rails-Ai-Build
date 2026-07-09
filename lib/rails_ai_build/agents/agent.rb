@@ -31,7 +31,12 @@ module RailsAiBuild
       end
 
       def build_system_prompt
-        parts = [@system_prompt]
+        parts = []
+        if RailsAiBuild.configuration.universal_builder && @system_prompt == DEFAULT_SYSTEM_PROMPT
+          parts << Builder::Context.snapshot(workspace: @workspace)
+        else
+          parts << @system_prompt
+        end
         memory_context = Memory::Store.context_for(workspace: @workspace) rescue nil
         parts << memory_context if memory_context
         parts.compact.join("\n\n")

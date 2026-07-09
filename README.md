@@ -27,10 +27,13 @@ gem "rails_ai_build"
 # rails generate rails_ai_build:install && rails db:migrate
 rails generate rails_ai_build:boost   # Laravel Boost-style introspection tools
 
+RailsAiBuild::ChatService.build("Add Stripe subscriptions with webhooks")
+# Or: rails rails_ai_build:build['Add comment system with Turbo Streams']
+
 RailsAiBuild::ChatService.ask("Add a health check endpoint")
 ```
 
-**Rails 7.0–8.1** supported via Appraisal CI matrix. See [`docs/FRAMEWORK_PARITY_ROADMAP.md`](./docs/FRAMEWORK_PARITY_ROADMAP.md).
+**Build anything** in any Rails 7.0–8.1 app — see [`docs/UNIVERSAL_BUILDER.md`](./docs/UNIVERSAL_BUILDER.md).
 
 ### Python
 

@@ -13,6 +13,14 @@ module RailsAiBuild
       agent.chat(prompt)
     end
 
+    def self.build(task, **options)
+      Builder::Universal.build(task, **options)
+    end
+
+    def self.fix(issue, **options)
+      Builder::Universal.fix(issue, **options)
+    end
+
     def self.create_agent(**options)
       Agents::Agent.new(**options)
     end
