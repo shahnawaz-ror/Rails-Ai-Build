@@ -75,12 +75,13 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_ai_build_test
+          MYSQL_ROOT_HOST: "%"
         ports: ["3306:3306"]
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
 
@@ -91,12 +92,24 @@ jobs:
 
       - name: Install DB client libraries
         if: matrix.adapter != 'sqlite3'
-        run: sudo apt-get update && sudo apt-get install -y libpq-dev default-libmysqlclient-dev
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev libmysqlclient-dev postgresql-client
 
       - name: Install dependencies (all DB adapters)
         env:
           INSTALL_ALL_DBS: "true"
         run: bundle install
+
+      - name: Wait for database
+        if: matrix.adapter != 'sqlite3'
+        env:
+          TEST_DB_ADAPTER: ${{ matrix.adapter }}
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_USER: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
+          TEST_DB_PASSWORD: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
+          TEST_DB_NAME: rails_ai_build_test
+        run: |
+          chmod +x .github/scripts/wait-for-db.sh
+          .github/scripts/wait-for-db.sh
 
       - name: Run specs (${{ matrix.adapter }})
         env:
@@ -105,7 +118,7 @@ jobs:
           TEST_DB_USER: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
           TEST_DB_PASSWORD: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
           TEST_DB_NAME: rails_ai_build_test
-        run: bundle exec rspec
+        run: bundle exec rspec --exclude-pattern 'spec/live/**'
 
   compatibility-smoke:
     name: Compatibility smoke (5 archetypes)

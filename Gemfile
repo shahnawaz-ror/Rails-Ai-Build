@@ -5,14 +5,11 @@ source "https://rubygems.org"
 gemspec
 
 gem "sqlite3", ">= 2.1"
+eval_gemfile "gemfiles/ci_dbs.rb" if ENV["INSTALL_ALL_DBS"] == "true"
 
 group :development, :test do
   gem "appraisal", "~> 2.5", require: false
   gem "combustion", "~> 1.3"
-  if ENV["INSTALL_ALL_DBS"] == "true"
-    gem "mysql2", "~> 0.5"
-    gem "pg", "~> 1.5"
-  end
   gem "rspec", "~> 3.12"
   gem "rspec-rails", "~> 6.0"
   gem "rubocop", "~> 1.69", require: false
