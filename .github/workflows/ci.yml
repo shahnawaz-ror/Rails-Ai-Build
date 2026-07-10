@@ -90,7 +90,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpq-dev postgresql-client
       - name: Install dependencies
         env:
-          INSTALL_ALL_DBS: "true"
+          INSTALL_CI_DB: postgresql
         run: bundle install
       - name: Verify pg gem
         run: bundle exec ruby -e "require 'pg'; puts 'pg', PG::VERSION"
@@ -140,7 +140,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libmysqlclient-dev default-mysql-client
       - name: Install dependencies
         env:
-          INSTALL_ALL_DBS: "true"
+          INSTALL_CI_DB: mysql2
         run: bundle install
       - name: Verify mysql2 gem
         run: bundle exec ruby -e "require 'mysql2'; puts 'mysql2', Mysql2::VERSION"
