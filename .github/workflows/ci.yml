@@ -50,13 +50,23 @@ jobs:
       - name: Run specs
         run: bundle exec rspec
 
-  db-matrix:
-    name: DB ${{ matrix.adapter }} (Ruby 3.3)
+  db-sqlite3:
+    name: DB sqlite3 (Ruby 3.3)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        adapter: [sqlite3, postgresql, mysql2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run specs (sqlite3)
+        env:
+          TEST_DB_ADAPTER: sqlite3
+        run: bundle exec rspec --exclude-pattern 'spec/live/**'
+
+  db-postgresql:
+    name: DB postgresql (Ruby 3.3)
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
@@ -69,7 +79,45 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+      - name: Install PostgreSQL client libraries
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev postgresql-client
+      - name: Install dependencies
+        env:
+          INSTALL_ALL_DBS: "true"
+        run: bundle install
+      - name: Verify pg gem
+        run: bundle exec ruby -e "require 'pg'; puts 'pg', PG::VERSION"
+      - name: Wait for PostgreSQL
+        env:
+          TEST_DB_ADAPTER: postgresql
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_USER: postgres
+          TEST_DB_PASSWORD: postgres
+        run: |
+          chmod +x .github/scripts/wait-for-db.sh
+          .github/scripts/wait-for-db.sh
+      - name: Run specs (postgresql)
+        env:
+          TEST_DB_ADAPTER: postgresql
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_PORT: 5432
+          TEST_DB_USER: postgres
+          TEST_DB_PASSWORD: postgres
+          TEST_DB_NAME: rails_ai_build_test
+          RAILS_ENV: test
+        run: bundle exec rspec --exclude-pattern 'spec/live/**'
+
+  db-mysql2:
+    name: DB mysql2 (Ruby 3.3)
+    runs-on: ubuntu-latest
+    services:
       mysql:
         image: mysql:8
         env:
@@ -84,40 +132,36 @@ jobs:
           --health-retries=10
     steps:
       - uses: actions/checkout@v4
-
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
           bundler-cache: false
-
-      - name: Install DB client libraries
-        if: matrix.adapter != 'sqlite3'
-        run: sudo apt-get update && sudo apt-get install -y libpq-dev libmysqlclient-dev postgresql-client
-
-      - name: Install dependencies (all DB adapters)
+      - name: Install MySQL client libraries
+        run: sudo apt-get update && sudo apt-get install -y libmysqlclient-dev default-mysql-client
+      - name: Install dependencies
         env:
           INSTALL_ALL_DBS: "true"
         run: bundle install
-
-      - name: Wait for database
-        if: matrix.adapter != 'sqlite3'
+      - name: Verify mysql2 gem
+        run: bundle exec ruby -e "require 'mysql2'; puts 'mysql2', Mysql2::VERSION"
+      - name: Wait for MySQL
         env:
-          TEST_DB_ADAPTER: ${{ matrix.adapter }}
+          TEST_DB_ADAPTER: mysql2
           TEST_DB_HOST: 127.0.0.1
-          TEST_DB_USER: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
-          TEST_DB_PASSWORD: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
-          TEST_DB_NAME: rails_ai_build_test
+          TEST_DB_USER: root
+          TEST_DB_PASSWORD: root
         run: |
           chmod +x .github/scripts/wait-for-db.sh
           .github/scripts/wait-for-db.sh
-
-      - name: Run specs (${{ matrix.adapter }})
+      - name: Run specs (mysql2)
         env:
-          TEST_DB_ADAPTER: ${{ matrix.adapter }}
+          TEST_DB_ADAPTER: mysql2
           TEST_DB_HOST: 127.0.0.1
-          TEST_DB_USER: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
-          TEST_DB_PASSWORD: ${{ matrix.adapter == 'postgresql' && 'postgres' || 'root' }}
+          TEST_DB_PORT: 3306
+          TEST_DB_USER: root
+          TEST_DB_PASSWORD: root
           TEST_DB_NAME: rails_ai_build_test
+          RAILS_ENV: test
         run: bundle exec rspec --exclude-pattern 'spec/live/**'
 
   compatibility-smoke:
