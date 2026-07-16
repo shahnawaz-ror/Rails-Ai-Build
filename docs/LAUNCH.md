@@ -1,6 +1,6 @@
 # Launch Checklist — Rails AI Build v2.3.0
 
-**Activation OS + IDE intelligence shipped.** See [FLOWS.md](./FLOWS.md) Flow 0 and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
+**Activation OS + IDE intelligence shipped.** See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
 
 ## Distribution (Day 1)
 

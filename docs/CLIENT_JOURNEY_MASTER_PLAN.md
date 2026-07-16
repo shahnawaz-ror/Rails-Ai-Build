@@ -442,10 +442,11 @@ Ship that, and the gem stops feeling like a library and starts feeling like a pr
 
 ## Related docs
 
-- [FLOWS.md](./FLOWS.md) — current integration flows  
-- [BUSINESS_PLAN.md](./BUSINESS_PLAN.md) — market & phases  
-- [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) — feature checklist  
-- [LAUNCH.md](./LAUNCH.md) — publish / Stripe / marketing ops  
-- [IDE_UI.md](./IDE_UI.md) — in-app Cursor surface  
-- [GTM_PLAYBOOK.md](./GTM_PLAYBOOK.md) — go-to-market  
-- `lib/rails_ai_build/plans.rb` — source of truth for plan matrix  
+- [SRS.md](./SRS.md) — **normative software requirements** (do not ship gaps)
+- [FLOWS.md](./FLOWS.md) — current integration flows
+- [BUSINESS_PLAN.md](./BUSINESS_PLAN.md) — market & phases
+- [PRODUCT_ROADMAP.md](./PRODUCT_ROADMAP.md) — feature checklist
+- [LAUNCH.md](./LAUNCH.md) — publish / Stripe / marketing ops
+- [IDE_UI.md](./IDE_UI.md) — in-app Cursor surface
+- [GTM_PLAYBOOK.md](./GTM_PLAYBOOK.md) — go-to-market
+- `lib/rails_ai_build/plans.rb` — source of truth for plan matrix

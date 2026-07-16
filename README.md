@@ -140,6 +140,7 @@ See [`packages/core-protocol/openapi.yaml`](./packages/core-protocol/openapi.yam
 
 See our strategic plans for turning this gem into a platform company:
 
+- [SRS (Software Requirements)](./docs/SRS.md) — complete requirements so we never miss a capability
 - [Client Journey Master Plan](./docs/CLIENT_JOURNEY_MASTER_PLAN.md) — install → BYOK / Cloud / paid → full Cursor-class capability map
 - [Business Plan](./docs/BUSINESS_PLAN.md) — market, revenue model, path to $1M+ ARR
 - [Product Roadmap](./docs/PRODUCT_ROADMAP.md) — revenue-aligned feature tiers
