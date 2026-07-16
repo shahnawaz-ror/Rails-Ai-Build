@@ -34,4 +34,28 @@ RSpec.describe RailsAiBuild::Tasks::Queue do
     task = described_class.enqueue('Fix spec')
     expect(described_class.find(task.id).description).to eq('Fix spec')
   end
+
+  it 'does not recursively spawn workers when the queue is empty' do
+    RailsAiBuild.configuration.sync_tasks = false
+    RailsAiBuild.configuration.max_concurrent_tasks = 2
+
+    threads_before = Thread.list.size
+    created = 0
+    allow(Thread).to receive(:new).and_wrap_original do |method, *args, &block|
+      created += 1
+      method.call(*args, &block)
+    end
+
+    task = described_class.enqueue('async noop')
+    active_statuses = %i[queued running]
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
+    sleep 0.01 while active_statuses.include?(task.status) && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
+    sleep 0.1 # let workers drain and exit
+
+    expect(task.status).to eq(:success)
+    # Old bug: every idle process_next ensure re-spawned max workers forever.
+    expect(created).to be <= 4
+    expect(Thread.list.size).to be < (threads_before + 10)
+    expect(described_class.send(:workers).count(&:alive?)).to eq(0)
+  end
 end
