@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.5] - 2026-07-16
+
+### Added — Complete IDE agent UX + app intelligence (build anything)
+- **`Intelligence.prepare!`** runs before every AI request — not migrations-only:
+  creates missing dirs, heals migration conflicts, checks Rails app structure,
+  API keys, initializer, and engine mount so the agent can build models,
+  controllers, routes, views, jobs, tests, or anything else
+- **Live status SSE** (`status` events): prepare → heal → ready → context → tools → reply → done
+- Humanized tool feedback for all build tools (`write_file`, `run_rails_check`, routes, schema, …)
+- **Enter to send**, Shift+Enter newline; auto-growing prompt; Send button
+- **Live progress bar** shows what the agent is doing right now
+- **Applied file feedback** in tool results + done payload (`applied_files`)
+- **Themes**: Dark, Light, Midnight, Forest, Slate (refreshed palettes + fonts)
+- Provider dropdown defaults to configured `default_provider`
+
 ## [2.2.4] - 2026-07-16
 
 ### Added — Migration intelligence (auto-heal DuplicateMigrationVersionError)

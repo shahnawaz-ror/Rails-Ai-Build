@@ -1,61 +1,127 @@
 <style>
   /* Cursor-inspired themes — dark (default), light, enterprise */
   :root, [data-theme="dark"] {
-    --rab-brand: #d30001;
-    --rab-accent: #0078d4;
-    --rab-accent-hover: #1a8cff;
-    --rab-bg: #0d0d0f;
-    --rab-surface: #18181b;
-    --rab-panel: #1f1f23;
-    --rab-elevated: #27272a;
-    --rab-border: #3f3f46;
-    --rab-text: #fafafa;
-    --rab-muted: #a1a1aa;
-    --rab-green: #22c55e;
-    --rab-yellow: #eab308;
+    --rab-brand: #e11d48;
+    --rab-accent: #38bdf8;
+    --rab-accent-hover: #7dd3fc;
+    --rab-bg: #0b1220;
+    --rab-surface: #111827;
+    --rab-panel: #0f172a;
+    --rab-elevated: #1e293b;
+    --rab-border: #334155;
+    --rab-text: #e2e8f0;
+    --rab-muted: #94a3b8;
+    --rab-green: #34d399;
+    --rab-yellow: #fbbf24;
     --rab-blue: #60a5fa;
-    --rab-purple: #a78bfa;
-    --rab-red: #f87171;
-    --rab-editor-bg: #121214;
-    --rab-input-bg: #09090b;
+    --rab-purple: #c084fc;
+    --rab-red: #fb7185;
+    --rab-editor-bg: #020617;
+    --rab-input-bg: #020617;
     --rab-github: #238636;
-    --rab-enterprise: #8957e5;
-    --rab-font-ui: "Inter", system-ui, -apple-system, sans-serif;
-    --rab-font-mono: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+    --rab-enterprise: #a78bfa;
+    --rab-font-ui: "IBM Plex Sans", "Segoe UI", sans-serif;
+    --rab-font-mono: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
   }
 
   [data-theme="light"] {
-    --rab-brand: #c40001;
-    --rab-accent: #0066cc;
-    --rab-bg: #f4f4f5;
+    --rab-brand: #be123c;
+    --rab-accent: #0284c7;
+    --rab-bg: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
     --rab-surface: #ffffff;
-    --rab-panel: #fafafa;
-    --rab-elevated: #f4f4f5;
-    --rab-border: #e4e4e7;
-    --rab-text: #18181b;
-    --rab-muted: #71717a;
+    --rab-panel: #f8fafc;
+    --rab-elevated: #f1f5f9;
+    --rab-border: #cbd5e1;
+    --rab-text: #0f172a;
+    --rab-muted: #64748b;
     --rab-editor-bg: #ffffff;
     --rab-input-bg: #ffffff;
   }
 
+  [data-theme="midnight"] {
+    --rab-brand: #22d3ee;
+    --rab-accent: #22d3ee;
+    --rab-accent-hover: #67e8f9;
+    --rab-bg: #020617;
+    --rab-surface: #0b1120;
+    --rab-panel: #0f172a;
+    --rab-elevated: #1e293b;
+    --rab-border: #1e3a5f;
+    --rab-text: #e0f2fe;
+    --rab-muted: #7dd3fc;
+    --rab-editor-bg: #020617;
+    --rab-input-bg: #020617;
+  }
+
+  [data-theme="forest"] {
+    --rab-brand: #4ade80;
+    --rab-accent: #34d399;
+    --rab-accent-hover: #6ee7b7;
+    --rab-bg: #071a12;
+    --rab-surface: #0c2418;
+    --rab-panel: #11301f;
+    --rab-elevated: #1a3d2a;
+    --rab-border: #24553a;
+    --rab-text: #ecfdf5;
+    --rab-muted: #86efac;
+    --rab-editor-bg: #04140d;
+    --rab-input-bg: #04140d;
+    --rab-enterprise: #fbbf24;
+  }
+
+  [data-theme="slate"] {
+    --rab-brand: #38bdf8;
+    --rab-accent: #0ea5e9;
+    --rab-accent-hover: #38bdf8;
+    --rab-bg: linear-gradient(165deg, #1e293b 0%, #0f172a 55%, #020617 100%);
+    --rab-surface: #1e293b;
+    --rab-panel: #273449;
+    --rab-elevated: #334155;
+    --rab-border: #475569;
+    --rab-text: #f1f5f9;
+    --rab-muted: #94a3b8;
+    --rab-editor-bg: #0f172a;
+    --rab-input-bg: #0f172a;
+    --rab-enterprise: #f59e0b;
+  }
+
+  /* Back-compat aliases for saved localStorage themes */
+  [data-theme="sand"] {
+    --rab-brand: #4ade80;
+    --rab-accent: #34d399;
+    --rab-accent-hover: #6ee7b7;
+    --rab-bg: #071a12;
+    --rab-surface: #0c2418;
+    --rab-panel: #11301f;
+    --rab-elevated: #1a3d2a;
+    --rab-border: #24553a;
+    --rab-text: #ecfdf5;
+    --rab-muted: #86efac;
+    --rab-editor-bg: #04140d;
+    --rab-input-bg: #04140d;
+  }
+
   [data-theme="enterprise"] {
-    --rab-brand: #8957e5;
-    --rab-accent: #8957e5;
-    --rab-accent-hover: #a371f7;
-    --rab-bg: #0a0a14;
-    --rab-surface: #12121f;
-    --rab-panel: #1a1a2e;
-    --rab-elevated: #252540;
-    --rab-border: #3d3d5c;
-    --rab-enterprise: #f0b429;
-    --rab-github: #2ea043;
-    --rab-editor-bg: #0e0e18;
+    --rab-brand: #38bdf8;
+    --rab-accent: #0ea5e9;
+    --rab-accent-hover: #38bdf8;
+    --rab-bg: #0f172a;
+    --rab-surface: #1e293b;
+    --rab-panel: #273449;
+    --rab-elevated: #334155;
+    --rab-border: #475569;
+    --rab-text: #f1f5f9;
+    --rab-muted: #94a3b8;
+    --rab-editor-bg: #0f172a;
+    --rab-input-bg: #0f172a;
+    --rab-enterprise: #f59e0b;
   }
 
   .rab-ide-body {
     margin: 0;
     font-family: var(--rab-font-ui);
     background: var(--rab-bg);
+    background-attachment: fixed;
     color: var(--rab-text);
     min-height: 100vh;
     overflow: hidden;
@@ -145,24 +211,40 @@
     display: flex; justify-content: space-between;
   }
   .rab-stream { flex: 1; overflow-y: auto; padding: 0.75rem; font-size: 0.78rem; }
-  .rab-event { margin-bottom: 0.6rem; }
+  .rab-empty-chat { color: var(--rab-muted); text-align: center; padding: 2rem 1rem; font-family: var(--rab-font-ui); }
+  .rab-live-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.35rem 0.75rem; font-size: 0.72rem; color: var(--rab-accent);
+    background: color-mix(in srgb, var(--rab-accent) 12%, transparent);
+    border-bottom: 1px solid var(--rab-border);
+  }
+  .rab-live-bar[hidden] { display: none !important; }
+  .rab-status-idle { color: var(--rab-muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .rab-event { margin-bottom: 0.6rem; animation: rab-fade-in 180ms ease-out; }
   .rab-event-tag { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 3px; margin-right: 0.4rem; font-weight: 600; }
-  .rab-tag-start { background: #1e3a5f; color: var(--rab-blue); }
-  .rab-tag-tool { background: #3d2e1a; color: var(--rab-yellow); }
-  .rab-tag-complete { background: #2e1a3d; color: var(--rab-purple); }
-  .rab-tag-error { background: #3d1a1a; color: var(--rab-red); }
-  .rab-event-body { background: var(--rab-elevated); border-radius: 6px; padding: 0.5rem 0.75rem; font-family: var(--rab-font-mono); }
+  .rab-tag-start, .rab-tag-status, .rab-tag-context, .rab-tag-session { background: color-mix(in srgb, var(--rab-blue) 25%, transparent); color: var(--rab-blue); }
+  .rab-tag-tool { background: color-mix(in srgb, var(--rab-yellow) 25%, transparent); color: var(--rab-yellow); }
+  .rab-tag-complete, .rab-tag-done { background: color-mix(in srgb, var(--rab-green) 25%, transparent); color: var(--rab-green); }
+  .rab-tag-error { background: color-mix(in srgb, var(--rab-red) 25%, transparent); color: var(--rab-red); }
+  .rab-tag-iteration, .rab-tag-delta { background: color-mix(in srgb, var(--rab-purple) 20%, transparent); color: var(--rab-purple); }
+  .rab-event-body { background: var(--rab-elevated); border-radius: 8px; padding: 0.55rem 0.75rem; font-family: var(--rab-font-mono); border: 1px solid transparent; }
+  .rab-event-user .rab-event-body { border-color: color-mix(in srgb, var(--rab-accent) 40%, transparent); }
+  .rab-event-status .rab-event-body { font-family: var(--rab-font-ui); color: var(--rab-muted); }
+  .rab-token-delta { color: var(--rab-text); }
+  .rab-applied { color: var(--rab-green); font-weight: 600; }
+  @keyframes rab-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
   .rab-prompt-bar {
     display: flex; gap: 0.5rem; padding: 0.6rem; border-top: 1px solid var(--rab-border);
-    background: var(--rab-input-bg);
+    background: var(--rab-input-bg); align-items: flex-end;
   }
   .rab-prompt-bar select { flex: 0 0 120px; }
   .rab-prompt-bar textarea {
-    flex: 1; resize: none; height: 2.5rem; background: var(--rab-elevated);
-    border: 1px solid var(--rab-border); border-radius: 8px; color: var(--rab-text);
-    font-family: inherit; font-size: 0.85rem; padding: 0.5rem 0.75rem;
+    flex: 1; resize: none; min-height: 2.75rem; max-height: 8rem; background: var(--rab-elevated);
+    border: 1px solid var(--rab-border); border-radius: 10px; color: var(--rab-text);
+    font-family: inherit; font-size: 0.85rem; padding: 0.55rem 0.75rem; line-height: 1.4;
   }
+  .rab-prompt-bar textarea:focus { outline: none; border-color: var(--rab-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--rab-accent) 25%, transparent); }
   .rab-btn {
     padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600;
     font-size: 0.8rem; cursor: pointer; font-family: inherit;

@@ -27,11 +27,13 @@
     <select id="rab-theme" title="Theme">
       <option value="dark">Dark</option>
       <option value="light">Light</option>
-      <option value="enterprise">Enterprise</option>
+      <option value="midnight">Midnight</option>
+      <option value="forest">Forest</option>
+      <option value="slate">Slate</option>
     </select>
     <select id="rab-provider" title="Provider">
       <% @providers.each do |p| %>
-        <option value="<%= p %>"><%= p %></option>
+        <option value="<%= p %>" <%= 'selected' if p.to_s == RailsAiBuild.configuration.default_provider.to_s %>><%= p %></option>
       <% end %>
     </select>
     <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui/demo') %>">Demo</a>
@@ -75,10 +77,16 @@
 
       <div class="rab-agent-panel" id="rab-agent-panel">
         <div class="rab-agent-header">
-          <span>Agent — Cursor-style SSE stream</span>
-          <span id="rab-agent-status"></span>
+          <span>Agent</span>
+          <span id="rab-agent-status" class="rab-status-idle">Ready — Enter to send, Shift+Enter for newline</span>
         </div>
-        <div class="rab-stream" id="rab-stream"></div>
+        <div class="rab-live-bar" id="rab-live-bar" hidden>
+          <span class="rab-pulse"></span>
+          <span id="rab-live-text">Working…</span>
+        </div>
+        <div class="rab-stream" id="rab-stream">
+          <div class="rab-empty-chat">Ask anything — you’ll see context, tools, and file writes live as they happen.</div>
+        </div>
         <form class="rab-prompt-bar" id="rab-prompt-form">
           <select id="rab-mode" title="Mode">
             <option value="stream">Agent</option>
@@ -92,8 +100,8 @@
               <option value="<%= s[:name] %>"><%= s[:name] %></option>
             <% end %>
           </select>
-          <textarea id="rab-prompt" placeholder="Ask the agent… (e.g. Add a health check endpoint)" rows="1"></textarea>
-          <button type="submit" class="rab-btn rab-btn-primary" id="rab-run-btn">Run</button>
+          <textarea id="rab-prompt" placeholder="Ask the agent… Enter to send · Shift+Enter for newline" rows="2"></textarea>
+          <button type="submit" class="rab-btn rab-btn-primary" id="rab-run-btn">Send</button>
         </form>
       </div>
     </main>

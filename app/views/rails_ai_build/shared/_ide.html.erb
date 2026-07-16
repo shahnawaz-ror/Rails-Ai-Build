@@ -9,9 +9,14 @@
   const canAudit = root.dataset.audit === 'true';
   const autoApply = root.dataset.autoApply === 'true';
 
-  // Theme persistence
+  // Theme persistence (map legacy theme names)
   const themeSelect = document.getElementById('rab-theme');
-  const savedTheme = localStorage.getItem('rab-theme') || 'dark';
+  const themeAlias = { sand: 'forest', enterprise: 'slate' };
+  let savedTheme = localStorage.getItem('rab-theme') || 'dark';
+  if (themeAlias[savedTheme]) {
+    savedTheme = themeAlias[savedTheme];
+    localStorage.setItem('rab-theme', savedTheme);
+  }
   document.documentElement.dataset.theme = savedTheme;
   if (themeSelect) themeSelect.value = savedTheme;
   themeSelect?.addEventListener('change', () => {
@@ -103,54 +108,116 @@
 
   loadTree();
 
-  // SSE streaming
+  // SSE streaming + live feedback
   const streamEl = document.getElementById('rab-stream');
   const runBtn = document.getElementById('rab-run-btn');
   const statusEl = document.getElementById('rab-agent-status');
+  const liveBar = document.getElementById('rab-live-bar');
+  const liveText = document.getElementById('rab-live-text');
+  const promptEl = document.getElementById('rab-prompt');
   let running = false;
-
   let sessionId = localStorage.getItem('rab-session-id') || null;
 
+  function setLive(message) {
+    if (!liveBar || !liveText) return;
+    if (message) {
+      liveBar.hidden = false;
+      liveText.textContent = message;
+      if (statusEl) statusEl.textContent = message;
+    } else {
+      liveBar.hidden = true;
+      if (statusEl) {
+        statusEl.className = 'rab-status-idle';
+        statusEl.textContent = 'Ready — Enter to send, Shift+Enter for newline';
+      }
+    }
+  }
+
   function formatEvent(event, data) {
-    const tags = { start: 'rab-tag-start', context: 'rab-tag-start', session: 'rab-tag-start',
+    const tags = {
+      start: 'rab-tag-start', status: 'rab-tag-status', context: 'rab-tag-context', session: 'rab-tag-session',
       attempt: 'rab-tag-start', verify: 'rab-tag-iteration', queued: 'rab-tag-start', running: 'rab-tag-start',
-      tool_call: 'rab-tag-tool', tool_result: 'rab-tag-tool', delta: 'rab-tag-iteration', iteration: 'rab-tag-iteration',
-      complete: 'rab-tag-complete', done: 'rab-tag-complete', finished: 'rab-tag-complete', pr_ready: 'rab-tag-complete',
-      error: 'rab-tag-error' };
+      tool_call: 'rab-tag-tool', tool_result: 'rab-tag-tool', delta: 'rab-tag-delta', iteration: 'rab-tag-iteration',
+      complete: 'rab-tag-complete', done: 'rab-tag-done', finished: 'rab-tag-complete', pr_ready: 'rab-tag-complete',
+      error: 'rab-tag-error', user: 'rab-tag-start'
+    };
     let body = '';
-    if (event === 'session') {
+    let extraClass = '';
+    if (event === 'user') {
+      body = escapeHtml(data.content || '');
+      extraClass = ' rab-event-user';
+    } else if (event === 'status') {
+      setLive(data.message || 'Working…');
+      body = escapeHtml(data.message || '');
+      extraClass = ' rab-event-status';
+    } else if (event === 'session') {
       sessionId = data.id;
       localStorage.setItem('rab-session-id', sessionId);
-      body = 'Thread ' + sessionId.slice(0, 8) + '… (model: ' + (data.model || '') + ')';
+      body = 'Thread ' + sessionId.slice(0, 8) + '… · ' + (data.provider || '') + '/' + (data.model || '');
       loadSessions();
     } else if (event === 'context') {
-      body = 'Auto-context: Rails ' + (data.rails || '?') + ', conventions loaded';
+      body = 'Context loaded · Rails ' + (data.rails || data.rails_version || '?');
     } else if (event === 'start' || event === 'attempt') {
       body = (event === 'attempt' ? 'Attempt ' + data.number + '/' + data.max : 'Starting: "' + (data.task || data.message || '') + '"');
     } else if (event === 'verify') {
       body = data.passed ? '✓ Verification passed' : '✗ Verification failed';
     } else if (event === 'tool_call') {
-      body = '<strong>' + data.name + '</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + JSON.stringify(data.arguments, null, 2) + '</pre>';
+      body = '<strong>' + escapeHtml(data.name || '') + '</strong>';
+      if (data.arguments) {
+        body += '<pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' +
+          escapeHtml(JSON.stringify(data.arguments, null, 2)).slice(0, 600) + '</pre>';
+      }
     } else if (event === 'tool_result') {
-      body = '<strong>' + data.name + ' →</strong><pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' + (data.result || '').slice(0, 800) + '</pre>';
+      const summary = data.summary || ('Finished ' + (data.name || 'tool'));
+      body = '<span class="rab-applied">' + escapeHtml(summary) + '</span>';
+      if (data.result) {
+        body += '<pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' +
+          escapeHtml(String(data.result).slice(0, 500)) + '</pre>';
+      }
+      if (/applied|written/i.test(summary)) loadTree();
     } else if (event === 'delta' || event === 'iteration') {
       body = data.content || '';
       if (data.token) return '<span class="rab-token-delta">' + escapeHtml(body) + '</span>';
+      body = escapeHtml(body);
     } else if (event === 'complete' || event === 'done' || event === 'finished') {
-      body = data.content || (data.status ? 'Status: ' + data.status : 'Done.');
+      body = escapeHtml(data.content || (data.status ? 'Status: ' + data.status : 'Done.'));
+      if (data.applied_files?.length) {
+        body += '<div class="rab-applied" style="margin-top:0.4rem">Files: ' +
+          data.applied_files.map(f => escapeHtml(f.path) + ' (' + escapeHtml(f.status) + ')').join(', ') + '</div>';
+        loadTree();
+      }
       if (data.pending_changes?.length) refreshChanges(data.pending_changes);
       if (data.compare_url || data.pr_url) body += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
     } else if (event === 'pr_ready') {
       body = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' + (data.branch || 'compare') + '</a>';
-    } else if (event === 'error') body = data.error;
-    return '<div class="rab-event"><span class="rab-event-tag ' + (tags[event] || 'rab-tag-error') + '">' + event + '</span><div class="rab-event-body">' + body + '</div></div>';
+    } else if (event === 'error') {
+      body = escapeHtml(data.error || 'Unknown error');
+    } else {
+      body = escapeHtml(typeof data === 'string' ? data : JSON.stringify(data));
+    }
+    return '<div class="rab-event' + extraClass + '"><span class="rab-event-tag ' + (tags[event] || 'rab-tag-error') + '">' +
+      event + '</span><div class="rab-event-body">' + body + '</div></div>';
   }
 
   function escapeHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function appendEvent(event, data) {
+    const empty = streamEl.querySelector('.rab-empty-chat');
+    if (empty) empty.remove();
+    const html = formatEvent(event, data);
+    if (event === 'delta' && data.token) {
+      streamEl.insertAdjacentHTML('beforeend', html);
+    } else {
+      streamEl.insertAdjacentHTML('beforeend', html);
+    }
+    streamEl.scrollTop = streamEl.scrollHeight;
   }
 
   async function consumeSse(res, onChunk) {
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    if (!res.body) throw new Error('No response stream');
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -171,97 +238,103 @@
   async function runAgent(e) {
     e?.preventDefault();
     if (running) return;
-    const prompt = document.getElementById('rab-prompt').value.trim();
+    const prompt = promptEl?.value.trim();
     if (!prompt) return;
     const mode = document.getElementById('rab-mode')?.value || 'stream';
 
+    appendEvent('user', { content: prompt });
+    if (promptEl) promptEl.value = '';
+
     if (mode === 'queue') {
+      setLive('Queueing task…');
       const res = await fetch(base + '/tasks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
       });
       const data = await res.json();
-      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', { content: 'Queued task ' + data.id, status: data.status }));
+      appendEvent('complete', { content: 'Queued task ' + data.id, status: data.status });
+      setLive(null);
       watchTask(data.id);
       loadTasks();
       return;
     }
 
-    if (mode === 'build' || mode === 'composer') {
-      running = true;
-      runBtn.disabled = true;
-      statusEl.textContent = mode === 'composer' ? 'Composing…' : 'Building…';
-      streamEl.innerHTML = '';
-      const res = await fetch(base + '/build/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify({
-          task: prompt,
-          skill: document.getElementById('rab-skill').value || undefined,
-          verify: true,
-          composer: mode === 'composer'
-        })
-      });
-      await consumeSse(res, (event, data) => {
-        const html = formatEvent(event, data);
-        if (event === 'delta' && data.token) {
-          streamEl.insertAdjacentHTML('beforeend', html);
-        } else {
-          streamEl.insertAdjacentHTML('beforeend', html);
-        }
-        streamEl.scrollTop = streamEl.scrollHeight;
-      });
-      running = false;
-      runBtn.disabled = false;
-      statusEl.textContent = '';
-      loadTasks();
-      return;
-    }
-
-    if (!canStream) {
-      streamEl.innerHTML = formatEvent('error', { error: 'Streaming requires Pro+ plan. Using sync /chat…' });
-      const res = await fetch(base + '/ai/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt, skill: document.getElementById('rab-skill').value || undefined, session_id: sessionId })
-      });
-      const data = await res.json();
-      if (data.session?.id) { sessionId = data.session.id; localStorage.setItem('rab-session-id', sessionId); }
-      streamEl.insertAdjacentHTML('beforeend', formatEvent('complete', data));
-      return;
-    }
-
     running = true;
-    runBtn.disabled = true;
-    statusEl.innerHTML = '<span class="rab-pulse"></span> Running';
-    streamEl.innerHTML = '';
-
-    const body = {
-      message: prompt,
-      skill: document.getElementById('rab-skill').value || undefined,
-      provider: document.getElementById('rab-provider')?.value,
-      session_id: sessionId
-    };
+    if (runBtn) runBtn.disabled = true;
+    setLive(mode === 'composer' ? 'Composing plan…' : (mode === 'build' ? 'Building…' : 'Starting agent…'));
 
     try {
+      if (mode === 'build' || mode === 'composer') {
+        const res = await fetch(base + '/build/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+          body: JSON.stringify({
+            task: prompt,
+            skill: document.getElementById('rab-skill').value || undefined,
+            verify: true,
+            composer: mode === 'composer'
+          })
+        });
+        await consumeSse(res, appendEvent);
+        loadTasks();
+        return;
+      }
+
+      if (!canStream) {
+        appendEvent('status', { message: 'Streaming unavailable — using sync chat…' });
+        const res = await fetch(base + '/ai/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: prompt,
+            skill: document.getElementById('rab-skill').value || undefined,
+            session_id: sessionId,
+            provider: document.getElementById('rab-provider')?.value
+          })
+        });
+        const data = await res.json();
+        if (data.error) appendEvent('error', { error: data.error });
+        else {
+          if (data.session?.id) { sessionId = data.session.id; localStorage.setItem('rab-session-id', sessionId); }
+          appendEvent('done', data);
+        }
+        return;
+      }
+
       const res = await fetch(base + '/ai/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          message: prompt,
+          skill: document.getElementById('rab-skill').value || undefined,
+          provider: document.getElementById('rab-provider')?.value,
+          session_id: sessionId
+        })
       });
-      await consumeSse(res, (event, data) => {
-        streamEl.insertAdjacentHTML('beforeend', formatEvent(event, data));
-        streamEl.scrollTop = streamEl.scrollHeight;
-      });
+      await consumeSse(res, appendEvent);
     } catch (err) {
-      streamEl.insertAdjacentHTML('beforeend', formatEvent('error', { error: err.message }));
+      appendEvent('error', { error: err.message });
     } finally {
       running = false;
-      runBtn.disabled = false;
-      statusEl.textContent = '';
+      if (runBtn) runBtn.disabled = false;
+      setLive(null);
     }
   }
 
   document.getElementById('rab-prompt-form')?.addEventListener('submit', runAgent);
+
+  // Enter to send, Shift+Enter for newline
+  promptEl?.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      runAgent(ev);
+    }
+  });
+
+  // Auto-grow textarea
+  promptEl?.addEventListener('input', () => {
+    promptEl.style.height = 'auto';
+    promptEl.style.height = Math.min(promptEl.scrollHeight, 128) + 'px';
+  });
 
   // Changes
   function refreshChanges(changes) {

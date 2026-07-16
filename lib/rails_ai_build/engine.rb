@@ -16,24 +16,20 @@ module RailsAiBuild
       RailsAiBuild::Providers.register_defaults
     end
 
-    # Auto-heal bad/duplicate migration versions (e.g. padded "000…2024") in dev/test
-    # so DuplicateMigrationVersionError does not brick /rails_ai_build.
+    # Auto-heal host blockers (migrations, etc.) in local envs before the IDE boots.
     initializer "rails_ai_build.heal_migrations", before: :load_config_initializers do
       next unless defined?(Rails)
       next unless rails_env_local?
 
-      report = RailsAiBuild::Migrations::Intelligence.diagnose
-      next if report[:healthy]
-
-      healed = RailsAiBuild::Migrations::Intelligence.auto_heal!(dry_run: false)
-      if healed[:healed].any?
+      result = RailsAiBuild::Intelligence.prepare!
+      if result[:actions].any?
         Rails.logger.warn(
-          "[rails_ai_build] Auto-healed #{healed[:healed].size} migration(s): " \
-          "#{healed[:healed].map { |h| "#{h[:from]} → #{h[:to]}" }.join(', ')}"
+          "[rails_ai_build] Intelligence healed #{result[:actions].size} issue(s): " \
+          "#{result[:actions].pluck(:type).join(', ')}"
         )
       end
     rescue StandardError => e
-      Rails.logger.warn("[rails_ai_build] Migration heal skipped: #{e.message}")
+      Rails.logger.warn("[rails_ai_build] Intelligence prepare skipped: #{e.message}")
     end
 
     initializer "rails_ai_build.mount_routes" do |app|
