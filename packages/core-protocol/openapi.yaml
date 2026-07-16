@@ -172,6 +172,9 @@ paths:
   /settings/bootstrap:
     post:
       summary: Issue settings token once (store as X-Rails-Ai-Build-Token)
+      description: |
+        Disabled in production unless `RAILS_AI_BUILD_ALLOW_BOOTSTRAP=1`.
+        Concurrent bootstraps are atomic — only the first claim wins.
       responses:
         "200":
           description: Token issued
@@ -183,7 +186,7 @@ paths:
                   settings_token: { type: string }
                   issued: { type: boolean }
         "422":
-          description: Token already issued
+          description: Token already issued / bootstrap locked
 
   /support/doctor:
     get:

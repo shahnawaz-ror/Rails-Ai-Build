@@ -32,4 +32,18 @@ RSpec.describe RailsAiBuild::Security::UrlGuard do
       described_class.validate!("file:///etc/passwd")
     end.to raise_error(RailsAiBuild::ConfigurationError, /scheme/)
   end
+
+  it "blocks IPv4-mapped loopback when localhost is disallowed" do
+    RailsAiBuild.configuration.ssrf_allow_localhost = false
+    expect do
+      described_class.validate!("http://[::ffff:127.0.0.1]/")
+    end.to raise_error(RailsAiBuild::ConfigurationError, /Localhost|Private|Blocked/i)
+  end
+
+  it "blocks CGNAT shared address space by default" do
+    RailsAiBuild.configuration.ssrf_allow_private = false
+    expect do
+      described_class.validate!("http://100.64.0.1/")
+    end.to raise_error(RailsAiBuild::ConfigurationError, /Private/)
+  end
 end

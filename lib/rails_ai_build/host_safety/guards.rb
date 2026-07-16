@@ -9,12 +9,31 @@ module RailsAiBuild
 
       module_function
 
+      MAX_WRITE_BYTES = 2_000_000
+
       def validate_write!(path, content)
         rel = normalize(path)
+        validate_size!(rel, content)
+        validate_binary!(rel, content)
         validate_ruby_syntax!(rel, content)
         validate_migration!(rel, content)
         validate_gemfile!(rel, content)
         true
+      end
+
+      def validate_size!(path, content)
+        bytes = content.to_s.bytesize
+        return true if bytes <= MAX_WRITE_BYTES
+
+        raise ToolError, "Write rejected for #{path}: content exceeds #{MAX_WRITE_BYTES} bytes"
+      end
+
+      def validate_binary!(path, content)
+        raw = content.to_s
+        return true if raw.empty?
+        return true unless raw.include?("\x00")
+
+        raise ToolError, "Write rejected for #{path}: null bytes (binary content not allowed)"
       end
 
       def validate_ruby_syntax!(path, content)

@@ -34,7 +34,8 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 | D | HTTP client + Stripe idempotency P1 | done |
 | E | Gemspec/packaging + health + release notes | done |
 | F | Circuit breaker + EventBus caps + activation singleton | done |
-| G | Edge-case specs + merge to main | in progress |
+| G | SSRF mapped-IP/CGNAT, Discord replay, write/memory/queue edges | done |
+| H | Merge to main + release notes | in progress |
 
 ## Acceptance (release gate)
 
@@ -50,8 +51,11 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 - [x] Per-host circuit breaker on outbound HTTP  
 - [x] EventBus capped + unsubscribe + clear on finished tasks  
 - [x] Activation singleton unique guard  
+- [x] SSRF blocks IPv4-mapped loopback + CGNAT  
+- [x] Discord 5m replay window  
+- [x] Write/diff/memory/queue caps; Changes#show content opt-in  
 - [x] `gem build` + require smoke passes  
-- [ ] Full RSpec green (350+ examples)  
+- [x] Full RSpec green (344 examples, 0 failures)  
 
 ## Multi-worker note
 

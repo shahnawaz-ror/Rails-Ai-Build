@@ -18,6 +18,14 @@
 - **EventBus** mutex, buffer caps, unsubscribe, clear on finished tasks
 - **Activation singleton_key** unique guard (migration + upgrade generator)
 - Cloud soft-fail wraps timeouts/5xx/circuit-open as `CloudUnavailableError` + BYOK CTA
+- **SSRF** — block IPv4-mapped loopback + CGNAT `100.64.0.0/10`
+- **Discord replay window** (5m) matching Slack
+- **Write/diff caps** — null-byte reject, existing-file size check, no duplicated bodies in Diff
+- **Task queue** max size + SSE unsubscribe; EventBus listener cap
+- **Memory::Store** key/value/file caps + atomic write
+- **Bootstrap** atomic token claim; production rejects query/body settings tokens
+- **Changes#show** omits raw file bodies unless `include_content=true`
+- **Seats** idle TTL eviction (24h default)
 - Tighter gemspec runtime file allowlist
 - See [RELEASE_HARDENING.md](./docs/RELEASE_HARDENING.md)
 

@@ -20,7 +20,7 @@ module RailsAiBuild
           return { success: false, error: e.message, path: args["path"], syntax_rejected: true }
         end
 
-        old_content = path.file? ? path.read : ""
+        old_content = read_existing_capped(path)
 
         Audit.log(
           action: "write_file",
@@ -36,6 +36,22 @@ module RailsAiBuild
           session_id: HostSafety.current_session_id,
           source: "write_file"
         )
+      end
+
+      private
+
+      def read_existing_capped(path)
+        return "" unless path.file?
+
+        max = Changes::Store::MAX_CONTENT_BYTES
+        size = path.size
+        if size > max
+          raise SecurityError,
+                "Existing file too large to diff safely (#{size} bytes > #{max}). " \
+                "Refuse write to avoid OOM — split the change or edit offline."
+        end
+
+        path.read
       end
     end
   end

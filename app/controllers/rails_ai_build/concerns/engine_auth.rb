@@ -13,7 +13,7 @@ module RailsAiBuild
         return unless RailsAiBuild.configuration.require_engine_token
         return if engine_auth_exempt?
 
-        token = request.headers["X-Rails-Ai-Build-Token"].presence || params[:settings_token]
+        token = request_engine_token
         return if Activation.bypass_settings_auth?
         return if Activation.valid_settings_token?(token)
         return if controller_name == "settings" && action_name == "bootstrap"
@@ -23,6 +23,21 @@ module RailsAiBuild
           code: "engine_auth_required",
           hint: "Set X-Rails-Ai-Build-Token (from POST /settings/bootstrap) or disable config.require_engine_token"
         }, status: :unauthorized
+      end
+
+      def request_engine_token
+        header = request.headers["X-Rails-Ai-Build-Token"].presence
+        return header if header
+        return nil if production_like_auth?
+
+        params[:settings_token]
+      end
+
+      def production_like_auth?
+        return true if ENV["RAILS_ENV"].to_s == "production"
+        return true if defined?(Rails) && Rails.env.production?
+
+        false
       end
 
       def engine_auth_exempt?

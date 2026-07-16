@@ -11,10 +11,12 @@ module RailsAiBuild
       change = Changes::Store.find(params[:id])
       return render json: { error: "Not found" }, status: :not_found unless change
 
-      render json: change.to_h.merge(
-        old_content: change.old_content,
-        new_content: change.new_content
-      )
+      payload = change.to_h
+      # Full file bodies only when explicitly requested — avoids cross-seat source leaks by default.
+      if ActiveModel::Type::Boolean.new.cast(params[:include_content])
+        payload = payload.merge(old_content: change.old_content, new_content: change.new_content)
+      end
+      render json: payload
     end
 
     def apply

@@ -165,15 +165,18 @@ module RailsAiBuild
       end
 
       ensure_store!
-      row = record
-      if row.settings_token_digest.present?
+      token = SecureRandom.hex(24)
+      digest = digest_token(token)
+
+      # Atomic claim: only the first concurrent bootstrap wins.
+      updated = ActivationRecord.where(id: record.id)
+                                .where("settings_token_digest IS NULL OR settings_token_digest = ''")
+                                .update_all(settings_token_digest: digest, updated_at: Time.now.utc)
+      if updated.to_i.zero?
         raise SecurityError, "Settings token already issued. Set RAILS_AI_BUILD_SETTINGS_TOKEN or rotate via rake."
       end
 
-      token = SecureRandom.hex(24)
-      row.settings_token_digest = digest_token(token)
-      row.save!
-      RailsAiBuild.configuration.settings_token_digest = row.settings_token_digest
+      RailsAiBuild.configuration.settings_token_digest = digest
       token
     end
 

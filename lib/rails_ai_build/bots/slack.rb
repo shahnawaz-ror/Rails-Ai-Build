@@ -67,6 +67,8 @@ module RailsAiBuild
     end
 
     class Discord
+      REPLAY_WINDOW = 60 * 5
+
       class << self
         def handle(payload)
           Plans.check!(:slack_bot)
@@ -96,6 +98,8 @@ module RailsAiBuild
           end
 
           raise SecurityError, "Missing Discord signature headers" if signature.blank? || timestamp.blank?
+          raise SecurityError, "Discord timestamp must be numeric" unless timestamp.to_s.match?(/\A\d+\z/)
+          raise SecurityError, "Discord timestamp outside replay window" if (Time.now.to_i - timestamp.to_i).abs > REPLAY_WINDOW
 
           begin
             require "ed25519"
@@ -106,6 +110,8 @@ module RailsAiBuild
             raise SecurityError, "Install ed25519 gem for Discord signature verification" if production_like?
 
             true
+          rescue SecurityError
+            raise
           rescue StandardError
             raise SecurityError, "Invalid Discord signature"
           end

@@ -40,6 +40,7 @@ module RailsAiBuild
         def record(path:, old_content:, new_content:, workspace:, session_id: nil, source: "write_file")
           Plans.check!(:diff_preview) if RailsAiBuild.configuration.diff_preview
           enforce_content_cap!(new_content)
+          enforce_content_cap!(old_content)
 
           session_id ||= HostSafety.current_session_id
           begin_session!(session_id) if session_id
@@ -88,6 +89,8 @@ module RailsAiBuild
 
         # Track files already written by rails generate (no second write).
         def track_external(path:, content:, workspace:, session_id: nil, source: "generator", old_content: "")
+          enforce_content_cap!(content)
+          enforce_content_cap!(old_content)
           session_id ||= HostSafety.current_session_id
           begin_session!(session_id) if session_id
           change = PendingChange.new(
@@ -227,7 +230,9 @@ module RailsAiBuild
           dropped.each do |change|
             next unless change.session_id
 
-            sessions[change.session_id.to_s]&.delete(change.id)
+            key = change.session_id.to_s
+            sessions[key]&.delete(change.id)
+            sessions.delete(key) if sessions[key]&.empty?
           end
         end
 

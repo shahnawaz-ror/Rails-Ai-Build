@@ -9,6 +9,7 @@ module RailsAiBuild
     class EventBus
       MAX_EVENTS_PER_TASK = 500
       MAX_TASKS = 2_000
+      MAX_LISTENERS_PER_TASK = 32
 
       class << self
         def emit(task_id, event, data)
@@ -33,7 +34,10 @@ module RailsAiBuild
           raise ArgumentError, "block required" unless block
 
           mutex.synchronize do
-            listeners(task_id) << block
+            list = listeners(task_id)
+            raise ConfigurationError, "Too many SSE listeners for task #{task_id}" if list.size >= MAX_LISTENERS_PER_TASK
+
+            list << block
             buffer!(task_id).each { |entry| safe_call(block, entry[:event].to_sym, entry[:data]) }
           end
           -> { unsubscribe(task_id, block) }

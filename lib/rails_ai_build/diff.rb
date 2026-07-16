@@ -8,10 +8,9 @@ module RailsAiBuild
       old_lines = old_content.to_s.lines(chomp: true)
       new_lines = new_content.to_s.lines(chomp: true)
 
+      # Do not embed full file bodies in the diff hash — PendingChange already holds them.
       {
         path: path,
-        old_content: old_content.to_s,
-        new_content: new_content.to_s,
         unified: unified_diff(old_lines, new_lines, path),
         stats: {
           additions: count_additions(old_lines, new_lines),

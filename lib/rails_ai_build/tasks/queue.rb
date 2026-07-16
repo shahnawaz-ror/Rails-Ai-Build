@@ -35,6 +35,7 @@ module RailsAiBuild
       end
 
       STATUSES = %i[queued running success failed cancelled].freeze
+      MAX_TASKS = 2_000
 
       class << self
         def enqueue(description, skill: nil, verify: nil, provider: nil, model: nil)
@@ -47,9 +48,14 @@ module RailsAiBuild
             verify: verify,
             created_at: Time.zone.now
           )
-          store[task.id] = task
-          metadata(task.id)[:provider] = provider
-          metadata(task.id)[:model] = model
+          cleared = []
+          mutex.synchronize do
+            cleared = evict_overflow! if store.size >= MAX_TASKS
+            store[task.id] = task
+            metadata(task.id)[:provider] = provider
+            metadata(task.id)[:model] = model
+          end
+          Array(cleared).each { |id| EventBus.clear(id) }
           assign_branch!(task)
           EventBus.emit(task.id, :queued, { id: task.id, description: task.description, branch: task.branch })
           if RailsAiBuild.configuration.sync_tasks
@@ -61,15 +67,15 @@ module RailsAiBuild
         end
 
         def all
-          store.values.sort_by(&:created_at).reverse.map(&:to_h)
+          mutex.synchronize { store.values.sort_by(&:created_at).reverse.map(&:to_h) }
         end
 
         def find(id)
-          store[id]
+          mutex.synchronize { store[id] }
         end
 
         def cancel(id)
-          task = store[id]
+          task = mutex.synchronize { store[id] }
           return nil unless task
           return task if task.status == :running
 
@@ -117,6 +123,21 @@ module RailsAiBuild
           Integrations::Git.create_branch(task.branch)
         rescue StandardError
           task.branch = nil
+        end
+
+        def evict_overflow!
+          cleared = []
+          finished = store.select { |_, t| %i[success failed cancelled].include?(t.status) }
+          finished.each_key do |id|
+            store.delete(id)
+            @meta&.delete(id)
+            cleared << id
+          end
+          if store.size >= MAX_TASKS
+            raise ConfigurationError, "Task queue full (#{MAX_TASKS}). Clear finished tasks or raise capacity."
+          end
+
+          cleared
         end
 
         def store

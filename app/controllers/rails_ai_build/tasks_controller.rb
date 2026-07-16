@@ -10,14 +10,14 @@ module RailsAiBuild
 
     def show
       task = Tasks::Queue.find(params.expect(:id))
-      return render json: { error: 'Not found' }, status: :not_found unless task
+      return render json: { error: "Not found" }, status: :not_found unless task
 
       render json: task.to_h
     end
 
     def create
       body = params.permit(:task, :skill, :verify, :provider, :model)
-      Audit.current_user = request.headers['X-User-Id'] || 'api'
+      Audit.current_user = request.headers["X-User-Id"] || "api"
 
       task = Tasks::Queue.enqueue(
         body[:task],
@@ -34,28 +34,32 @@ module RailsAiBuild
 
     def destroy
       task = Tasks::Queue.cancel(params[:id])
-      return render json: { error: 'Not found' }, status: :not_found unless task
+      return render json: { error: "Not found" }, status: :not_found unless task
 
       render json: task.to_h
     end
 
     def stream
       task = Tasks::Queue.find(params.expect(:id))
-      return render json: { error: 'Not found' }, status: :not_found unless task
+      return render json: { error: "Not found" }, status: :not_found unless task
 
-      response.headers['Content-Type'] = 'text/event-stream'
-      response.headers['Cache-Control'] = 'no-cache'
-      response.headers['X-Accel-Buffering'] = 'no'
+      response.headers["Content-Type"] = "text/event-stream"
+      response.headers["Cache-Control"] = "no-cache"
+      response.headers["X-Accel-Buffering"] = "no"
 
-      Tasks::EventBus.subscribe(task.id) do |event, data|
-        response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
+      unsub = nil
+      begin
+        unsub = Tasks::EventBus.subscribe(task.id) do |event, data|
+          response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
+        end
+
+        response.stream.write(Streaming::Sse.format_sse(event: :snapshot, data: task.to_h)) if task.status != :running
+      rescue StandardError => e
+        response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message }))
+      ensure
+        unsub&.call
+        response.stream.close
       end
-
-      response.stream.write(Streaming::Sse.format_sse(event: :snapshot, data: task.to_h)) if task.status != :running
-    rescue StandardError => e
-      response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message }))
-    ensure
-      response.stream.close
     end
   end
 end

@@ -7,6 +7,8 @@ module RailsAiBuild
     # Lightweight seat claims for Team/Enterprise licenses.
     # Process-local with mutex; for multi-worker deploy set seat_limit via Redis/DB later.
     module Seats
+      DEFAULT_TTL_SECONDS = 86_400 # 24h idle release
+
       class << self
         def limit
           configured = RailsAiBuild.configuration.seat_limit
@@ -20,11 +22,15 @@ module RailsAiBuild
         end
 
         def active_count
-          mutex.synchronize { claims.size }
+          mutex.synchronize do
+            expire_stale!
+            claims.size
+          end
         end
 
         def status
           mutex.synchronize do
+            expire_stale!
             {
               enabled: enabled?,
               limit: limit,
@@ -39,8 +45,12 @@ module RailsAiBuild
           return true unless enabled?
 
           mutex.synchronize do
+            expire_stale!
             uid = normalize(user_id)
-            return true if claims.key?(uid)
+            if claims.key?(uid)
+              claims[uid] = Time.now
+              return true
+            end
 
             if claims.size >= limit
               raise PlanRequiredError.new(
@@ -80,6 +90,14 @@ module RailsAiBuild
 
         def normalize(user_id)
           user_id.to_s.strip.presence || "anonymous"
+        end
+
+        def expire_stale!
+          ttl = ENV.fetch("RAILS_AI_BUILD_SEAT_TTL", DEFAULT_TTL_SECONDS).to_i
+          return if ttl <= 0
+
+          cutoff = Time.now - ttl
+          claims.delete_if { |_uid, claimed_at| claimed_at < cutoff }
         end
       end
     end
