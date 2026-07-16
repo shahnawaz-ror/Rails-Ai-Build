@@ -89,6 +89,8 @@ require "rails_ai_build/trust/app_sandbox"
 require "rails_ai_build/trust/runner"
 require "rails_ai_build/trust/report"
 
+require "rails_ai_build/migrations/intelligence"
+
 # Load the Rails engine so host apps get routes, rake tasks, and generators.
 require "rails_ai_build/engine" if defined?(Rails::Engine)
 

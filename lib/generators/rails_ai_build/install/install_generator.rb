@@ -30,6 +30,17 @@ module RailsAiBuild
         template 'initializer.rb', 'config/initializers/rails_ai_build.rb'
       end
 
+      def heal_migration_collisions
+        report = RailsAiBuild::Migrations::Intelligence.auto_heal!(
+          migrate_dir: File.expand_path('db/migrate', destination_root)
+        )
+        report[:healed].each do |h|
+          say_status :heal, "#{h[:from]} → #{h[:to]} (#{h[:reason]})", :yellow
+        end
+      rescue StandardError => e
+        say_status :warn, "Migration heal skipped: #{e.message}", :yellow
+      end
+
       def show_readme
         readme 'README' if behavior == :invoke
       end

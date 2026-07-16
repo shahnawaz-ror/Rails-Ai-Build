@@ -55,14 +55,25 @@ Metrics/ClassLength:
     - "lib/rails_ai_build/tasks/queue.rb"
     - "lib/rails_ai_build/tasks/runtime.rb"
     - "lib/rails_ai_build/models/anthropic_provider.rb"
+    - "lib/rails_ai_build/support.rb"
 
 Metrics/CyclomaticComplexity:
   Exclude:
     - "lib/rails_ai_build/workspace/browser.rb"
+    - "lib/rails_ai_build/migrations/intelligence.rb"
 
 Metrics/PerceivedComplexity:
   Exclude:
     - "lib/rails_ai_build/workspace/browser.rb"
+    - "lib/rails_ai_build/migrations/intelligence.rb"
+
+Metrics/MethodLength:
+  Exclude:
+    - "lib/rails_ai_build/migrations/intelligence.rb"
+
+Rails/EnvLocal:
+  Exclude:
+    - "lib/rails_ai_build/engine.rb"
 
 Style/MultilineBlockChain:
   Exclude:

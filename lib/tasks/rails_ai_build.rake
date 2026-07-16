@@ -6,9 +6,39 @@ require 'fileutils'
 
 # rubocop:disable Metrics/BlockLength
 namespace :rails_ai_build do
+  desc "Detect and auto-fix duplicate/short migration versions (e.g. 2024)"
+  task fix_migrations: :environment do
+    puts "\n🧠 Migration intelligence\n#{'=' * 40}"
+    before = RailsAiBuild::Migrations::Intelligence.diagnose
+    puts before[:message]
+    unless before[:healthy]
+      puts "Duplicates: #{before[:duplicates].inspect}" unless before[:duplicates].empty?
+      puts "Short versions: #{before[:short_versions].inspect}" unless before[:short_versions].empty?
+    end
+
+    result = RailsAiBuild::Migrations::Intelligence.auto_heal!(dry_run: ENV['DRY_RUN'] == '1')
+    if result[:healed].empty?
+      puts "✅ Nothing to heal"
+    else
+      result[:healed].each do |h|
+        puts "  #{ENV['DRY_RUN'] == '1' ? 'Would rename' : 'Renamed'}: #{h[:from]} → #{h[:to]} (#{h[:reason]})"
+      end
+      puts "\n✅ Done. Run: rails db:migrate"
+    end
+  end
+
   desc "One-command setup: configure, verify API keys, run demo"
   task setup: :environment do
     puts "\n🚀 Rails AI Build Setup\n#{'=' * 40}\n"
+
+    # Step 0: Heal migration collisions that brick the IDE
+    mig = RailsAiBuild::Migrations::Intelligence.diagnose
+    unless mig[:healthy]
+      puts "🧠 Fixing migration version conflicts…"
+      healed = RailsAiBuild::Migrations::Intelligence.auto_heal!
+      healed[:healed].each { |h| puts "   Renamed #{h[:from]} → #{h[:to]}" }
+      puts "✅ Migrations healed\n"
+    end
 
     # Step 1: Check API keys
     openai_key = ENV["OPENAI_API_KEY"]

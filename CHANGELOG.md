@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.4] - 2026-07-16
+
+### Added — Migration intelligence (auto-heal DuplicateMigrationVersionError)
+- **`Migrations::Intelligence`** detects duplicate / short versions (e.g. padded `000…2024` → `2024`)
+- **Auto-heal on boot** in development/test — renames bad `rails_ai_build` migrations to unique UTC timestamps
+- **`rails rails_ai_build:fix_migrations`** — explicit repair (supports `DRY_RUN=1`)
+- Doctor + install + setup all run migration intelligence so the IDE does not brick host apps
+
 ## [2.2.3] - 2026-07-16
 
 ### Fixed — Free plan streaming + auto-apply + migration versions

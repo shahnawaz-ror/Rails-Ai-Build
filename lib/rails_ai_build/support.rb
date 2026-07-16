@@ -13,6 +13,7 @@ module RailsAiBuild
             check_workspace(workspace),
             check_rails_version,
             check_gemfile(workspace),
+            check_migrations(workspace),
             check_providers,
             check_tools(workspace),
             check_plan_features,
@@ -96,6 +97,17 @@ module RailsAiBuild
           ok("tools", "#{tools.size} tools available: #{tools.map { |t| t[:name] }.join(', ')}")
         rescue StandardError => e
           error("tools", e.message)
+        end
+
+        def check_migrations(workspace)
+          dir = workspace.join('db/migrate')
+          report = Migrations::Intelligence.diagnose(migrate_dir: dir)
+          if report[:healthy]
+            ok('migrations', report[:message])
+          else
+            error('migrations', report[:message],
+                  'rails rails_ai_build:fix_migrations')
+          end
         end
 
         def check_plan_features
