@@ -19,9 +19,18 @@ module RailsAiBuild
         @metadata = metadata
       end
 
+      MAX_MESSAGES = 200
+      MAX_MESSAGE_BYTES = 100_000
+
       def add_message(message)
+        content = message.respond_to?(:content) ? message.content.to_s : message.to_s
+        if content.bytesize > MAX_MESSAGE_BYTES
+          raise AgentError, "Session message exceeds #{MAX_MESSAGE_BYTES} bytes"
+        end
+
         @messages << message
-        auto_title! if @title.nil? && message.role == :user
+        @messages.shift while @messages.size > MAX_MESSAGES
+        auto_title! if @title.nil? && message.respond_to?(:role) && message.role == :user
       end
 
       def to_h

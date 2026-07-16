@@ -48,6 +48,9 @@ module RailsAiBuild
             verify: verify,
             created_at: Time.zone.now
           )
+          # Opportunistically drop finished tasks so long-running mounts do not retain forever.
+          clear_finished! if mutex.synchronize { store.size > (MAX_TASKS / 2) }
+
           cleared = []
           mutex.synchronize do
             cleared = evict_overflow! if store.size >= MAX_TASKS

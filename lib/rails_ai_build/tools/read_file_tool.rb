@@ -13,6 +13,9 @@ module RailsAiBuild
                  },
                  required: %w[path]
 
+      MAX_FILE_BYTES = 2_000_000
+      DEFAULT_LINE_LIMIT = 2_000
+
       def execute(args)
         path = resolve_path(args["path"])
 
@@ -20,17 +23,27 @@ module RailsAiBuild
           return { error: "File not found: #{args['path']}" }
         end
 
+        if path.size > MAX_FILE_BYTES
+          return {
+            error: "File too large to read (#{path.size} bytes > #{MAX_FILE_BYTES})",
+            hint: "Use offset/limit on a smaller slice, or grep for the relevant section."
+          }
+        end
+
         lines = path.read.lines
         offset = [(args["offset"] || 1).to_i - 1, 0].max
         limit = args["limit"]&.to_i
+        limit = DEFAULT_LINE_LIMIT if limit.nil? || limit <= 0
+        limit = [limit, DEFAULT_LINE_LIMIT].min
 
-        selected = limit ? lines[offset, limit] : lines[offset..]
+        selected = lines[offset, limit] || []
         numbered = selected.each_with_index.map { |line, i| "#{offset + i + 1}|#{line.chomp}" }
 
         {
           path: args["path"],
           content: numbered.join("\n"),
-          total_lines: lines.size
+          total_lines: lines.size,
+          truncated: (offset + selected.size) < lines.size
         }
       end
     end

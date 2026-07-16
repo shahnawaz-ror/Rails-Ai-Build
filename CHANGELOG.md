@@ -26,6 +26,9 @@
 - **Bootstrap** atomic token claim; production rejects query/body settings tokens
 - **Changes#show** omits raw file bodies unless `include_content=true`
 - **Seats** idle TTL eviction (24h default)
+- **AI Session** message count/byte caps; **read_file** size + default line limit
+- **RateLimit** response headers (`X-RateLimit-*`, `Retry-After`)
+- Doctor warns when `ssrf_allow_localhost` is on in production
 - Tighter gemspec runtime file allowlist
 - See [RELEASE_HARDENING.md](./docs/RELEASE_HARDENING.md)
 

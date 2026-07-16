@@ -35,7 +35,8 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 | E | Gemspec/packaging + health + release notes | done |
 | F | Circuit breaker + EventBus caps + activation singleton | done |
 | G | SSRF mapped-IP/CGNAT, Discord replay, write/memory/queue edges | done |
-| H | Merge to main + release notes | in progress |
+| H | Merge to main + release notes | done |
+| I | Session/read_file caps + rate-limit headers | in progress |
 
 ## Acceptance (release gate)
 

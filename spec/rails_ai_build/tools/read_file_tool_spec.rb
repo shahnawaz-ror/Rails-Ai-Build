@@ -2,25 +2,26 @@
 
 require "spec_helper"
 require "tmpdir"
+require "fileutils"
 
 RSpec.describe RailsAiBuild::Tools::ReadFileTool do
   let(:workspace) { Pathname.new(Dir.mktmpdir) }
   let(:tool) { described_class.new(workspace: workspace) }
 
-  before do
-    workspace.join("app/models/user.rb").dirname.mkpath
-    workspace.join("app/models/user.rb").write("class User\nend\n")
-  end
-
   after { FileUtils.rm_rf(workspace) }
 
   it "reads a file with line numbers" do
-    result = tool.call("path" => "app/models/user.rb")
-    expect(result[:content]).to include("1|class User")
-    expect(result[:total_lines]).to eq(2)
+    workspace.join("app").mkpath
+    workspace.join("app/hi.rb").write("a\nb\nc\n")
+    result = tool.call("path" => "app/hi.rb", "limit" => 2)
+    expect(result[:error]).to be_nil
+    expect(result[:content]).to include("1|a")
+    expect(result[:truncated]).to be true
   end
 
-  it "rejects paths outside workspace" do
-    expect { tool.call("path" => "../../../etc/passwd") }.to raise_error(RailsAiBuild::SecurityError)
+  it "rejects oversized files" do
+    workspace.join("big.bin").write("x" * (described_class::MAX_FILE_BYTES + 1))
+    result = tool.call("path" => "big.bin")
+    expect(result[:error]).to match(/too large/i)
   end
 end

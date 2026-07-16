@@ -12,7 +12,7 @@ module RailsAiBuild
 
     class << self
       def check!(key)
-        return true if disabled?
+        return limit if disabled?
 
         mutex.synchronize do
           now = Time.now.to_i
@@ -27,7 +27,7 @@ module RailsAiBuild
 
           bucket << now
           evict_keys! if buckets.size > MAX_KEYS
-          true
+          [limit - bucket.size, 0].max
         end
       end
 
@@ -37,6 +37,14 @@ module RailsAiBuild
 
       def disabled?
         ENV["RAILS_AI_BUILD_RATE_LIMIT"].to_s == "0"
+      end
+
+      def limit
+        ENV.fetch("RAILS_AI_BUILD_RATE_LIMIT", DEFAULT_LIMIT).to_i
+      end
+
+      def window
+        ENV.fetch("RAILS_AI_BUILD_RATE_WINDOW", DEFAULT_WINDOW).to_i
       end
 
       private
@@ -55,14 +63,7 @@ module RailsAiBuild
 
         overflow.times { buckets.shift }
       end
-
-      def limit
-        ENV.fetch("RAILS_AI_BUILD_RATE_LIMIT", DEFAULT_LIMIT).to_i
-      end
-
-      def window
-        ENV.fetch("RAILS_AI_BUILD_RATE_WINDOW", DEFAULT_WINDOW).to_i
-      end
     end
   end
 end
+

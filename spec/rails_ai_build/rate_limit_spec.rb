@@ -15,8 +15,10 @@ RSpec.describe RailsAiBuild::RateLimit do
     described_class.reset!
   end
 
-  it "allows requests under the limit" do
-    3.times { expect(described_class.check!("ip")).to be(true) }
+  it "allows requests under the limit and returns remaining" do
+    expect(described_class.check!("ip")).to eq(2)
+    expect(described_class.check!("ip")).to eq(1)
+    expect(described_class.check!("ip")).to eq(0)
   end
 
   it "raises when limit exceeded" do

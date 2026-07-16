@@ -158,14 +158,22 @@ module RailsAiBuild
         end
 
         def check_ssrf
-          if RailsAiBuild.configuration.ssrf_protection != false
-            ok(
-              "ssrf",
-              "SSRF protection on (localhost=#{RailsAiBuild.configuration.ssrf_allow_localhost != false}, private=#{RailsAiBuild.configuration.ssrf_allow_private == true})"
-            )
-          else
-            warn("ssrf", "SSRF protection disabled", "Set config.ssrf_protection = true")
+          if RailsAiBuild.configuration.ssrf_protection == false
+            return warn("ssrf", "SSRF protection disabled", "Set config.ssrf_protection = true")
           end
+
+          if production_like? && RailsAiBuild.configuration.ssrf_allow_localhost != false
+            return warn(
+              "ssrf",
+              "ssrf_allow_localhost is enabled in production-like env",
+              "Set config.ssrf_allow_localhost = false unless you intentionally call local Ollama"
+            )
+          end
+
+          ok(
+            "ssrf",
+            "SSRF protection on (localhost=#{RailsAiBuild.configuration.ssrf_allow_localhost != false}, private=#{RailsAiBuild.configuration.ssrf_allow_private == true})"
+          )
         end
 
         def check_engine_auth
