@@ -1,21 +1,17 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class SharedAgentsController < ActionController::API
+  class SharedAgentsController < ApplicationController
     def index
       Plans.check!(:shared_agents)
       agents = SharedAgentRecord.published.order(:name)
       render json: { agents: agents }
-    rescue PlanRequiredError => e
-      render json: e.as_json, status: :payment_required
     end
 
     def create
       Plans.check!(:shared_agents)
       agent = SharedAgentRecord.create!(shared_agent_params)
       render json: agent, status: :created
-    rescue PlanRequiredError => e
-      render json: e.as_json, status: :payment_required
     end
 
     def run
@@ -23,8 +19,6 @@ module RailsAiBuild
       agent = SharedAgentRecord.find(params[:id])
       result = agent.to_agent.chat(params[:message])
       render json: result
-    rescue PlanRequiredError => e
-      render json: e.as_json, status: :payment_required
     end
 
     private

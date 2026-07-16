@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class CommunityPacksController < ActionController::API
+  class CommunityPacksController < ApplicationController
     def index
       builtin = Marketplace::Registry.all
       community = if defined?(CommunityPackRecord)
@@ -16,8 +16,6 @@ module RailsAiBuild
       Plans.check!(:community_submissions)
       pack = CommunityPackRecord.create!(community_pack_params.merge(approved: false))
       render json: pack.to_marketplace_entry.merge(status: "pending_review"), status: :created
-    rescue ConfigurationError => e
-      render json: { error: e.message }, status: :payment_required
     end
 
     def approve

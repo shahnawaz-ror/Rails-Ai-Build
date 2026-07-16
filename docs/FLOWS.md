@@ -1,6 +1,34 @@
-# Complete Flow Reference — Rails AI Build v1.1.0
+# Complete Flow Reference — Rails AI Build v2.3.0
 
 All product flows implemented and tested. Use this as the integration guide.
+
+---
+
+## Flow 0: Day-1 Activation OS (wizard)
+
+```bash
+gem "rails_ai_build"
+bundle install
+rails generate rails_ai_build:install   # new apps
+# OR for existing installs:
+rails generate rails_ai_build:upgrade
+rails db:migrate
+```
+
+Open `http://localhost:3000/rails_ai_build/ui/ide` and pick one door:
+
+| Door | API | Result |
+|------|-----|--------|
+| BYOK | `POST /settings/keys` `{ openai \| anthropic \| nvidia }` | Encrypted key + default provider |
+| Cloud | `POST /settings/keys` `{ cloud_api_key }` | Hosted models (Pro+) |
+| License | `POST /settings/license` `{ license_key }` | Durable plan entitlement |
+
+Also:
+
+- `POST /settings/bootstrap` → issue `X-Rails-Ai-Build-Token` once
+- Doctor tab → `GET /support/doctor`
+- Gated features → `402` with `code: plan_required` + upgrade modal / `POST /billing/checkout`
+- Plan cannot be set via `PATCH /settings` (license or Stripe only)
 
 ---
 
@@ -11,7 +39,7 @@ gem "rails_ai_build"
 bundle install
 rails generate rails_ai_build:install
 rails db:migrate
-export OPENAI_API_KEY=sk-...
+export OPENAI_API_KEY=sk-...   # or use IDE Activate wizard
 rails rails_ai_build:setup
 rails rails_ai_build:ask["Add a GET /health endpoint"]
 ```
@@ -186,14 +214,8 @@ curl -X POST http://localhost:3000/rails_ai_build/shared_agents/1/run \
 
 ---
 
-## All PRs merged
+## Version note
 
-| PR | Status | Version |
-|----|--------|---------|
-| #1 Platform launch | ✅ Squash merged | v1.0.0 |
-| #3 Specs & compatibility | ✅ Squash merged | v1.2.0 |
-| #4 Final scope | ✅ Squash merged | v1.3.0 |
+**v2.3.0 — Day-1 Activation OS** is on `main`: encrypted keys, license entitlements, IDE wizard/doctor/upgrade modal, structured `plan_required` payloads, OpenAPI settings routes.
 
-**All code scopes complete.**
-
-**Code scope: 100% complete.** Remaining items are operational (publish gems, Stripe live keys, marketing).
+Remaining ops items (not code): publish gems, live Stripe products, marketing — see [LAUNCH.md](./LAUNCH.md).

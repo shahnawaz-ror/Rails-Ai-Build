@@ -18,7 +18,14 @@ unless defined?(RAILS_AI_BUILD_COMBUSTION_BOOTED)
     require file unless file.end_with?("application_record.rb")
   end
   Dir[RailsAiBuild::Engine.root.join("app/jobs/**/*.rb")].sort.each { |file| require file }
-  Dir[RailsAiBuild::Engine.root.join("app/controllers/**/*.rb")].sort.each { |file| require file }
+  Dir[RailsAiBuild::Engine.root.join("app/controllers/rails_ai_build/concerns/**/*.rb")].sort.each { |file| require file }
+  require RailsAiBuild::Engine.root.join("app/controllers/rails_ai_build/application_controller.rb")
+  Dir[RailsAiBuild::Engine.root.join("app/controllers/**/*.rb")].sort.each do |file|
+    next if file.include?("/concerns/")
+    next if file.end_with?("application_controller.rb")
+
+    require file
+  end
 
   ActionController::Base.prepend_view_path(RailsAiBuild::Engine.root.join("app/views"))
 

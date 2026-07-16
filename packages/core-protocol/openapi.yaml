@@ -1,10 +1,11 @@
 openapi: 3.1.0
 info:
   title: Rails AI Build API
-  version: 0.2.0
+  version: 2.3.0
   description: |
     Language-agnostic REST API for AI coding agents.
     Implemented by the Rails engine, standalone server, or consumed by client SDKs.
+    Day-1 Activation: settings keys, license, wizard, doctor, and plan_required upgrades.
 
 servers:
   - url: http://localhost:3000/rails_ai_build
@@ -85,6 +86,148 @@ paths:
         "200":
           description: Provider list
 
+  /settings:
+    get:
+      summary: Current settings + activation status
+      responses:
+        "200":
+          description: Settings payload (never returns raw API keys)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      summary: Update non-secret settings
+      parameters:
+        - $ref: "#/components/parameters/SettingsToken"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                default_provider: { type: string }
+                default_model: { type: string }
+                diff_preview: { type: boolean }
+                audit_enabled: { type: boolean }
+                max_agent_iterations: { type: integer }
+      responses:
+        "200":
+          description: Updated settings
+        "401":
+          description: Settings token required
+        "403":
+          description: Plan cannot be set via settings
+
+  /settings/keys:
+    post:
+      summary: Save encrypted API keys (BYOK / cloud)
+      parameters:
+        - $ref: "#/components/parameters/SettingsToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                openai: { type: string }
+                anthropic: { type: string }
+                nvidia: { type: string }
+                cloud_api_key: { type: string }
+                default_provider: { type: string }
+      responses:
+        "200":
+          description: Keys stored; activation status returned
+
+  /settings/license:
+    post:
+      summary: Activate signed license entitlement
+      parameters:
+        - $ref: "#/components/parameters/SettingsToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [license_key]
+              properties:
+                license_key: { type: string }
+      responses:
+        "200":
+          description: License applied; plan updated durably
+        "422":
+          description: Invalid license
+
+  /settings/wizard/complete:
+    post:
+      summary: Mark first-run wizard complete
+      parameters:
+        - $ref: "#/components/parameters/SettingsToken"
+      responses:
+        "200":
+          description: Wizard completed
+
+  /settings/bootstrap:
+    post:
+      summary: Issue settings token once (store as X-Rails-Ai-Build-Token)
+      responses:
+        "200":
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings_token: { type: string }
+                  issued: { type: boolean }
+        "422":
+          description: Token already issued
+
+  /support/doctor:
+    get:
+      summary: Run diagnostics (keys, encryption, activation, migrations)
+      responses:
+        "200":
+          description: Doctor report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoctorReport"
+
+  /plans:
+    get:
+      summary: List plans and current plan
+      responses:
+        "200":
+          description: Plan matrix
+
+  /billing/checkout:
+    post:
+      summary: Create Stripe checkout session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan: { type: string, enum: [pro, team] }
+                email: { type: string }
+                success_url: { type: string }
+                cancel_url: { type: string }
+      responses:
+        "200":
+          description: Checkout URL
+        "422":
+          description: Stripe not configured
+        "402":
+          description: Plan required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanRequired"
+
 components:
   parameters:
     AgentId:
@@ -93,6 +236,13 @@ components:
       required: true
       schema:
         type: integer
+    SettingsToken:
+      name: X-Rails-Ai-Build-Token
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Required for settings mutations once bootstrap has issued a token
 
   schemas:
     AgentInput:
@@ -103,7 +253,7 @@ components:
           type: string
         provider:
           type: string
-          enum: [openai, anthropic]
+          enum: [openai, anthropic, nvidia, cloud]
         model_name:
           type: string
         system_prompt:
@@ -137,3 +287,59 @@ components:
           type: object
         finish_reason:
           type: string
+
+    Settings:
+      type: object
+      properties:
+        version: { type: string }
+        plan: { type: string }
+        default_provider: { type: string }
+        default_model: { type: string }
+        features:
+          type: array
+          items: { type: string }
+        api_keys_configured:
+          type: object
+          properties:
+            openai: { type: boolean }
+            anthropic: { type: boolean }
+            nvidia: { type: boolean }
+            cloud: { type: boolean }
+        activation:
+          type: object
+          properties:
+            needs_wizard: { type: boolean }
+            activated: { type: boolean }
+            entitlement_source: { type: string }
+        upgrade_url: { type: string }
+
+    DoctorReport:
+      type: object
+      properties:
+        status: { type: string, enum: [healthy, issues_found] }
+        version: { type: string }
+        plan: { type: string }
+        checks:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              status: { type: string }
+              message: { type: string }
+              fix: { type: string }
+
+    PlanRequired:
+      type: object
+      properties:
+        error: { type: string }
+        code: { type: string, enum: [plan_required] }
+        feature: { type: string }
+        current_plan: { type: string }
+        suggested_plan: { type: string }
+        upgrade: { type: string }
+        checkout:
+          type: object
+          properties:
+            endpoint: { type: string }
+            plan: { type: string }

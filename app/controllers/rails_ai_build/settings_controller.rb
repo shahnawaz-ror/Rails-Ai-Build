@@ -51,7 +51,7 @@ module RailsAiBuild
     end
 
     def keys_params
-      params.permit(:cloud_api_key, :openai, :anthropic, :nvidia, api_keys: {})
+      params.permit(:cloud_api_key, :openai, :anthropic, :nvidia, :default_provider, api_keys: {})
     end
   end
 end

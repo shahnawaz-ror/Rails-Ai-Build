@@ -10,7 +10,12 @@ module RailsAiBuild
       '1.4.0' => ['RuboCop, expanded specs, Appraisal multi-Rails matrix'],
       '1.4.1' => ['Web UI live demo with SSE streaming'],
       '1.4.2' => ['CI coverage reports on pull requests'],
-      '1.5.0' => ['Full developer workflow specs, multi-DB CI, upgrade generator']
+      '1.5.0' => ['Full developer workflow specs, multi-DB CI, upgrade generator'],
+      '2.3.0' => [
+        'Day-1 Activation OS — encrypted keys, license entitlements, IDE wizard',
+        'Doctor panel + upgrade modal with plan_required checkout payloads',
+        'Settings auth token; plan no longer spoofable via PATCH /settings'
+      ]
     }.freeze
 
     UPGRADE_STEPS = {
@@ -22,6 +27,13 @@ module RailsAiBuild
       '1.4.0' => [
         { action: :bundle_update, message: 'bundle update rails_ai_build' },
         { action: :run_generator, generator: 'rails_ai_build:upgrade', message: 'rails generate rails_ai_build:upgrade' },
+        { action: :doctor, message: 'rails rails_ai_build:doctor' }
+      ],
+      '2.3.0' => [
+        { action: :bundle_update, message: 'bundle update rails_ai_build' },
+        { action: :run_generator, generator: 'rails_ai_build:upgrade', message: 'rails generate rails_ai_build:upgrade' },
+        { action: :migrate, message: 'rails db:migrate' },
+        { action: :activate, message: 'Open /rails_ai_build/ui/ide and complete the Activate wizard' },
         { action: :doctor, message: 'rails rails_ai_build:doctor' }
       ]
     }.freeze

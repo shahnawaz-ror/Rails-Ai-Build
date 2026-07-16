@@ -125,13 +125,13 @@
     const provider = document.getElementById('rab-wizard-provider').value;
     const key = document.getElementById('rab-wizard-key').value.trim();
     if (!key) return setWizardStatus('Paste an API key first');
-    const body = {}; body[provider] = key;
+    const body = { default_provider: provider }; body[provider] = key;
     const { res, data } = await apiFetch('/settings/keys', {
       method: 'POST', headers: settingsHeaders(), body: JSON.stringify(body)
     });
     if (!res.ok) return setWizardStatus(data.error || 'Failed to save key');
     await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
-    setWizardStatus('Key saved. You can ask the agent now.', true);
+    setWizardStatus('Key saved. Ask the agent anything — e.g. Add GET /health.', true);
     setTimeout(() => location.reload(), 700);
   });
 
@@ -140,11 +140,19 @@
     const cloud = document.getElementById('rab-wizard-cloud').value.trim();
     if (!cloud) return setWizardStatus('Paste a cloud API key first');
     const { res, data } = await apiFetch('/settings/keys', {
-      method: 'POST', headers: settingsHeaders(), body: JSON.stringify({ cloud_api_key: cloud })
+      method: 'POST', headers: settingsHeaders(),
+      body: JSON.stringify({ cloud_api_key: cloud, default_provider: 'cloud' })
     });
-    if (!res.ok) return setWizardStatus(data.error || 'Failed to save cloud key');
+    if (!res.ok) {
+      if (data.code === 'plan_required') {
+        setWizardStatus('Cloud key saved needs Pro+ hosted models — upgrade or use BYOK.');
+        openUpgradeModal(data);
+        return;
+      }
+      return setWizardStatus(data.error || 'Failed to save cloud key');
+    }
     await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
-    setWizardStatus('Cloud key saved.', true);
+    setWizardStatus('Cloud key saved — provider set to cloud. Ask the agent to build.', true);
     setTimeout(() => location.reload(), 700);
   });
 

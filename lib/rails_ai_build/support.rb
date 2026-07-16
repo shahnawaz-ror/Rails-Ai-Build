@@ -376,6 +376,7 @@ module RailsAiBuild
             end
           end
 
+          prefer_provider_after_keys!(normalized)
           RailsAiBuild.configuration.apply_env_providers!
           current
         end
@@ -383,6 +384,23 @@ module RailsAiBuild
         def activate_license(token)
           Entitlements::License.apply!(token)
           current
+        end
+
+        private
+
+        def prefer_provider_after_keys!(normalized)
+          config = RailsAiBuild.configuration
+          if normalized[:cloud_api_key].present? || normalized[:default_provider].to_s == "cloud"
+            config.default_provider = :cloud
+          elsif normalized[:nvidia].present?
+            config.default_provider = :nvidia
+          elsif normalized[:anthropic].present?
+            config.default_provider = :anthropic
+          elsif normalized[:openai].present?
+            config.default_provider = :openai
+          elsif normalized[:default_provider].present?
+            config.default_provider = normalized[:default_provider].to_sym
+          end
         end
       end
     end

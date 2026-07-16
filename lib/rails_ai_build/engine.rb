@@ -39,6 +39,16 @@ module RailsAiBuild
       Rails.logger.warn("[rails_ai_build] Intelligence prepare skipped: #{e.message}")
     end
 
+    # Append gem migrations so existing hosts pick up activations via db:migrate
+    # (new installs also get the table from the install generator template).
+    initializer "rails_ai_build.append_migrations" do |app|
+      next if app.root.to_s == root.to_s
+
+      config.paths["db/migrate"].expanded.each do |expanded_path|
+        app.config.paths["db/migrate"] << expanded_path
+      end
+    end
+
     initializer "rails_ai_build.mount_routes" do |app|
       next unless RailsAiBuild.configuration.auto_mount
 

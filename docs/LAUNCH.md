@@ -1,14 +1,21 @@
-# Launch Checklist — Rails AI Build v1.3.0
+# Launch Checklist — Rails AI Build v2.3.0
 
-**Code scope: 100% complete.** See [FLOWS.md](./FLOWS.md) for all integration flows.
+**Activation OS + IDE intelligence shipped.** See [FLOWS.md](./FLOWS.md) Flow 0 and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
 
 ## Distribution (Day 1)
 
 - [ ] Set `RUBYGEMS_API_KEY` secret in GitHub → publish gem
 - [ ] Set `PYPI_API_TOKEN` secret → publish Python package
 - [ ] Set `NPM_TOKEN` secret → publish `@rails-ai-build/sdk`
-- [x] Tag releases: v1.0.0 through v1.3.0
+- [x] Tag releases: v1.0.0 through v1.3.0 (next: v2.3.0)
 - [ ] Enable GitHub Pages for landing site
+
+## Activation / entitlements (Day 1)
+
+- [ ] Set `RAILS_AI_BUILD_SECRET` or rely on Rails `secret_key_base` for encrypted keys
+- [ ] Set `RAILS_AI_BUILD_LICENSE_SECRET` for signed license tokens (production)
+- [ ] Optional: `RAILS_AI_BUILD_SETTINGS_TOKEN` for locked-down settings mutations
+- [ ] Verify IDE wizard → Doctor green on a fresh Rails app
 
 ## Stripe (Week 1)
 
@@ -16,6 +23,7 @@
 - [ ] Create products: Pro ($29/mo), Team ($99/seat/mo)
 - [ ] Set secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - [ ] Set env: `STRIPE_PRICE_PRO`, `STRIPE_PRICE_TEAM`
+- [ ] Confirm webhook `checkout.session.completed` persists plan via `Activation.apply_plan!`
 
 ## Marketing (Week 1)
 
