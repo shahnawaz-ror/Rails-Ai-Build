@@ -46,7 +46,7 @@ RSpec.describe RailsAiBuild::Tasks::Queue do
     end
 
     task = described_class.enqueue('async noop')
-    wait_until { !%i[queued running].include?(task.status) }
+    wait_until { %i[queued running].exclude?(task.status) }
 
     expect(task.status).to eq(:success)
     expect(created).to be <= 4
