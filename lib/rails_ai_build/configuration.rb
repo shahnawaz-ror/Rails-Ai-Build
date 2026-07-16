@@ -25,7 +25,10 @@ module RailsAiBuild
                   :max_concurrent_tasks,
                   :sync_tasks,
                   :branch_per_task,
-                  :auto_pr_on_complete
+                  :auto_pr_on_complete,
+                  :license_key,
+                  :wizard_completed,
+                  :settings_token_digest
 
     def initialize
       @default_model = "gpt-4o"
@@ -52,6 +55,9 @@ module RailsAiBuild
       @sync_tasks = false
       @branch_per_task = true
       @auto_pr_on_complete = true
+      @license_key = nil
+      @wizard_completed = false
+      @settings_token_digest = nil
     end
 
     def workspace_path

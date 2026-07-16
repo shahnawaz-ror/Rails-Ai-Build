@@ -16,6 +16,13 @@ module RailsAiBuild
       RailsAiBuild::Providers.register_defaults
     end
 
+    initializer "rails_ai_build.load_activation", after: :load_config_initializers do
+      RailsAiBuild.configuration.apply_env_providers!
+      RailsAiBuild::Activation.load_into_configuration!
+    rescue StandardError => e
+      Rails.logger.warn("[rails_ai_build] Activation load skipped: #{e.message}") if defined?(Rails)
+    end
+
     # Auto-heal bad/duplicate migration versions (e.g. padded "000…2024") in dev/test
     # so DuplicateMigrationVersionError does not brick /rails_ai_build.
     initializer "rails_ai_build.heal_migrations", before: :load_config_initializers do

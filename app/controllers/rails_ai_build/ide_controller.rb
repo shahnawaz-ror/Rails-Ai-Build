@@ -14,6 +14,8 @@ module RailsAiBuild
       @features = feature_flags
       @enterprise = enterprise_context
       @git = safe_git_summary
+      @activation = Activation.status
+      @upgrade_url = Plans::UPGRADE_URL
     end
 
     private

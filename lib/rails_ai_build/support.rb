@@ -10,6 +10,8 @@ module RailsAiBuild
           workspace ||= safe_workspace
           checks = [
             check_api_keys,
+            check_activation,
+            check_encryption,
             check_workspace(workspace),
             check_rails_version,
             check_gemfile(workspace),
@@ -24,7 +26,8 @@ module RailsAiBuild
             status: checks.all? { |c| c.status == :ok } ? :healthy : :issues_found,
             checks: checks.map(&:to_h),
             version: RailsAiBuild::VERSION,
-            plan: RailsAiBuild.configuration.plan
+            plan: RailsAiBuild.configuration.plan,
+            activation: Activation.status
           }
         end
 
@@ -53,7 +56,35 @@ module RailsAiBuild
             ok("api_keys", "API key configured (#{configured.join(', ')})")
           else
             warn("api_keys", "No API keys set",
-                 "export NVIDIA_API_KEY=nvapi-... (build.nvidia.com) or OPENAI_API_KEY / ANTHROPIC_API_KEY")
+                 "Open the IDE wizard or POST /settings/keys with openai/anthropic/nvidia/cloud_api_key")
+          end
+        end
+
+        def check_activation
+          status = Activation.status
+          if status[:activated]
+            source = status[:entitlement_source]
+            ok("activation", "Activated (#{status[:providers].join(', ')}; entitlement: #{source})")
+          elsif status[:needs_wizard]
+            warn("activation", "First-run wizard incomplete",
+                 "Open /rails_ai_build/ui/ide and complete BYOK, Cloud key, or License setup")
+          else
+            warn("activation", "No keys or license yet",
+                 "POST /settings/keys or POST /settings/license")
+          end
+        end
+
+        def check_encryption
+          if Secrets::Encryptor.available?
+            if Activation.table_ready?
+              ok("encryption", "Secret encryption + durable activation store ready")
+            else
+              warn("encryption", "Encryption ready but activation table missing",
+                   "rails db:migrate")
+            end
+          else
+            warn("encryption", "No secret_key_base / RAILS_AI_BUILD_SECRET",
+                 "Set SECRET_KEY_BASE or RAILS_AI_BUILD_SECRET for encrypted key storage")
           end
         end
 
@@ -277,6 +308,7 @@ module RailsAiBuild
       class << self
         def current
           config = RailsAiBuild.configuration
+          activation = Activation.status
           {
             version: RailsAiBuild::VERSION,
             plan: config.plan,
@@ -290,11 +322,9 @@ module RailsAiBuild
             auto_mount: config.auto_mount,
             features: Plans.current[:features],
             limits: Plans.current[:limits],
-            api_keys_configured: {
-              openai: config.api_key_for(:openai).present?,
-              anthropic: config.api_key_for(:anthropic).present?,
-              cloud: config.cloud_api_key.present?
-            }
+            api_keys_configured: activation[:api_keys_configured],
+            activation: activation,
+            upgrade_url: Plans::UPGRADE_URL
           }
         end
 
@@ -302,13 +332,56 @@ module RailsAiBuild
           normalized = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
           normalized = normalized.transform_keys(&:to_sym)
 
-          allowed = %i[plan default_provider default_model diff_preview audit_enabled
+          # Plan is durable — only license / billing / explicit activate_plan may change it.
+          if normalized.key?(:plan)
+            raise SecurityError,
+                  "Plan cannot be set via settings. Activate a license or use billing checkout."
+          end
+
+          allowed = %i[default_provider default_model diff_preview audit_enabled
                        max_agent_iterations auto_mount]
           RailsAiBuild.configure do |c|
             allowed.each do |key|
-              c.send("#{key}=", normalized[key]) if normalized.key?(key)
+              next unless normalized.key?(key)
+
+              value = normalized[key]
+              value = value.to_sym if %i[default_provider].include?(key) && value
+              c.send("#{key}=", value)
             end
           end
+          current
+        end
+
+        def update_keys(params)
+          normalized = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
+          normalized = normalized.transform_keys(&:to_sym)
+
+          if Activation.table_ready?
+            Activation.persist_cloud_api_key!(normalized[:cloud_api_key]) if normalized.key?(:cloud_api_key)
+
+            key_params = normalized.slice(:openai, :anthropic, :nvidia, :api_keys)
+            if key_params[:api_keys]
+              Activation.persist_api_keys!(key_params[:api_keys])
+            elsif (key_params.keys.map(&:to_sym) & %i[openai anthropic nvidia]).any?
+              Activation.persist_api_keys!(key_params.slice(:openai, :anthropic, :nvidia))
+            end
+          else
+            %i[openai anthropic nvidia].each do |provider|
+              next unless normalized.key?(provider)
+
+              RailsAiBuild.configuration.api_keys[provider] = normalized[provider]
+            end
+            if normalized.key?(:cloud_api_key)
+              RailsAiBuild.configuration.cloud_api_key = normalized[:cloud_api_key]
+            end
+          end
+
+          RailsAiBuild.configuration.apply_env_providers!
+          current
+        end
+
+        def activate_license(token)
+          Entitlements::License.apply!(token)
           current
         end
       end

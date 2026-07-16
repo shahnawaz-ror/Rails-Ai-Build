@@ -100,6 +100,10 @@ RailsAiBuild::Engine.routes.draw do
   get "settings", to: "settings#show"
   patch "settings", to: "settings#update"
   put "settings", to: "settings#update"
+  post "settings/keys", to: "settings#update_keys"
+  post "settings/license", to: "settings#activate_license"
+  post "settings/wizard/complete", to: "settings#complete_wizard"
+  post "settings/bootstrap", to: "settings#bootstrap"
 
   get "tokens", to: "analytics#tokens"
 

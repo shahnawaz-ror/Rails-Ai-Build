@@ -8,8 +8,11 @@ module RailsAiBuild
         body: params[:body]
       )
       render json: result
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
     rescue ConfigurationError => e
-      render json: { error: e.message, upgrade: "https://railsaibuild.com/pricing" }, status: :payment_required
+      render json: { error: e.message, upgrade: Plans::UPGRADE_URL, code: "configuration_error" },
+             status: :payment_required
     end
   end
 end

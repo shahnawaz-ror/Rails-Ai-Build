@@ -8,6 +8,39 @@
   const canPr = root.dataset.pr === 'true';
   const canAudit = root.dataset.audit === 'true';
   const autoApply = root.dataset.autoApply === 'true';
+  const needsWizard = root.dataset.needsWizard === 'true';
+  const upgradeUrl = root.dataset.upgradeUrl || 'https://railsaibuild.com/pricing';
+  let settingsToken = localStorage.getItem('rab-settings-token') || '';
+  let pendingUpgradePlan = 'pro';
+
+  async function ensureSettingsToken() {
+    if (settingsToken) return settingsToken;
+    try {
+      const res = await fetch(base + '/settings/bootstrap', { method: 'POST' });
+      const data = await res.json();
+      if (data.settings_token) {
+        settingsToken = data.settings_token;
+        localStorage.setItem('rab-settings-token', settingsToken);
+      }
+    } catch (e) { /* open local settings allowed */ }
+    return settingsToken;
+  }
+
+  function settingsHeaders(extra = {}) {
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, extra);
+    if (settingsToken) headers['X-Rails-Ai-Build-Token'] = settingsToken;
+    return headers;
+  }
+
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(base + path, options);
+    let data = null;
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (res.status === 402 || data.code === 'plan_required') {
+      openUpgradeModal(data);
+    }
+    return { res, data };
+  }
 
   // Theme persistence
   const themeSelect = document.getElementById('rab-theme');
@@ -39,12 +72,164 @@
     tab.addEventListener('click', () => {
       document.querySelectorAll('.rab-right-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      ['tasks', 'changes', 'git', 'enterprise'].forEach(id => {
+      ['tasks', 'changes', 'git', 'doctor', 'enterprise'].forEach(id => {
         const el = document.getElementById('rab-panel-' + id);
         if (el) el.style.display = tab.dataset.right === id ? 'block' : 'none';
       });
+      if (tab.dataset.right === 'doctor') loadDoctor();
     });
   });
+
+  // First-run wizard
+  const wizard = document.getElementById('rab-wizard');
+  function showWizard(show) {
+    if (!wizard) return;
+    wizard.hidden = !show;
+  }
+  if (needsWizard && !localStorage.getItem('rab-wizard-skipped')) showWizard(true);
+
+  document.getElementById('rab-open-wizard')?.addEventListener('click', () => showWizard(true));
+  document.getElementById('rab-wizard-close')?.addEventListener('click', () => showWizard(false));
+  document.getElementById('rab-wizard-skip')?.addEventListener('click', async () => {
+    localStorage.setItem('rab-wizard-skipped', '1');
+    await ensureSettingsToken();
+    await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
+    showWizard(false);
+  });
+
+  document.querySelectorAll('.rab-wizard-door').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.rab-wizard-door').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['byok', 'cloud', 'license'].forEach(id => {
+        const pane = document.getElementById('rab-door-' + id);
+        if (pane) pane.hidden = btn.dataset.door !== id;
+      });
+    });
+  });
+
+  function setWizardStatus(msg, ok) {
+    const el = document.getElementById('rab-wizard-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.color = ok ? 'var(--rab-green)' : 'var(--rab-red)';
+  }
+
+  document.getElementById('rab-wizard-save-key')?.addEventListener('click', async () => {
+    await ensureSettingsToken();
+    const provider = document.getElementById('rab-wizard-provider').value;
+    const key = document.getElementById('rab-wizard-key').value.trim();
+    if (!key) return setWizardStatus('Paste an API key first');
+    const body = {}; body[provider] = key;
+    const { res, data } = await apiFetch('/settings/keys', {
+      method: 'POST', headers: settingsHeaders(), body: JSON.stringify(body)
+    });
+    if (!res.ok) return setWizardStatus(data.error || 'Failed to save key');
+    await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
+    setWizardStatus('Key saved. You can ask the agent now.', true);
+    setTimeout(() => location.reload(), 700);
+  });
+
+  document.getElementById('rab-wizard-save-cloud')?.addEventListener('click', async () => {
+    await ensureSettingsToken();
+    const cloud = document.getElementById('rab-wizard-cloud').value.trim();
+    if (!cloud) return setWizardStatus('Paste a cloud API key first');
+    const { res, data } = await apiFetch('/settings/keys', {
+      method: 'POST', headers: settingsHeaders(), body: JSON.stringify({ cloud_api_key: cloud })
+    });
+    if (!res.ok) return setWizardStatus(data.error || 'Failed to save cloud key');
+    await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
+    setWizardStatus('Cloud key saved.', true);
+    setTimeout(() => location.reload(), 700);
+  });
+
+  document.getElementById('rab-wizard-save-license')?.addEventListener('click', async () => {
+    await ensureSettingsToken();
+    const license = document.getElementById('rab-wizard-license').value.trim();
+    if (!license) return setWizardStatus('Paste a license token first');
+    const { res, data } = await apiFetch('/settings/license', {
+      method: 'POST', headers: settingsHeaders(), body: JSON.stringify({ license_key: license })
+    });
+    if (!res.ok) return setWizardStatus(data.error || 'Invalid license');
+    await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
+    setWizardStatus('License activated (' + (data.plan || data.activation?.plan || '') + ').', true);
+    setTimeout(() => location.reload(), 700);
+  });
+
+  // Upgrade modal
+  const upgradeModal = document.getElementById('rab-upgrade-modal');
+  function openUpgradeModal(payload = {}) {
+    if (!upgradeModal) return;
+    pendingUpgradePlan = payload.suggested_plan || payload.checkout?.plan || 'pro';
+    const msg = document.getElementById('rab-upgrade-message');
+    const planEl = document.getElementById('rab-upgrade-plan');
+    if (msg) msg.textContent = payload.error || 'This feature requires a higher plan.';
+    if (planEl) planEl.textContent = String(pendingUpgradePlan).toUpperCase();
+    upgradeModal.hidden = false;
+  }
+  function closeUpgradeModal() { if (upgradeModal) upgradeModal.hidden = true; }
+  document.getElementById('rab-upgrade-close')?.addEventListener('click', closeUpgradeModal);
+  document.getElementById('rab-plan-badge')?.addEventListener('click', () => openUpgradeModal({
+    error: 'Upgrade to unlock diff preview, hosted models, git, PRs, and team features.',
+    suggested_plan: root.dataset.plan === 'free' ? 'pro' : 'team'
+  }));
+  document.getElementById('rab-open-upgrade')?.addEventListener('click', () => openUpgradeModal({
+    error: 'Choose a plan to unlock more of the Cursor-class loop.',
+    suggested_plan: 'pro'
+  }));
+  document.querySelectorAll('.rab-upgrade-link').forEach(btn => {
+    btn.addEventListener('click', () => openUpgradeModal({
+      error: 'Feature :' + btn.dataset.feature + ' is locked on your current plan.',
+      suggested_plan: 'pro'
+    }));
+  });
+  document.getElementById('rab-upgrade-checkout')?.addEventListener('click', async () => {
+    const status = document.getElementById('rab-upgrade-status');
+    const { res, data } = await apiFetch('/billing/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan: pendingUpgradePlan,
+        success_url: window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'upgraded=true',
+        cancel_url: window.location.href
+      })
+    });
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+      return;
+    }
+    if (status) {
+      status.textContent = data.error || 'Stripe not configured — open pricing or activate a license in the wizard.';
+      status.style.color = 'var(--rab-yellow)';
+    }
+    if (!res.ok) window.open(upgradeUrl, '_blank');
+  });
+
+  // Doctor panel
+  async function loadDoctor() {
+    const summary = document.getElementById('rab-doctor-summary');
+    const list = document.getElementById('rab-doctor-list');
+    if (!summary || !list) return;
+    summary.textContent = 'Running diagnostics…';
+    try {
+      const res = await fetch(base + '/support/doctor');
+      const data = await res.json();
+      const healthy = data.status === 'healthy';
+      summary.innerHTML = '<span class="' + (healthy ? 'rab-feature-on' : 'rab-feature-off') + '">' +
+        (healthy ? '✓ Healthy' : '○ Issues found') + '</span> · ' + (data.plan || '') + ' · v' + (data.version || '');
+      list.innerHTML = (data.checks || []).map(c => {
+        const icon = c.status === 'ok' ? '✓' : (c.status === 'warn' ? '!' : '✗');
+        const cls = c.status === 'ok' ? 'rab-feature-on' : 'rab-feature-off';
+        return '<div class="rab-doctor-item"><span class="' + cls + '">' + icon + '</span> <strong>' +
+          escapeHtml(c.name) + '</strong><div class="rab-doctor-msg">' + escapeHtml(c.message || '') +
+          (c.fix ? '<div class="rab-wizard-hint">Fix: ' + escapeHtml(c.fix) + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    } catch (e) {
+      summary.textContent = e.message;
+    }
+  }
+  document.getElementById('rab-refresh-doctor')?.addEventListener('click', loadDoctor);
 
   // Editor tabs
   document.querySelectorAll('.rab-tab').forEach(tab => {
@@ -304,21 +489,25 @@
 
   // GitHub PR
   document.getElementById('rab-create-pr')?.addEventListener('click', async () => {
-    if (!canPr) return;
-    const res = await fetch(base + '/pull_requests', {
+    if (!canPr) {
+      openUpgradeModal({ error: 'GitHub PR creation requires Team+', suggested_plan: 'team' });
+      return;
+    }
+    const { data } = await apiFetch('/pull_requests', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: 'AI: ' + document.getElementById('rab-prompt').value.slice(0, 60) })
     });
-    const data = await res.json();
     if (data.compare_url || data.pr_url) window.open(data.compare_url || data.pr_url, '_blank');
-    else alert(data.error || JSON.stringify(data));
+    else if (data.code !== 'plan_required') alert(data.error || JSON.stringify(data));
   });
 
   // Audit
   document.getElementById('rab-load-audit')?.addEventListener('click', async () => {
-    if (!canAudit) return;
-    const res = await fetch(base + '/audit');
-    const data = await res.json();
+    if (!canAudit) {
+      openUpgradeModal({ error: 'Audit log requires Team+', suggested_plan: 'team' });
+      return;
+    }
+    const { data } = await apiFetch('/audit');
     document.getElementById('rab-audit-log').textContent = JSON.stringify(data, null, 2);
   });
 

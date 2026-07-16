@@ -208,6 +208,41 @@
   .rab-pulse { display: inline-block; width: 6px; height: 6px; background: var(--rab-green); border-radius: 50%; animation: rab-pulse 1s infinite; margin-right: 0.4rem; }
   @keyframes rab-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+  .rab-badge-plan { border: none; cursor: pointer; font: inherit; }
+  .rab-wizard-overlay, .rab-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.62); z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .rab-wizard-overlay[hidden], .rab-modal-overlay[hidden] { display: none !important; }
+  .rab-wizard-card, .rab-modal-card {
+    width: min(480px, 100%); background: var(--rab-surface); border: 1px solid var(--rab-border);
+    border-radius: 12px; padding: 1.25rem 1.35rem; box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+  }
+  .rab-wizard-card h2, .rab-modal-card h2 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+  .rab-wizard-sub { color: var(--rab-muted); font-size: 0.85rem; margin: 0 0 1rem; }
+  .rab-wizard-doors { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
+  .rab-wizard-door {
+    flex: 1; border: 1px solid var(--rab-border); background: var(--rab-elevated); color: var(--rab-muted);
+    border-radius: 8px; padding: 0.45rem; cursor: pointer; font-size: 0.75rem; font-weight: 600;
+  }
+  .rab-wizard-door.active { border-color: var(--rab-accent); color: var(--rab-text); background: var(--rab-panel); }
+  .rab-wizard-pane label { display: block; font-size: 0.72rem; color: var(--rab-muted); margin-bottom: 0.35rem; }
+  .rab-wizard-pane input, .rab-wizard-pane select, .rab-wizard-pane textarea {
+    width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; background: var(--rab-input-bg);
+    border: 1px solid var(--rab-border); border-radius: 8px; color: var(--rab-text);
+    padding: 0.55rem 0.7rem; font-family: inherit; font-size: 0.85rem;
+  }
+  .rab-wizard-hint { color: var(--rab-muted); font-size: 0.72rem; margin: 0.25rem 0 0.75rem; }
+  .rab-wizard-status { min-height: 1.2rem; font-size: 0.78rem; margin: 0.5rem 0; }
+  .rab-wizard-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+  .rab-doctor-summary { margin-bottom: 0.75rem; font-size: 0.78rem; }
+  .rab-doctor-item { padding: 0.45rem 0; border-bottom: 1px solid var(--rab-border); }
+  .rab-doctor-msg { margin-top: 0.2rem; color: var(--rab-muted); font-size: 0.72rem; }
+  .rab-upgrade-link {
+    margin-left: 0.4rem; border: none; background: transparent; color: var(--rab-accent);
+    cursor: pointer; font-size: 0.68rem; text-decoration: underline;
+  }
+
   @media (max-width: 1100px) {
     .rab-right { display: none; }
     .rab-sidebar { width: 200px; }

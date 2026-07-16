@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0] - 2026-07-16
+
+### Added — Day-1 Activation OS
+- **Encrypted API key store** — `rails_ai_build_activations` + `Secrets::Encryptor` (MessageEncryptor)
+- **Durable entitlements** — signed license tokens (`Entitlements::License`) and Stripe webhook → persisted plan
+- **Authenticated settings** — `X-Rails-Ai-Build-Token` / `POST /settings/bootstrap` (plan can no longer be spoofed via PATCH)
+- **Settings APIs** — `POST /settings/keys`, `/settings/license`, `/settings/wizard/complete`
+- **IDE first-run wizard** — BYOK / Cloud key / License doors
+- **Upgrade modal** — 402 `plan_required` payloads with `suggested_plan` + checkout CTA
+- **Doctor panel** in IDE — activation + encryption checks via `GET /support/doctor`
+- **`PlanRequiredError`** — structured upgrade JSON for gated features
+
 ## [2.2.4] - 2026-07-16
 
 ### Added — Migration intelligence (auto-heal DuplicateMigrationVersionError)

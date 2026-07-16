@@ -6,8 +6,8 @@ module RailsAiBuild
       Plans.check!(:audit_log)
       logs = Audit.all
       render json: { logs: logs }
-    rescue ConfigurationError => e
-      render json: { error: e.message, upgrade: "https://railsaibuild.com/pricing" }, status: :payment_required
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
     end
   end
 end

@@ -95,4 +95,18 @@ ActiveRecord::Schema[7.0].define(version: 1) do
     t.timestamps
   end
   add_index :rails_ai_build_community_packs, :slug, unique: true
+
+  create_table :rails_ai_build_activations do |t|
+    t.text :encrypted_api_keys
+    t.text :encrypted_cloud_api_key
+    t.text :license_token
+    t.string :plan, default: "free"
+    t.string :entitlement_source, default: "free"
+    t.string :license_org
+    t.datetime :license_expires_at
+    t.string :settings_token_digest
+    t.boolean :wizard_completed, null: false, default: false
+    t.json :metadata
+    t.timestamps
+  end
 end
