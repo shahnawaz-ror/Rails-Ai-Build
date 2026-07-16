@@ -57,7 +57,7 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 - [x] Discord 5m replay window  
 - [x] Write/diff/memory/queue caps; Changes#show content opt-in  
 - [x] `gem build` + require smoke passes  
-- [x] Full RSpec green (344 examples, 0 failures)  
+- [x] Full RSpec green (348 examples, 0 failures)  
 
 ## Multi-worker note
 
