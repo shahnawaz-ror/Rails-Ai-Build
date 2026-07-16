@@ -3,8 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe RailsAiBuild::Engine do
-  it 'defines the Engine class when Rails is present' do
-    expect(defined?(described_class)).to eq('constant')
+  it 'is a Rails::Engine' do
     expect(described_class).to be < Rails::Engine
   end
 

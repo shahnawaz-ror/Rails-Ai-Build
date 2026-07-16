@@ -6,6 +6,11 @@
   1. Run migrations:
        rails db:migrate
 
+     If you see DuplicateMigrationVersionError for version 2024 (or similar),
+     remove the bad rails_ai_build migration file under db/migrate/ (short
+     numeric prefix), re-run: rails generate rails_ai_build:install, then
+     rails db:migrate.
+
   2. Set an API key (any one is enough):
 
        # NVIDIA NIM (free tier at https://build.nvidia.com)

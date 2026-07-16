@@ -3,10 +3,11 @@
   const root = document.getElementById('rab-ide');
   if (!root) return;
 
-  const base = root.dataset.base;
+  const base = (root.dataset.base || '').replace(/\/+$/, '');
   const canStream = root.dataset.streaming === 'true';
   const canPr = root.dataset.pr === 'true';
   const canAudit = root.dataset.audit === 'true';
+  const autoApply = root.dataset.autoApply === 'true';
 
   // Theme persistence
   const themeSelect = document.getElementById('rab-theme');

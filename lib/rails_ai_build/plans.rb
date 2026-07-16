@@ -6,14 +6,18 @@ module RailsAiBuild
       free: {
         name: "Free",
         price: 0,
-        features: %i[local_agent byok openai anthropic custom_providers token_tracking basic_analytics],
-        limits: { max_iterations: 15, max_agents: 3, shell: true }
+        # BYOK local use includes streaming + NVIDIA; writes auto-apply when diff_preview is false
+        features: %i[
+          local_agent byok openai anthropic nvidia custom_providers
+          token_tracking basic_analytics streaming
+        ],
+        limits: { max_iterations: 25, max_agents: 3, shell: true }
       },
       pro: {
         name: "Pro",
         price: 29,
         features: %i[
-          local_agent byok openai anthropic custom_providers
+          local_agent byok openai anthropic nvidia custom_providers
           diff_preview hosted_models agent_memory priority_models
           streaming git_integration mcp
         ],
@@ -23,7 +27,7 @@ module RailsAiBuild
         name: "Team",
         price: 99,
         features: %i[
-          local_agent byok openai anthropic custom_providers
+          local_agent byok openai anthropic nvidia custom_providers
           diff_preview hosted_models agent_memory priority_models
           team_dashboard shared_agents audit_log approval_workflow
           pr_creation slack_bot workspaces analytics community_submissions
@@ -35,7 +39,7 @@ module RailsAiBuild
         name: "Enterprise",
         price: nil,
         features: %i[
-          local_agent byok openai anthropic custom_providers
+          local_agent byok openai anthropic nvidia custom_providers
           diff_preview hosted_models agent_memory priority_models
           team_dashboard shared_agents audit_log approval_workflow
           pr_creation slack_bot workspaces analytics community_submissions

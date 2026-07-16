@@ -1,10 +1,12 @@
 <% content_for :title do %>Rails AI Build IDE<% end %>
 
+<% ide_base = (request.script_name.presence || request.path.sub(%r{/ui/ide/?.*\z}, '')).to_s.sub(%r{/\z}, '') %>
 <div class="rab-ide" id="rab-ide"
-     data-base="<%= request.path.sub(%r{/ui/ide.*}, '') %>"
+     data-base="<%= ide_base %>"
      data-streaming="<%= @features[:streaming] %>"
      data-pr="<%= @features[:pr_creation] %>"
-     data-audit="<%= @features[:audit_log] %>">
+     data-audit="<%= @features[:audit_log] %>"
+     data-auto-apply="<%= !RailsAiBuild.configuration.diff_preview %>">
 
   <header class="rab-topbar">
     <div class="rab-logo">⬥ Rails AI Build <span>IDE v<%= @version %></span></div>
@@ -123,7 +125,11 @@
             <% end %>
             <button class="rab-btn rab-btn-accent" id="rab-apply-all" style="width:100%;margin-top:0.5rem">Apply All</button>
           <% else %>
-            <p class="rab-locked">No pending changes. Enable diff_preview for review workflow.</p>
+            <% if RailsAiBuild.configuration.diff_preview %>
+              <p class="rab-locked">No pending changes yet. Run the agent to queue file diffs.</p>
+            <% else %>
+              <p class="rab-locked">Auto-apply is on — file writes are applied immediately. Enable <code>diff_preview</code> in the initializer to review before apply.</p>
+            <% end %>
           <% end %>
           <div id="rab-diff-detail" style="margin-top:1rem"></div>
         </section>

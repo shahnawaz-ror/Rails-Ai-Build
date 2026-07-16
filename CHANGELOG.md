@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.3] - 2026-07-16
+
+### Fixed — Free plan streaming + auto-apply + migration versions
+- **Free plan** includes `streaming` and `nvidia` (BYOK) so IDE SSE works without Pro
+- Install initializer defaults `diff_preview = false` so `write_file` auto-applies
+- Install migration numbering always uses UTC timestamps (fixes `DuplicateMigrationVersionError` for version `2024`)
+- IDE `data-base` uses `script_name` and strips trailing slash (fixes `/rails_ai_build//tasks`)
+- Changes panel explains auto-apply vs pending-diff review mode
+
 ## [2.2.2] - 2026-07-16
 
 ### Fixed — Engine load in host Rails apps

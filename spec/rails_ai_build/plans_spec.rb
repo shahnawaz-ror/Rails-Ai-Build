@@ -7,6 +7,8 @@ RSpec.describe RailsAiBuild::Plans do
 
   it "returns free plan features by default" do
     expect(described_class.feature?(:local_agent)).to be true
+    expect(described_class.feature?(:streaming)).to be true
+    expect(described_class.feature?(:nvidia)).to be true
     expect(described_class.feature?(:diff_preview)).to be false
   end
 

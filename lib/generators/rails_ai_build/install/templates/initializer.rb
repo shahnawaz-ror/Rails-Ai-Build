@@ -30,11 +30,12 @@ RailsAiBuild.configure do |config|
   config.max_agent_iterations = 25
   config.shell_timeout = 30
 
-  # Plan: :free, :pro, :team, :enterprise
+  # Plan: :free includes streaming + NVIDIA BYOK; writes auto-apply unless diff_preview
   config.plan = :free
 
-  # Diff preview — queue writes for approval (Pro+ feature)
-  # config.diff_preview = true
+  # false = write_file applies immediately (recommended for local agents)
+  # true  = queue diffs for manual Apply in the IDE (Pro+)
+  config.diff_preview = false
 
   # Audit log — track all agent actions (Team+ feature)
   # config.audit_enabled = true
