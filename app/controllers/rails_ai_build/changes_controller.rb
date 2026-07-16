@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class ChangesController < ActionController::API
+  class ChangesController < ApplicationController
     def index
       changes = Changes::Store.all(status: params[:status]&.to_sym)
       render json: { changes: changes.map(&:to_h) }
@@ -20,6 +20,10 @@ module RailsAiBuild
     def apply
       result = Changes::Store.apply(params[:id])
       render json: result
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
+    rescue SecurityError => e
+      render json: { error: e.message, code: "approval_required" }, status: :forbidden
     rescue AgentError => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
@@ -27,6 +31,10 @@ module RailsAiBuild
     def reject
       result = Changes::Store.reject(params[:id])
       render json: result
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
+    rescue SecurityError => e
+      render json: { error: e.message, code: "approval_required" }, status: :forbidden
     rescue AgentError => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
@@ -34,6 +42,10 @@ module RailsAiBuild
     def apply_all
       results = Changes::Store.apply_all
       render json: { applied: results }
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
+    rescue SecurityError => e
+      render json: { error: e.message, code: "approval_required" }, status: :forbidden
     end
   end
 end

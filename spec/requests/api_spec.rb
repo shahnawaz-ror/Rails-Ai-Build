@@ -24,6 +24,14 @@ RSpec.describe "RailsAiBuild API", type: :request do
       expect(json_response[:content]).to be_present
     end
 
+    it "returns the activation help topic" do
+      get "/rails_ai_build/help/activation"
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response[:content]).to include("BYOK")
+      expect(json_response[:content]).to include("License")
+    end
+
     it "returns 404 for unknown topics" do
       get "/rails_ai_build/help/not-a-real-topic-id"
 

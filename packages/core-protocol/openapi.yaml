@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Rails AI Build API
-  version: 2.3.0
+  version: 2.4.0
   description: |
     Language-agnostic REST API for AI coding agents.
     Implemented by the Rails engine, standalone server, or consumed by client SDKs.
@@ -227,6 +227,84 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlanRequired"
+
+  /billing/portal:
+    post:
+      summary: Create Stripe Billing Portal session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_id: { type: string }
+                return_url: { type: string }
+      responses:
+        "200":
+          description: Portal URL
+        "422":
+          description: Portal unavailable
+
+  /billing/webhook:
+    post:
+      summary: Stripe webhook (HMAC signed)
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Event handled
+        "400":
+          description: Invalid signature
+
+  /audit:
+    get:
+      summary: Audit log (Team+)
+      responses:
+        "200":
+          description: Logs
+        "402":
+          description: Plan required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanRequired"
+
+  /audit/export:
+    get:
+      summary: Export audit log JSON or CSV (Team+)
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [json, csv] }
+      responses:
+        "200":
+          description: Export payload
+        "402":
+          description: Plan required
+
+  /git/status:
+    get:
+      summary: Git working tree summary (Pro+)
+      responses:
+        "200":
+          description: Branch and changed files
+
+  /mcp/tools:
+    get:
+      summary: List MCP tools (Pro+)
+      responses:
+        "200":
+          description: Tool list
+
+  /changes:
+    get:
+      summary: Pending diff changes (Pro+)
+      responses:
+        "200":
+          description: Change list
 
 components:
   parameters:

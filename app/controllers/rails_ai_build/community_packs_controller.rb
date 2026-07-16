@@ -19,8 +19,10 @@ module RailsAiBuild
     end
 
     def approve
+      Plans.check!(:community_submissions)
       pack = CommunityPackRecord.find_by!(slug: params[:id])
       pack.update!(approved: true)
+      Audit.log(action: "community.approve", metadata: { slug: pack.slug })
       render json: pack.to_marketplace_entry
     end
 

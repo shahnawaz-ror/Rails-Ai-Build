@@ -122,12 +122,13 @@ RSpec.describe "Day-1 Activation OS", type: :request do
     it "persists plan on checkout completion" do
       payload = {
         type: "checkout.session.completed",
-        data: { object: { metadata: { plan: "pro" } } }
+        data: { object: { metadata: { plan: "pro" }, customer: "cus_act" } }
       }.to_json
+      sig = RailsAiBuild::Billing::Client.sign_payload(payload, secret: "whsec")
 
       post "/rails_ai_build/billing/webhook",
            params: payload,
-           headers: { "Stripe-Signature" => "sig", "CONTENT_TYPE" => "application/json" }
+           headers: { "Stripe-Signature" => sig, "CONTENT_TYPE" => "application/json" }
 
       expect(response).to have_http_status(:ok)
       expect(RailsAiBuild.configuration.plan).to eq(:pro)

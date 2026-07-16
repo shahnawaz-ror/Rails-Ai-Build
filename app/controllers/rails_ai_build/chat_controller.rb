@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class ChatController < ActionController::API
+  class ChatController < ApplicationController
+    before_action :enforce_rate_limit!
+
     def create
       body = params.permit(:message, :provider, :model, :system_prompt, :skill, :workspace)
 
@@ -24,6 +26,8 @@ module RailsAiBuild
       render json: result.merge(
         pending_changes: Changes::Store.all(status: :pending).map(&:to_h)
       )
+    rescue Cloud::Client::CloudUnavailableError => e
+      render json: e.as_json, status: :service_unavailable
     rescue Error => e
       render json: { error: e.message }, status: :unprocessable_entity
     end

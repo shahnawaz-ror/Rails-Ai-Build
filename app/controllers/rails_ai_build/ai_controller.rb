@@ -3,6 +3,10 @@
 module RailsAiBuild
   class AiController < ActionController::API
     include ActionController::Live
+    include Concerns::PlanErrorRendering
+    include Concerns::RateLimited
+
+    before_action :enforce_rate_limit!, only: %i[chat stream]
 
     def chat
       body = params.permit(:message, :provider, :model, :skill, :session_id, :workspace)
@@ -21,6 +25,8 @@ module RailsAiBuild
       )
 
       render json: result.to_h
+    rescue Cloud::Client::CloudUnavailableError => e
+      render json: e.as_json, status: :service_unavailable
     rescue Error => e
       render json: { error: e.message }, status: :unprocessable_content
     end
@@ -41,6 +47,8 @@ module RailsAiBuild
       ) do |sse|
         response.stream.write(sse)
       end
+    rescue Cloud::Client::CloudUnavailableError => e
+      response.stream.write(Ai::Stream.format(event: :error, data: e.as_json))
     rescue StandardError => e
       response.stream.write(Ai::Stream.format(event: :error, data: { error: e.message }))
     ensure

@@ -1,13 +1,13 @@
-# Launch Checklist — Rails AI Build v2.3.0
+# Launch Checklist — Rails AI Build v2.4.0
 
-**Activation OS + IDE intelligence shipped.** See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
+**Activation OS + money/governance portions shipped.** See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
 
 ## Distribution (Day 1)
 
 - [ ] Set `RUBYGEMS_API_KEY` secret in GitHub → publish gem
 - [ ] Set `PYPI_API_TOKEN` secret → publish Python package
 - [ ] Set `NPM_TOKEN` secret → publish `@rails-ai-build/sdk`
-- [x] Tag releases: v1.0.0 through v1.3.0 (next: v2.3.0)
+- [x] Tag releases: v1.0.0 through v1.3.0 (next publish: v2.4.0)
 - [ ] Enable GitHub Pages for landing site
 
 ## Activation / entitlements (Day 1)

@@ -17,6 +17,8 @@ module RailsAiBuild
           Analytics.track(event: "slack_command", user: user, metadata: { command: command })
 
           { response_type: "in_channel", text: result[:content] || "Done." }
+        rescue PlanRequiredError
+          raise
         rescue StandardError => e
           { response_type: "ephemeral", text: "Error: #{e.message}" }
         end
@@ -53,6 +55,8 @@ module RailsAiBuild
           Analytics.track(event: "discord_command", user: user)
 
           { type: 4, data: { content: (result[:content] || "Done.")[0, 2000] } }
+        rescue PlanRequiredError
+          raise
         rescue StandardError => e
           { type: 4, data: { content: "Error: #{e.message}" } }
         end

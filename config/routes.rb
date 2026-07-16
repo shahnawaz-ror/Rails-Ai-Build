@@ -62,9 +62,14 @@ RailsAiBuild::Engine.routes.draw do
     end
   end
 
-  resources :audit_logs, only: [:index], path: "audit"
+  resources :audit_logs, only: [:index], path: "audit" do
+    collection do
+      get :export
+    end
+  end
 
   post "billing/checkout", to: "billing#checkout"
+  post "billing/portal", to: "billing#portal"
   post "billing/webhook", to: "billing#webhook"
 
   resources :marketplace, only: [:index] do

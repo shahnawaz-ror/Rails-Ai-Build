@@ -4,7 +4,7 @@
 | Field | Value |
 |-------|-------|
 | **Product** | Rails AI Build (`rails_ai_build`) |
-| **Version covered** | 2.3.0+ (living document) |
+| **Version covered** | 2.4.0+ (living document) |
 | **Document status** | Normative product contract |
 | **Audience** | Engineering, Product, QA, Security, GTM, Enterprise sales |
 | **Related** | [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md), [FLOWS.md](./FLOWS.md), [SECURITY.md](../SECURITY.md), OpenAPI `packages/core-protocol/openapi.yaml` |
@@ -186,7 +186,7 @@ A release is **SRS-complete** only if:
 | ACT-015 | Local/dev may bypass settings auth until token exists | Should | Free |
 | ACT-016 | Production hosts SHOULD set `RAILS_AI_BUILD_SETTINGS_TOKEN` or bootstrap | Must | All |
 | ACT-017 | Skip wizard persists preference without blocking IDE | Should | Free |
-| ACT-018 | Guided first prompt after activation (e.g. health endpoint) | Should | Free |
+| ACT-018 | Guided first prompt after activation (e.g. health endpoint) | Must | Free |
 
 ---
 
@@ -293,7 +293,7 @@ A release is **SRS-complete** only if:
 | REV-001 | Diff preview queues writes when enabled | Must | Pro+ |
 | REV-002 | Free plan documents auto-apply vs preview clearly | Must | Free |
 | REV-003 | `GET /changes`, apply, reject, apply_all | Must | Pro+ |
-| REV-004 | Approval workflow for high-risk changes | Should | Team+ |
+| REV-004 | Approval workflow for high-risk changes (RBAC reviewer/admin) | Must | Team+ |
 | GIT-001 | Git status/diff/commit APIs | Must | Pro+ |
 | GIT-002 | IDE Git panel | Must | Pro+ |
 | GIT-003 | `POST /pull_requests` creates GitHub/GitLab compare/PR | Must | Team+ |
@@ -334,8 +334,8 @@ A release is **SRS-complete** only if:
 | ENT-007 | Custom models registration | Must | Enterprise |
 | ENT-008 | Admin generator for Devise-gated host mount | Should | Enterprise |
 | ENT-009 | SOC2 / SLA packaging (ops + claims only when true) | Future | Enterprise |
-| ENT-010 | Audit export / retention policies | Future | Enterprise |
-| ENT-011 | Rate limits / abuse protection per key/org | Future | All |
+| ENT-010 | Audit export JSON/CSV (`GET /audit/export`) | Must | Team+ |
+| ENT-011 | Rate limits on AI endpoints (`RAILS_AI_BUILD_RATE_LIMIT`) | Must | All |
 
 ---
 
@@ -378,11 +378,11 @@ A release is **SRS-complete** only if:
 | BILL-001 | `POST /billing/checkout` creates Stripe session for pro/team | Must | Free→Paid |
 | BILL-002 | Webhook upgrades/downgrades via durable `Activation.apply_plan!` | Must | Paid |
 | BILL-003 | Clear error when Stripe not configured | Must | Free |
-| BILL-004 | Customer portal / invoices | Future | Paid |
+| BILL-004 | Customer portal / invoices via `POST /billing/portal` | Must | Paid |
 | CLOUD-001 | Cloud client sends Bearer cloud API key | Must | Pro+ |
 | CLOUD-002 | Hosted models gated by `hosted_models` | Must | Pro+ |
 | CLOUD-003 | Configurable cloud base URL | Should | Pro+ |
-| CLOUD-004 | Soft-fail messaging + BYOK fallback CTA | Should | Pro+ |
+| CLOUD-004 | Soft-fail messaging + BYOK CTA (no silent swap) | Must | Pro+ |
 | CLOUD-005 | Live cloud accounts, metering, org sync | Future | Cloud SaaS |
 | CLOUD-006 | License JWT short TTL + offline grace (Enterprise) | Future | Enterprise |
 
@@ -752,6 +752,7 @@ Use before major releases. Every box must map to code or an explicit Future item
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 1.1 | 2026-07-16 | 2.4.0 — portal, webhook HMAC, cloud soft-fail, approval, audit export, rate limit |
 | 1.0 | 2026-07-16 | Initial comprehensive SRS for Rails AI Build 2.3.0 |
 
 **Ownership:** Product + Engineering.  

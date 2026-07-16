@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4.0] - 2026-07-16
+
+### Added — Complete remaining Activation / money / governance portions
+- **Stripe webhook HMAC verification** (`Stripe-Signature` t/v1 + tolerance)
+- **Billing portal** — `POST /billing/portal` + IDE “Billing portal” button
+- **Cloud soft-fail** — no silent OpenAI fallback; `cloud_unavailable` + BYOK CTA
+- **Guided first mission** after Activate wizard (prefilled `/health` prompt)
+- **Approval workflow** — Team+ apply/reject gated; RBAC admin/reviewer when enabled
+- **Audit export** — `GET /audit/export` (JSON/CSV)
+- **Rate limiting** — in-process limiter on chat/AI endpoints (`RAILS_AI_BUILD_RATE_LIMIT`)
+- **Help topic `activation`** + install README wizard steps
+- **Discord/Slack** return structured plan_required upgrade messages
+- **Community approve** gated to Team+
+- OpenAPI 2.4.0 covers portal, webhook, audit export, git, mcp, changes
+- SECURITY.md supported versions → 2.4.x / 2.3.x
+
 ## [2.3.0] - 2026-07-16
 
 ### Added — Day-1 Activation OS

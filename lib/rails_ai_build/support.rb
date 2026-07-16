@@ -189,14 +189,39 @@ module RailsAiBuild
             2. bundle install
             3. rails generate rails_ai_build:install
             4. rails db:migrate
-            5. export OPENAI_API_KEY=sk-...
-            6. rails rails_ai_build:setup
+            5. Open http://localhost:3000/rails_ai_build/ui/ide
+            6. Complete Activate wizard (BYOK / Cloud / License)
+               — or export NVIDIA_API_KEY / OPENAI_API_KEY
+            7. rails rails_ai_build:doctor
+            8. Ask the agent: "Add a GET /health endpoint"
+          HELP
+        },
+        "activation" => {
+          title: "Day-1 Activation",
+          content: <<~HELP
+            Three doors into power (pick one):
+
+            1) BYOK — paste OpenAI / Anthropic / NVIDIA key in the IDE wizard
+               API: POST /rails_ai_build/settings/keys
+            2) Cloud key — hosted models (Pro+)
+               API: POST /rails_ai_build/settings/keys { "cloud_api_key": "..." }
+            3) License — signed paid entitlement
+               API: POST /rails_ai_build/settings/license { "license_key": "..." }
+
+            Settings mutations use X-Rails-Ai-Build-Token
+            (issue once: POST /rails_ai_build/settings/bootstrap).
+
+            Plan cannot be set via PATCH /settings — use license or Stripe.
+            Doctor: GET /rails_ai_build/support/doctor
+            Billing portal: POST /rails_ai_build/billing/portal
           HELP
         },
         "api-keys" => {
           title: "API Keys",
           content: <<~HELP
-            Set via environment variables (any one is enough):
+            Preferred: open /rails_ai_build/ui/ide → Activate wizard.
+
+            Or environment variables (any one is enough):
               NVIDIA_API_KEY=nvapi-...          # free key: https://build.nvidia.com
               NVIDIA_MODEL=meta/llama-3.1-8b-instruct
               OPENAI_API_KEY=sk-...
@@ -208,6 +233,8 @@ module RailsAiBuild
 
             When NVIDIA_API_KEY starts with nvapi-, the install initializer
             selects :nvidia automatically.
+
+            Keys saved via POST /settings/keys are encrypted at rest.
           HELP
         },
         "skills" => {

@@ -59,6 +59,7 @@ module RailsAiBuild
         end
 
         def apply(id, workspace: nil)
+          enforce_approval!
           change = find(id)
           raise AgentError, "Change not found: #{id}" unless change
           raise AgentError, "Change already #{change.status}" unless change.status == :pending
@@ -66,17 +67,21 @@ module RailsAiBuild
           workspace ||= RailsAiBuild.configuration.workspace_path
           apply_change(change, workspace)
           change.status = :applied
+          Audit.log(action: "change.apply", path: change.path, metadata: { change_id: change.id })
           result_for(change, "applied")
         end
 
         def reject(id)
+          enforce_approval!
           change = find(id)
           raise AgentError, "Change not found: #{id}" unless change
           change.status = :rejected
+          Audit.log(action: "change.reject", path: change.path, metadata: { change_id: change.id })
           result_for(change, "rejected")
         end
 
         def apply_all(workspace: nil)
+          enforce_approval!
           pending = all(status: :pending)
           pending.map { |c| apply(c.id, workspace: workspace) }
         end
@@ -86,6 +91,21 @@ module RailsAiBuild
         end
 
         private
+
+        # Team+ approval_workflow: only admin/reviewer (or non-RBAC team) may apply.
+        def enforce_approval!
+          return unless Plans.feature?(:approval_workflow)
+          return unless RailsAiBuild.configuration.diff_preview
+
+          Plans.check!(:approval_workflow)
+          return unless Rbac.enabled?
+
+          role = Rbac.current_role
+          return if %i[admin reviewer].include?(role.to_sym)
+
+          raise SecurityError,
+                "Role '#{role}' cannot apply changes under approval_workflow (need admin or reviewer)"
+        end
 
         def memory_store
           @memory_store ||= []

@@ -4,9 +4,11 @@
 
 | Version | Supported |
 | ------- | --------- |
-| 1.4.x   | Yes       |
-| 1.3.x   | Yes       |
-| < 1.3   | No        |
+| 2.4.x   | Yes |
+| 2.3.x   | Yes |
+| 2.2.x   | Yes (security fixes) |
+| 1.5.x   | Best effort |
+| < 1.5   | No |
 
 ## Reporting a vulnerability
 
@@ -30,6 +32,8 @@ In scope:
 - SSRF via model provider URLs
 - MCP / streaming endpoint abuse
 - Secrets handling (API keys in logs or responses)
+- Stripe webhook signature forgery
+- Settings plan spoofing / settings token bypass
 
 Out of scope:
 
@@ -39,8 +43,11 @@ Out of scope:
 ## Safe defaults
 
 - Diff preview queues writes before applying (Pro+)
+- Team+ approval workflow can require reviewer role to apply changes
 - Path traversal guards in file tools
 - Plan-based feature gates for sensitive capabilities
 - Doctor task surfaces misconfiguration
+- Encrypted API key store + settings mutation token
+- Stripe webhooks verified with HMAC signature
 
 Host applications should mount the engine behind authentication in production and restrict `allowed_tools` as needed.

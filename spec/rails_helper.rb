@@ -49,6 +49,7 @@ RSpec.configure do |config|
     RailsAiBuild::Models::Registry.register_defaults
     RailsAiBuild::Ai::Session.reset!
     RailsAiBuild::Tasks::Queue.reset!
+    RailsAiBuild::RateLimit.reset!
     ActiveJob::Base.queue_adapter = :test
     Database.reset! if defined?(Database)
     RailsAiBuild::Changes::Store.clear!

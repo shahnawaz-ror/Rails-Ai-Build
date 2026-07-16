@@ -2,9 +2,31 @@
 
 module RailsAiBuild
   module Cloud
-    # Hosted models via Rails AI Cloud — no API key required (Pro+)
+    # Hosted models via Rails AI Cloud — Pro+ with cloud_api_key.
+    # On outage: clear error + BYOK CTA (no silent provider swap).
     class Client
       DEFAULT_URL = "https://cloud.railsaibuild.com"
+
+      class CloudUnavailableError < ProviderError
+        attr_reader :byok_cta, :fallback_available
+
+        def initialize(message, fallback_available: false)
+          @byok_cta = "Switch to BYOK: set OPENAI_API_KEY / ANTHROPIC_API_KEY / NVIDIA_API_KEY, " \
+                      "or POST /settings/keys, then set default_provider."
+          @fallback_available = fallback_available
+          super(message)
+        end
+
+        def as_json(*)
+          {
+            error: message,
+            code: "cloud_unavailable",
+            byok_cta: byok_cta,
+            fallback_available: fallback_available,
+            hint: "Use BYOK while Cloud is down, or retry later."
+          }
+        end
+      end
 
       class << self
         def chat(messages:, tools: [], model: nil, **kwargs)
@@ -56,7 +78,8 @@ module RailsAiBuild
           request["Content-Type"] = "application/json"
           request.body = JSON.generate(payload) if payload
 
-          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
+                                                           open_timeout: 5, read_timeout: 60) do |http|
             http.request(request)
           end
 
@@ -64,15 +87,12 @@ module RailsAiBuild
           raise ProviderError, body["error"] || "Cloud API error" if response.code.to_i >= 400
 
           body
-        rescue Errno::ECONNREFUSED, SocketError
-          # Fallback to local OpenAI when cloud is unavailable (dev mode)
-          fallback_local(messages: payload&.dig(:messages) || [], tools: payload&.dig(:tools) || [],
-                         model: payload&.dig(:model))
-        end
-
-        def fallback_local(messages:, tools:, model:)
-          provider = Models::Registry.build(:openai)
-          provider.chat(messages: messages, tools: tools, model: model)
+        rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+          byok_ready = Activation.configured_providers.any? { |p| p != :cloud }
+          raise CloudUnavailableError.new(
+            "Rails AI Cloud unavailable (#{e.class}: #{e.message}). #{byok_ready ? 'BYOK keys are configured — switch default_provider.' : 'Add a BYOK key to continue.'}",
+            fallback_available: byok_ready
+          )
         end
 
         def parse_chat_response(body)

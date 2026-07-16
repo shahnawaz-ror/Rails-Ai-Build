@@ -8,6 +8,7 @@ require "rails_ai_build/plan_required_error"
 require "rails_ai_build/secrets/encryptor"
 require "rails_ai_build/entitlements/license"
 require "rails_ai_build/activation"
+require "rails_ai_build/rate_limit"
 
 require "rails_ai_build/models/base_provider"
 require "rails_ai_build/models/openai_provider"

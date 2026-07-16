@@ -131,7 +131,8 @@
     });
     if (!res.ok) return setWizardStatus(data.error || 'Failed to save key');
     await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
-    setWizardStatus('Key saved. Ask the agent anything — e.g. Add GET /health.', true);
+    localStorage.setItem('rab-first-mission', '1');
+    setWizardStatus('Key saved. Loading your first mission…', true);
     setTimeout(() => location.reload(), 700);
   });
 
@@ -152,7 +153,8 @@
       return setWizardStatus(data.error || 'Failed to save cloud key');
     }
     await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
-    setWizardStatus('Cloud key saved — provider set to cloud. Ask the agent to build.', true);
+    localStorage.setItem('rab-first-mission', '1');
+    setWizardStatus('Cloud key saved. Loading your first mission…', true);
     setTimeout(() => location.reload(), 700);
   });
 
@@ -165,7 +167,8 @@
     });
     if (!res.ok) return setWizardStatus(data.error || 'Invalid license');
     await fetch(base + '/settings/wizard/complete', { method: 'POST', headers: settingsHeaders() });
-    setWizardStatus('License activated (' + (data.plan || data.activation?.plan || '') + ').', true);
+    localStorage.setItem('rab-first-mission', '1');
+    setWizardStatus('License activated (' + (data.plan || data.activation?.plan || '') + '). Loading mission…', true);
     setTimeout(() => location.reload(), 700);
   });
 
@@ -216,6 +219,23 @@
       status.style.color = 'var(--rab-yellow)';
     }
     if (!res.ok) window.open(upgradeUrl, '_blank');
+  });
+
+  document.getElementById('rab-upgrade-portal')?.addEventListener('click', async () => {
+    const status = document.getElementById('rab-upgrade-status');
+    const { res, data } = await apiFetch('/billing/portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ return_url: window.location.href })
+    });
+    if (data.portal_url) {
+      window.location.href = data.portal_url;
+      return;
+    }
+    if (status) {
+      status.textContent = data.error || data.hint || 'Billing portal unavailable — complete checkout first.';
+      status.style.color = 'var(--rab-yellow)';
+    }
   });
 
   // Doctor panel
@@ -310,6 +330,22 @@
   const promptEl = document.getElementById('rab-prompt');
   let running = false;
   let sessionId = localStorage.getItem('rab-session-id') || null;
+
+  // Guided first mission after activation
+  if (localStorage.getItem('rab-first-mission') === '1') {
+    localStorage.removeItem('rab-first-mission');
+    if (promptEl && !promptEl.value.trim()) {
+      promptEl.value = 'Add a GET /health endpoint that returns JSON { status: "ok" }';
+      promptEl.focus();
+      if (statusEl) {
+        statusEl.className = 'rab-status-idle';
+        statusEl.textContent = 'First mission ready — press Enter (or Send) to run';
+      }
+      streamEl?.insertAdjacentHTML('beforeend',
+        '<div class="rab-event"><span class="rab-event-tag rab-tag-start">mission</span>' +
+        '<div class="rab-event-body">Welcome! Run the prefilled prompt to ship your first change.</div></div>');
+    }
+  }
 
   function setLive(message) {
     if (!liveBar || !liveText) return;

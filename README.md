@@ -145,7 +145,7 @@ See our strategic plans for turning this gem into a platform company:
 - [Business Plan](./docs/BUSINESS_PLAN.md) — market, revenue model, path to $1M+ ARR
 - [Product Roadmap](./docs/PRODUCT_ROADMAP.md) — revenue-aligned feature tiers
 - [Go-to-Market Playbook](./docs/GTM_PLAYBOOK.md) — "Forgot Cursor?" launch strategy
-- **Day-1 Activation (v2.3):** `/rails_ai_build/ui/ide` wizard (BYOK / Cloud / License), Doctor tab, upgrade modal. Keys encrypted at rest; plan only via license or Stripe.
+- **Day-1 Activation (v2.4):** IDE wizard (BYOK / Cloud / License), Doctor, upgrade + billing portal, signed Stripe webhooks, cloud soft-fail BYOK CTA, approval workflow, audit export, rate limits.
 
 ---
 

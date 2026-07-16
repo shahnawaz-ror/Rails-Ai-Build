@@ -11,32 +11,29 @@
      numeric prefix), re-run: rails generate rails_ai_build:install, then
      rails db:migrate.
 
-  2. Set an API key (any one is enough):
+  2. Activate (pick one door):
 
-       # NVIDIA NIM (free tier at https://build.nvidia.com)
-       export NVIDIA_API_KEY=nvapi-...
-       # optional model override:
-       export NVIDIA_MODEL=meta/llama-3.1-8b-instruct
+     A) IDE wizard (recommended)
+       open http://localhost:3000/rails_ai_build/ui/ide
+       → Activate → BYOK / Cloud key / License
 
-       # or OpenAI / Anthropic
-       export OPENAI_API_KEY=sk-...
-       export ANTHROPIC_API_KEY=sk-ant-...
+     B) Environment keys
+       export NVIDIA_API_KEY=nvapi-...   # free: https://build.nvidia.com
+       # or OPENAI_API_KEY / ANTHROPIC_API_KEY
 
-     Keys can also be set in config/initializers/rails_ai_build.rb.
-     When NVIDIA_API_KEY is set, the gem defaults to :nvidia automatically.
+     C) Existing install upgrade
+       rails generate rails_ai_build:upgrade
+       rails db:migrate
 
-  3. The engine is mounted at /rails_ai_build (disable auto_mount to change).
+  3. Verify:
+       rails rails_ai_build:doctor
+       # or Doctor tab in the IDE
 
-  4. Create an agent via API or console:
+  4. First win — ask the agent:
+       "Add a GET /health endpoint"
+       (prefilled in the IDE after Activate)
 
-       # Uses default provider (nvidia if NVIDIA_API_KEY is set)
-       agent = RailsAiBuild::Agents::Agent.new
-       result = agent.chat("Add a health check endpoint to config/routes.rb")
+  5. Engine mount: /rails_ai_build (disable auto_mount to change).
 
-       # Or force NVIDIA explicitly
-       agent = RailsAiBuild::Agents::Agent.new(
-         provider: :nvidia,
-         model: "meta/llama-3.1-8b-instruct"
-       )
-
-  See README for full documentation.
+  Docs: docs/SRS.md · docs/FLOWS.md · docs/IDE_UI.md
+=========================================================

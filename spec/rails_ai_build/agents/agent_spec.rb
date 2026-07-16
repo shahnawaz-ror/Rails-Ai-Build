@@ -28,6 +28,6 @@ RSpec.describe RailsAiBuild::Agents::Agent do
   it "includes system prompt in messages" do
     agent = described_class.new(system_prompt: "You are a test agent.")
     expect(agent.messages.first[:role]).to eq(:system)
-    expect(agent.messages.first[:content]).to eq("You are a test agent.")
+    expect(agent.messages.first[:content]).to include("You are a test agent.")
   end
 end

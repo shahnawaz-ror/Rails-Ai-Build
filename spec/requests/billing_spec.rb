@@ -30,20 +30,49 @@ RSpec.describe 'Billing API', type: :request do
     end
   end
 
+  describe 'POST /rails_ai_build/billing/portal' do
+    it 'creates a portal session' do
+      stub_request(:post, 'https://api.stripe.com/v1/billing_portal/sessions')
+        .to_return(status: 200, body: { id: 'bps_test', url: 'https://billing.stripe.com/test' }.to_json)
+
+      post '/rails_ai_build/billing/portal',
+           params: { customer_id: 'cus_123' }.to_json,
+           headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response[:portal_url]).to include('billing.stripe.com')
+    end
+  end
+
   describe 'POST /rails_ai_build/billing/webhook' do
-    it 'upgrades plan on checkout.session.completed' do
+    it 'upgrades plan on valid signed checkout.session.completed' do
       payload = {
         type: 'checkout.session.completed',
-        data: { object: { metadata: { plan: 'pro' } } }
+        data: { object: { metadata: { plan: 'pro' }, customer: 'cus_x' } }
       }.to_json
+      sig = RailsAiBuild::Billing::Client.sign_payload(payload, secret: 'whsec_test')
 
       post '/rails_ai_build/billing/webhook',
            params: payload,
-           headers: { 'Stripe-Signature' => 'sig_test', 'CONTENT_TYPE' => 'application/json' }
+           headers: { 'Stripe-Signature' => sig, 'CONTENT_TYPE' => 'application/json' }
 
       expect(response).to have_http_status(:ok)
       expect(json_response[:status]).to eq('upgraded')
       expect(RailsAiBuild.configuration.plan).to eq(:pro)
+    end
+
+    it 'rejects forged signatures' do
+      payload = {
+        type: 'checkout.session.completed',
+        data: { object: { metadata: { plan: 'enterprise' } } }
+      }.to_json
+
+      post '/rails_ai_build/billing/webhook',
+           params: payload,
+           headers: { 'Stripe-Signature' => 't=1,v1=forged', 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:bad_request)
+      expect(RailsAiBuild.configuration.plan).to eq(:free)
     end
   end
 end
