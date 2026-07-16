@@ -180,7 +180,17 @@ That is the Cursor-class safety story for **in-app** agents — Cursor can trash
 
 ## 8. Related
 
-- [SRS.md](./SRS.md) — add Host Safety requirements under AI / Operate  
+- [SRS.md](./SRS.md) — Host Safety + generator-first under AI / Operate  
 - [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md) — pillar “Operate”  
-- Code today: `Intelligence`, `Migrations::Intelligence`, `Tasks::Runtime`, `Changes::Store`, `run_rails_check`  
-- Not yet: rollback, boot ladder, Gemfile guard, shadow worktree
+
+### Implemented (v2.5.0)
+- Declarative `Generators::Catalog` + `IntentRouter` (score, don’t branch)
+- `run_generator` tool + `Generators::Runner` (allowlisted `rails g`)
+- `Ai::Driver` session: begin → generator route → AI when needed → `HostSafety.verify_after_turn!`
+- Syntax gate on `write_file`; boot check for `config/` / `Gemfile` / `db/migrate/`
+- `Changes::Store.rollback` / `rollback_session`; IDE **Undo last run**; Doctor `host_safety`
+
+### Still later
+- Gemfile `bundle check` before apply  
+- Shadow worktree / isolate subprocess for risky writes  
+- Migration dry-run validator beyond syntax/boot

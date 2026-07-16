@@ -214,6 +214,23 @@ namespace :rails_ai_build do
     puts "\nVersion: #{result[:version]} | Plan: #{result[:plan]}"
   end
 
+  desc "Show Host Safety + generator catalog status"
+  task host_safety: :environment do
+    cfg = RailsAiBuild.configuration
+    puts "\n🛡  Rails AI Build Host Safety\n#{'=' * 40}"
+    puts "host_safety:           #{cfg.host_safety != false}"
+    puts "host_safety_boot_check:#{cfg.host_safety_boot_check != false}"
+    puts "generator_first:       #{cfg.generator_first != false}"
+    puts "allowed run_generator: #{cfg.allowed_tools.map(&:to_sym).include?(:run_generator)}"
+    puts "catalog entries:       #{RailsAiBuild::Generators::Catalog.entries.size}"
+    RailsAiBuild::Generators::Catalog.entries.each do |e|
+      puts "  - #{e['id']}: rails g #{e['generator']}"
+    end
+    doctor = RailsAiBuild::Support::Doctor.check
+    hs = doctor[:checks].find { |c| c[:name].to_s == "host_safety" }
+    puts "\nDoctor: #{hs&.dig(:status)} — #{hs&.dig(:message)}"
+  end
+
   desc "Show help topics"
   task :help, [:topic] => :environment do |_t, args|
     if args[:topic].present?

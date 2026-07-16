@@ -28,13 +28,16 @@ module RailsAiBuild
                   :auto_pr_on_complete,
                   :license_key,
                   :wizard_completed,
-                  :settings_token_digest
+                  :settings_token_digest,
+                  :host_safety,
+                  :host_safety_boot_check,
+                  :generator_first
 
     def initialize
       @default_model = "gpt-4o"
       @default_provider = :openai
       @api_keys = {}
-      @allowed_tools = %i[read_file write_file grep list_files shell]
+      @allowed_tools = %i[read_file write_file grep list_files shell run_generator]
       @workspace_root = -> { Rails.root }
       @max_agent_iterations = 25
       @shell_timeout = 30
@@ -58,6 +61,9 @@ module RailsAiBuild
       @license_key = nil
       @wizard_completed = false
       @settings_token_digest = nil
+      @host_safety = true
+      @host_safety_boot_check = true
+      @generator_first = true
     end
 
     def workspace_path

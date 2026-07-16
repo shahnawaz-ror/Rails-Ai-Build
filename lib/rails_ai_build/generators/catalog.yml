@@ -1,0 +1,99 @@
+# Declarative generator catalog — IntentRouter scores entries; no giant if/else trees.
+# AI is only asked when args are incomplete or no entry scores above threshold.
+
+entries:
+  - id: scaffold
+    generator: scaffold
+    description: Full CRUD scaffold (model, controller, views, routes, migration)
+    skills: [crud, feature]
+    patterns:
+      - "(?i)\\bscaffold\\b\\s+(\\w+)"
+      - "(?i)\\b(crud|resource)\\b.*?\\b([A-Z][a-zA-Z0-9]+|[a-z]+_?[a-z]*)\\b"
+      - "(?i)\\b(create|add|build)\\b.*?\\b(post|posts|article|articles|comment|comments|product|products)\\b"
+    arg_template: ["%{name}", "%{attributes}"]
+    required: [name]
+    defaults:
+      attributes: "title:string"
+
+  - id: model
+    generator: model
+    description: ActiveRecord model + migration
+    skills: [crud, migration, feature]
+    patterns:
+      - "(?i)\\b(generate\\s+)?model\\b\\s+(\\w+)"
+      - "(?i)\\b(create|add)\\b.*?\\bmodel\\b.*?\\b(\\w+)\\b"
+    arg_template: ["%{name}", "%{attributes}"]
+    required: [name]
+    defaults:
+      attributes: ""
+
+  - id: migration
+    generator: migration
+    description: Standalone migration
+    skills: [migration]
+    patterns:
+      - "(?i)\\b(migration|migrate)\\b\\s+(Add\\w+|Create\\w+|Remove\\w+|Change\\w+)"
+      - "(?i)\\badd\\s+(\\w+)\\s+to\\s+(\\w+)"
+    arg_template: ["%{name}"]
+    required: [name]
+    name_from: migration_name
+
+  - id: controller
+    generator: controller
+    description: Rails controller (+ optional actions)
+    skills: [api, crud, feature]
+    patterns:
+      - "(?i)\\bcontroller\\b\\s+(\\w+)"
+      - "(?i)\\b(api|json)\\b.*?\\bcontroller\\b.*?\\b(\\w+)\\b"
+    arg_template: ["%{name}", "%{actions}"]
+    required: [name]
+    defaults:
+      actions: "index show create update destroy"
+
+  - id: mailer
+    generator: mailer
+    description: ActionMailer class
+    skills: [feature]
+    patterns:
+      - "(?i)\\bmailer\\b\\s+(\\w+)"
+    arg_template: ["%{name}"]
+    required: [name]
+
+  - id: job
+    generator: job
+    description: ActiveJob class
+    skills: [feature]
+    patterns:
+      - "(?i)\\b(job|activejob)\\b\\s+(\\w+)"
+      - "(?i)\\bbackground\\b.*?\\b(\\w+)\\b.*?\\bjob\\b"
+    arg_template: ["%{name}"]
+    required: [name]
+
+  - id: channel
+    generator: channel
+    description: ActionCable channel
+    skills: [feature]
+    patterns:
+      - "(?i)\\bchannel\\b\\s+(\\w+)"
+    arg_template: ["%{name}"]
+    required: [name]
+
+  - id: devise
+    generator: devise
+    description: Devise User (requires devise gem)
+    skills: [auth]
+    patterns:
+      - "(?i)\\bdevise\\b"
+      - "(?i)\\b(authentication|login|sign\\s*up)\\b.*?\\b(devise|user)\\b"
+    arg_template: ["%{name}"]
+    required: [name]
+    defaults:
+      name: User
+    requires_gem: devise
+
+settings:
+  # One clear pattern match is enough; skill boost tips ties toward catalog entries.
+  score_threshold: 1.0
+  skill_boost: 1.5
+  pattern_weight: 1.0
+  max_generator_steps: 2

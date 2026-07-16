@@ -62,5 +62,24 @@ RSpec.describe 'Changes API', type: :request do
       expect(response).to have_http_status(:ok)
       expect(json_response[:applied].size).to be >= 1
     end
+
+    it 'rolls back a session via API' do
+      RailsAiBuild.configuration.diff_preview = false
+      session_id = 'api-sess-1'
+      RailsAiBuild::Changes::Store.record(
+        path: 'app/undo.rb',
+        old_content: '',
+        new_content: "UndoMe\n",
+        workspace: workspace,
+        session_id: session_id
+      )
+      expect(workspace.join('app/undo.rb')).to exist
+
+      post '/rails_ai_build/changes/rollback_session', params: { session_id: session_id }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(json_response[:count]).to be >= 1
+      expect(workspace.join('app/undo.rb')).not_to exist
+    end
   end
 end
+

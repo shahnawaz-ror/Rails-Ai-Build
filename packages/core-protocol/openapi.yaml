@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Rails AI Build API
-  version: 2.4.0
+  version: 2.5.0
   description: |
     Language-agnostic REST API for AI coding agents.
     Implemented by the Rails engine, standalone server, or consumed by client SDKs.
@@ -305,6 +305,43 @@ paths:
       responses:
         "200":
           description: Change list
+
+  /changes/apply_all:
+    post:
+      summary: Apply all pending changes
+      responses:
+        "200":
+          description: Applied list
+
+  /changes/rollback_session:
+    post:
+      summary: Undo all file changes for an AI session (Host Safety)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id]
+              properties:
+                session_id:
+                  type: string
+      responses:
+        "200":
+          description: Rollback summary
+
+  /changes/{id}/rollback:
+    post:
+      summary: Rollback a single tracked change
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rolled back change
 
 components:
   parameters:

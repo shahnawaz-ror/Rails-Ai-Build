@@ -42,4 +42,31 @@ RSpec.describe RailsAiBuild::Changes::Store do
     expect(apply_result[:status]).to eq("applied")
     expect(workspace.join("app/test.rb")).to exist
   end
+
+  it "rolls back a session of applied changes" do
+    session_id = "sess-1"
+    described_class.begin_session!(session_id)
+    described_class.record(
+      path: "app/a.rb",
+      old_content: "",
+      new_content: "A\n",
+      workspace: workspace,
+      session_id: session_id
+    )
+    described_class.track_external(
+      path: "app/b.rb",
+      content: "B\n",
+      old_content: "",
+      workspace: workspace,
+      session_id: session_id
+    )
+    workspace.join("app/b.rb").dirname.mkpath
+    workspace.join("app/b.rb").write("B\n")
+
+    result = described_class.rollback_session(session_id, workspace: workspace)
+    expect(result[:count]).to eq(2)
+    expect(workspace.join("app/a.rb")).not_to exist
+    expect(workspace.join("app/b.rb")).not_to exist
+  end
 end
+

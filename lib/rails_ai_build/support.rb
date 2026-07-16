@@ -18,6 +18,7 @@ module RailsAiBuild
             check_migrations(workspace),
             check_providers,
             check_tools(workspace),
+            check_host_safety,
             check_plan_features,
             check_upgrade(workspace),
             check_disk_space(workspace)
@@ -128,6 +129,29 @@ module RailsAiBuild
           ok("tools", "#{tools.size} tools available: #{tools.map { |t| t[:name] }.join(', ')}")
         rescue StandardError => e
           error("tools", e.message)
+        end
+
+        def check_host_safety
+          allowed = RailsAiBuild.configuration.allowed_tools.map(&:to_sym)
+          generator_ok = allowed.include?(:run_generator)
+          safety_on = RailsAiBuild.configuration.host_safety != false
+          first = RailsAiBuild.configuration.generator_first != false
+          catalog = Generators::Catalog.entries.size
+
+          if safety_on && first && generator_ok && catalog.positive?
+            ok(
+              "host_safety",
+              "Generator-first + Host Safety on (#{catalog} catalog entries; boot check #{RailsAiBuild.configuration.host_safety_boot_check != false ? 'on' : 'off'})"
+            )
+          else
+            warn(
+              "host_safety",
+              "Host Safety incomplete (safety=#{safety_on}, generator_first=#{first}, run_generator=#{generator_ok}, catalog=#{catalog})",
+              "Ensure config.host_safety / generator_first are true and allowed_tools includes :run_generator"
+            )
+          end
+        rescue StandardError => e
+          error("host_safety", e.message)
         end
 
         def check_migrations(workspace)

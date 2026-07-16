@@ -23,8 +23,14 @@ RailsAiBuild.configure do |config|
     config.default_model = ENV.fetch('OPENAI_MODEL', 'gpt-4o')
   end
 
-  # Tools the agent can use
-  config.allowed_tools = %i[read_file write_file grep list_files shell]
+  # Tools the agent can use (run_generator preferred over freeform writes)
+  config.allowed_tools = %i[read_file write_file grep list_files shell run_generator]
+
+  # Prefer Rails generators (catalog scoring) over inventing files with AI
+  config.generator_first = true
+  # Syntax gate + session rollback when boot-critical files break
+  config.host_safety = true
+  config.host_safety_boot_check = true
 
   # Agent loop safety limits
   config.max_agent_iterations = 25

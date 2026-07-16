@@ -25,4 +25,13 @@ RSpec.describe RailsAiBuild::Ai::Driver do
     described_class.run('Second message', session: session)
     expect(session.messages.size).to eq(4)
   end
+
+  it 'attaches a generator plan and host_safety report on AI turns' do
+    result = described_class.run('Say hello without changing files')
+    expect(result.generator_plan).to be_a(Hash)
+    expect(result.generator_plan[:mode].to_s).to eq('ai')
+    expect(result.host_safety).to be_a(Hash)
+    expect(result.host_safety[:healthy]).to eq(true)
+  end
 end
+

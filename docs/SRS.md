@@ -4,7 +4,7 @@
 | Field | Value |
 |-------|-------|
 | **Product** | Rails AI Build (`rails_ai_build`) |
-| **Version covered** | 2.4.0+ (living document) |
+| **Version covered** | 2.5.0+ (living document) |
 | **Document status** | Normative product contract |
 | **Audience** | Engineering, Product, QA, Security, GTM, Enterprise sales |
 | **Related** | [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md), [FLOWS.md](./FLOWS.md), [SECURITY.md](../SECURITY.md), OpenAPI `packages/core-protocol/openapi.yaml` |
@@ -215,6 +215,9 @@ A release is **SRS-complete** only if:
 | AI-013 | Shell respects timeout (`shell_timeout`) | Must | Free |
 | AI-014 | Boost tools: application_info, list_routes, database_schema, list_rake_tasks, read_settings, read_logs, search_rails_docs, list_models, run_rails_check, list_migrations, model_attributes | Must | Free (via boost) |
 | AI-015 | `allowed_tools` config restricts tool set | Must | Free |
+| AI-016 | Generator-first: IntentRouter scores catalog; prefer `run_generator` over freeform writes | Must | Free |
+| AI-017 | Host Safety: syntax gate, boot ladder for critical paths, auto `rollback_session` | Must | Free |
+| AI-018 | IDE Undo last run + `POST /changes/rollback_session` | Must | Free |
 | AI-016 | RBAC further restricts tools when enabled | Must | Enterprise |
 | AI-017 | Max iterations enforced per plan | Must | All |
 | AI-018 | Intelligence.prepare! runs before AI requests (heal dirs/migrations/structure) | Must | Free |
@@ -292,7 +295,7 @@ A release is **SRS-complete** only if:
 |----|-------------|----------|------|
 | REV-001 | Diff preview queues writes when enabled | Must | Pro+ |
 | REV-002 | Free plan documents auto-apply vs preview clearly | Must | Free |
-| REV-003 | `GET /changes`, apply, reject, apply_all | Must | Pro+ |
+| REV-003 | `GET /changes`, apply, reject, apply_all, rollback_session | Must | Pro+ |
 | REV-004 | Approval workflow for high-risk changes (RBAC reviewer/admin) | Must | Team+ |
 | GIT-001 | Git status/diff/commit APIs | Must | Pro+ |
 | GIT-002 | IDE Git panel | Must | Pro+ |

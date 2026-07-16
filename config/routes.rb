@@ -37,9 +37,11 @@ RailsAiBuild::Engine.routes.draw do
     member do
       post :apply
       post :reject
+      post :rollback
     end
     collection do
       post :apply_all
+      post :rollback_session
     end
   end
 

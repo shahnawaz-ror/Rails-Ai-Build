@@ -74,6 +74,7 @@ API:
 - `GET /rails_ai_build/changes`
 - `POST /rails_ai_build/changes/:id/apply`
 - `POST /rails_ai_build/changes/apply_all`
+- `POST /rails_ai_build/changes/rollback_session` (Undo last run / Host Safety)
 
 ---
 

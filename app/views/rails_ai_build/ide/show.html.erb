@@ -183,6 +183,7 @@
 
         <section id="rab-panel-changes">
           <h3 style="font-size:0.7rem;color:var(--rab-muted);margin-bottom:0.5rem">PENDING DIFFS</h3>
+          <button class="rab-btn rab-btn-secondary" id="rab-undo-last-run" style="width:100%;margin-bottom:0.5rem" title="Rollback all file changes from the current AI session">Undo last run</button>
           <% if @pending.any? %>
             <% @pending.each do |c| %>
               <div class="rab-change-item" data-change-id="<%= c.id %>">
@@ -198,7 +199,7 @@
             <% if RailsAiBuild.configuration.diff_preview %>
               <p class="rab-locked">No pending changes yet. Run the agent to queue file diffs.</p>
             <% else %>
-              <p class="rab-locked">Auto-apply is on — file writes are applied immediately. Enable <code>diff_preview</code> in the initializer to review before apply.</p>
+              <p class="rab-locked">Auto-apply is on — file writes are applied immediately. Use <strong>Undo last run</strong> if Host Safety did not already roll back.</p>
             <% end %>
           <% end %>
           <div id="rab-diff-detail" style="margin-top:1rem"></div>

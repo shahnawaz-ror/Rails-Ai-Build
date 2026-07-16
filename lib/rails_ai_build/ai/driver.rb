@@ -5,9 +5,11 @@ require 'json'
 module RailsAiBuild
   module Ai
     # Model-first AI driver — the brain of rails_ai_build (like Cursor / Claude).
+    # Generator-first: IntentRouter scores catalog entries; AI fills gaps / custom logic only.
     class Driver
       Result = Struct.new(
         :content, :session, :context, :iterations, :usage, :messages, :finish_reason,
+        :generator_plan, :host_safety,
         keyword_init: true
       ) do
         def to_h
@@ -18,6 +20,8 @@ module RailsAiBuild
             iterations: iterations,
             usage: usage,
             finish_reason: finish_reason,
+            generator_plan: generator_plan,
+            host_safety: host_safety,
             pending_changes: Changes::Store.all(status: :pending).map(&:to_h)
           }
         end
@@ -49,32 +53,52 @@ module RailsAiBuild
 
       def run(message, &on_event)
         @applied_files = []
+        @generator_plan = nil
+        @generator_result = nil
+        @host_safety = nil
         emit(on_event, :status, { phase: 'start', message: 'Understanding your request…' })
 
         Intelligence.prepare!(workspace: @workspace, on_event: on_event)
+        HostSafety.begin_session!(@session.id)
 
-        emit(on_event, :status, { phase: 'context', message: 'Gathering app context…' })
-        context = ContextEngine.snapshot(workspace: @workspace)
-        emit(on_event, :context, context.to_h)
+        begin
+          route_generators!(message, on_event)
 
-        @session.add_message(Agents::Message.user(message))
-        agent = build_agent(context)
+          if skip_ai_after_generator?
+            return finish_generator_only!(message, on_event)
+          end
 
-        emit(on_event, :status, {
-               phase: 'think',
-               message: "Thinking with #{@provider}/#{@model || 'default'}…"
-             })
+          emit(on_event, :status, { phase: 'context', message: 'Gathering app context…' })
+          context = ContextEngine.snapshot(workspace: @workspace)
+          emit(on_event, :context, context.to_h)
 
-        runner = Agents::Runner.new(agent: agent)
-        wire_streaming(runner, on_event)
+          @session.add_message(Agents::Message.user(augmented_user_message(message)))
+          agent = build_agent(context)
 
-        result = runner.run!
+          emit(on_event, :status, {
+                 phase: 'think',
+                 message: "Thinking with #{@provider}/#{@model || 'default'}…"
+               })
 
-        @session.add_message(Agents::Message.assistant(result[:content]))
-        emit(on_event, :status, { phase: 'done', message: finish_message(result) })
-        emit(on_event, :done, done_payload(result))
+          runner = Agents::Runner.new(agent: agent)
+          wire_streaming(runner, on_event)
 
-        build_result(result, context)
+          result = runner.run!
+
+          content = result[:content].to_s
+          @host_safety = HostSafety.verify_after_turn!(workspace: @workspace, session_id: @session.id)
+          content = append_safety_note(content)
+          result = result.merge(content: content)
+
+          @session.add_message(Agents::Message.assistant(content))
+          emit(on_event, :host_safety, @host_safety) if @host_safety
+          emit(on_event, :status, { phase: 'done', message: finish_message(result) })
+          emit(on_event, :done, done_payload(result))
+
+          build_result(result, context)
+        ensure
+          HostSafety.end_session!
+        end
       end
 
       TOOL_STATUS_TEMPLATES = {
@@ -83,6 +107,7 @@ module RailsAiBuild
         'grep' => ->(ctx) { ctx[:query] ? "Searching codebase for #{ctx[:query]}…" : 'Searching codebase…' },
         'list_files' => ->(_ctx) { 'Listing files…' },
         'shell' => ->(_ctx) { 'Running shell command…' },
+        'run_generator' => ->(ctx) { "Running rails g #{ctx[:generator] || '…'}…" },
         'run_rails_check' => ->(_ctx) { 'Verifying Rails app (zeitwerk / tests)…' },
         'list_migrations' => ->(_ctx) { 'Inspecting migrations…' },
         'list_routes' => ->(_ctx) { 'Reading routes…' },
@@ -98,12 +123,104 @@ module RailsAiBuild
 
       private
 
+      def route_generators!(message, on_event)
+        return unless RailsAiBuild.configuration.generator_first != false
+
+        emit(on_event, :status, { phase: 'route', message: 'Matching Rails generators…' })
+        @generator_plan = Generators::IntentRouter.plan(message, skill: @skill, workspace: @workspace)
+        emit(on_event, :generator_plan, @generator_plan.to_h)
+
+        return unless @generator_plan.mode == :generator
+
+        emit(on_event, :status, {
+               phase: 'generator',
+               message: "Running rails g #{@generator_plan.generator} #{Array(@generator_plan.args).join(' ')}…".strip
+             })
+        @generator_result = Generators::Runner.execute!(
+          @generator_plan,
+          workspace: @workspace,
+          session_id: @session.id
+        )
+        emit(on_event, :generator_result, @generator_result.to_h)
+        Array(@generator_result.created_files).each do |path|
+          @applied_files << { path: path, status: 'generated' }
+        end
+      rescue SecurityError, ToolError => e
+        emit(on_event, :status, { phase: 'generator', message: "Generator skipped: #{e.message}" })
+        @generator_result = nil
+      end
+
+      def skip_ai_after_generator?
+        return false unless @generator_result&.ok
+        return false if @generator_plan&.ai_followup
+
+        true
+      end
+
+      def finish_generator_only!(message, on_event)
+        files = Array(@generator_result.created_files)
+        content = [
+          "Ran `#{@generator_result.command}`.",
+          files.any? ? "Created: #{files.join(', ')}." : 'Generator finished.',
+          'No custom AI follow-up required for this request.'
+        ].join(' ')
+
+        context = ContextEngine.snapshot(workspace: @workspace)
+        @session.add_message(Agents::Message.user(message))
+        @host_safety = HostSafety.verify_after_turn!(workspace: @workspace, session_id: @session.id)
+        content = append_safety_note(content)
+        @session.add_message(Agents::Message.assistant(content))
+
+        result = {
+          content: content,
+          iterations: 0,
+          usage: {},
+          finish_reason: 'generator',
+          messages: @session.messages
+        }
+        emit(on_event, :host_safety, @host_safety) if @host_safety
+        emit(on_event, :delta, { content: content, final: true })
+        emit(on_event, :status, { phase: 'done', message: finish_message(result) })
+        emit(on_event, :done, done_payload(result))
+        build_result(result, context)
+      end
+
+      def augmented_user_message(message)
+        return message unless @generator_plan
+
+        notes = []
+        if @generator_result&.ok
+          notes << "GENERATOR ALREADY RAN: `#{@generator_result.command}`"
+          notes << "Created files: #{Array(@generator_result.created_files).join(', ')}" if @generator_result.created_files.any?
+          notes << 'Customize with write_file only where needed; do not re-run the same generator.'
+        elsif @generator_plan.mode == :hybrid
+          notes << "GENERATOR CANDIDATE: #{@generator_plan.generator} (#{@generator_plan.reason})"
+          notes << "Suggested args: #{Array(@generator_plan.args).inspect}"
+          notes << 'Call run_generator with complete args before inventing files with write_file.'
+        elsif @generator_plan.mode == :generator && @generator_result && !@generator_result.ok
+          notes << "GENERATOR FAILED: `#{@generator_result.command}` — #{@generator_result.stderr}"
+          notes << 'Diagnose and fix, or call run_generator with corrected args.'
+        end
+        return message if notes.empty?
+
+        "#{message}\n\n[RailsAiBuild routing]\n#{notes.join("\n")}"
+      end
+
+      def append_safety_note(content)
+        return content unless @host_safety&.dig(:rolled_back)
+
+        "#{content}\n\n⚠️ Host Safety rolled back this turn's file changes " \
+          "(#{@host_safety[:failure_class]}). The app should still boot — retry with a safer approach " \
+          '(prefer `run_generator`).'
+      end
+
       def build_agent(_context)
         system = ContextEngine.system_prompt(
           workspace: @workspace,
           session: @session,
           skill: @skill
         )
+        system = [system, generator_system_hint].compact.join("\n\n")
 
         agent = Agents::Agent.new(
           provider: @provider,
@@ -119,6 +236,17 @@ module RailsAiBuild
         end
 
         agent
+      end
+
+      def generator_system_hint
+        return unless RailsAiBuild.configuration.generator_first != false
+
+        <<~HINT
+          ## Generator-first (Host Safety)
+          Prefer `run_generator` for scaffolds, models, migrations, controllers, mailers, jobs, channels, devise.
+          Use `write_file` for custom business logic after generators — never invent whole Rails resources by hand when a generator exists.
+          Ruby syntax is checked before writes; boot-critical failures auto-rollback the turn.
+        HINT
       end
 
       def wire_streaming(runner, on_event)
@@ -175,7 +303,8 @@ module RailsAiBuild
         {
           path: args['path'] || args[:path],
           query: args['query'] || args[:query] || args['pattern'] || args[:pattern],
-          model: args['model'] || args[:model]
+          model: args['model'] || args[:model],
+          generator: args['generator'] || args[:generator]
         }
       end
 
@@ -185,6 +314,8 @@ module RailsAiBuild
           "Applied #{parsed['path']} (#{parsed['bytes_written']} bytes)"
         elsif parsed.is_a?(Hash) && parsed['status'] == 'pending_approval'
           "Queued #{parsed['path']} for review"
+        elsif parsed.is_a?(Hash) && parsed['status'] == 'generated'
+          "Generated #{Array(parsed['created_files']).join(', ')}"
         else
           "Finished #{tool_result[:name]}"
         end
@@ -193,6 +324,13 @@ module RailsAiBuild
       def track_applied_file!(tool_result)
         parsed = parse_tool_payload(tool_result[:result])
         return unless parsed.is_a?(Hash)
+
+        if tool_result[:name].to_s == 'run_generator'
+          Array(parsed['created_files'] || parsed[:created_files]).each do |path|
+            @applied_files << { path: path, status: 'generated' }
+          end
+          return
+        end
 
         path = parsed['path'] || parsed[:path]
         status = parsed['status'] || parsed[:status]
@@ -211,7 +349,9 @@ module RailsAiBuild
 
       def finish_message(runner_result)
         files = @applied_files || []
-        if files.any?
+        if @host_safety&.dig(:rolled_back)
+          "Rolled back — Host Safety blocked unsafe changes"
+        elsif files.any?
           "Done — #{files.size} file change(s), #{runner_result[:iterations]} step(s)"
         else
           "Done — #{runner_result[:iterations]} step(s)"
@@ -225,6 +365,8 @@ module RailsAiBuild
           usage: runner_result[:usage],
           finish_reason: runner_result[:finish_reason],
           applied_files: @applied_files || [],
+          generator_plan: @generator_plan&.to_h,
+          host_safety: @host_safety,
           pending_changes: Changes::Store.all(status: :pending).map(&:to_h)
         }
       end
@@ -237,7 +379,9 @@ module RailsAiBuild
           iterations: runner_result[:iterations],
           usage: runner_result[:usage],
           messages: runner_result[:messages],
-          finish_reason: runner_result[:finish_reason]
+          finish_reason: runner_result[:finish_reason],
+          generator_plan: @generator_plan&.to_h,
+          host_safety: @host_safety
         )
       end
     end

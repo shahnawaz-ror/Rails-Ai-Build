@@ -8,7 +8,8 @@ module RailsAiBuild
         write_file: WriteFileTool,
         grep: GrepTool,
         list_files: ListFilesTool,
-        shell: ShellTool
+        shell: ShellTool,
+        run_generator: RunGeneratorTool
       }.freeze
 
       BOOST_TOOLS = {

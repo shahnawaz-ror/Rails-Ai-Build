@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.0] - 2026-07-16
+
+### Added — Generator-first + Host Safety MVP
+- **Declarative generator catalog** (`Generators::Catalog` + `catalog.yml`) — score intents, no giant if/else trees
+- **`IntentRouter`** — picks scaffold/model/migration/controller/mailer/job/channel/devise from message + skill
+- **`run_generator` tool** + allowlisted `Generators::Runner` with session file tracking
+- **Driver wiring** — begin session → route generator → AI only when needed → `verify_after_turn!`
+- **Host Safety** — Ruby syntax gate on `write_file`, boot ladder for `config/` / `Gemfile` / migrations, auto `rollback_session`
+- **IDE Undo last run** + `POST /changes/rollback_session` (+ per-change `rollback`)
+- **Doctor `host_safety` check** + `rails rails_ai_build:host_safety`
+- Config: `generator_first`, `host_safety`, `host_safety_boot_check` (defaults on); install template includes `run_generator`
+
 ## [2.4.0] - 2026-07-16
 
 ### Added — Complete remaining Activation / money / governance portions

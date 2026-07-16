@@ -591,6 +591,25 @@
     await fetch(base + '/changes/apply_all', { method: 'POST' });
     location.reload();
   });
+  document.getElementById('rab-undo-last-run')?.addEventListener('click', async () => {
+    if (!sessionId) {
+      alert('No AI session yet — run a prompt first, then Undo.');
+      return;
+    }
+    if (!confirm('Rollback all file changes from this AI session?')) return;
+    const res = await fetch(base + '/changes/rollback_session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.error || 'Rollback failed');
+      return;
+    }
+    alert('Rolled back ' + (data.count || 0) + ' change(s).');
+    location.reload();
+  });
 
   document.querySelectorAll('.rab-change-item[data-change-id]').forEach(item => {
     item.addEventListener('click', async (ev) => {

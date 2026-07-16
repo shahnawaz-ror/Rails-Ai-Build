@@ -29,6 +29,7 @@ module RailsAiBuild
       def self.prompt
         <<~PROMPT
           You are a senior Rails developer scaffolding a CRUD resource.
+          Prefer `run_generator` with scaffold (or model + controller) before write_file.
           Follow these conventions strictly:
           - snake_case file names, CamelCase class names
           - RESTful routes via `resources`
@@ -37,6 +38,7 @@ module RailsAiBuild
           - RSpec request specs + model specs with FactoryBot
           - Hotwire (Turbo Frames) for index/show if views are needed
           Read existing models and controllers first to match project style.
+          After the generator, only customize business logic.
         PROMPT
       end
     end
@@ -49,7 +51,7 @@ module RailsAiBuild
         <<~PROMPT
           You are a senior Rails developer adding authentication.
           Check if Devise is already in the Gemfile before adding it.
-          If Devise exists, use Devise generators and conventions.
+          If Devise exists, use `run_generator` with devise (not hand-written auth files).
           Otherwise implement session-based auth with has_secure_password.
           Include: User model, sessions controller, before_action :authenticate_user!
           Add RSpec tests for auth flows.
@@ -64,6 +66,7 @@ module RailsAiBuild
       def self.prompt
         <<~PROMPT
           You are a senior Rails API developer.
+          Prefer `run_generator` for model/controller scaffolding, then customize JSON responses.
           Use namespace :api, version with module Api::V1.
           Return JSON with appropriate HTTP status codes.
           Use jbuilder or manual render json: patterns matching the project.
@@ -112,8 +115,8 @@ module RailsAiBuild
         <<~PROMPT
           You are a senior Rails database engineer.
           Read database_schema and list_models first.
-          Generate migrations with reversible up/down.
-          Add indexes for foreign keys. Use appropriate column types.
+          Prefer `run_generator` with migration (or model) — do not invent migration files by hand.
+          Keep migrations reversible. Add indexes for foreign keys. Use appropriate column types.
           Run rails db:migrate via shell if appropriate, then run_rails_check.
         PROMPT
       end
@@ -150,6 +153,7 @@ module RailsAiBuild
         <<~PROMPT
           You are a senior Rails product engineer shipping a complete feature.
           Explore routes, models, and conventions first.
+          Prefer `run_generator` for structure, then write_file for custom logic and tests.
           Deliver: migration (if needed), model, controller, routes, views/API, tests.
           Match Hotwire/API-only patterns detected in the app.
           Verify with run_rails_check before finishing.
