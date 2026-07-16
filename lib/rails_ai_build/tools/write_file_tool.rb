@@ -4,10 +4,10 @@ module RailsAiBuild
   module Tools
     class WriteFileTool < BaseTool
       name "write_file"
-      description "Create or overwrite a file in the Rails application workspace. Changes may require approval when diff preview is enabled."
+      description "Create or overwrite a file relative to the Rails app root. Changes may require approval when diff preview is enabled."
       parameters type: "object",
                  properties: {
-                   path: { type: "string", description: "Relative path from workspace root" },
+                   path: { type: "string", description: "Path relative to app root, e.g. 'app/models/user.rb'" },
                    content: { type: "string", description: "Full file content to write" }
                  },
                  required: %w[path content]

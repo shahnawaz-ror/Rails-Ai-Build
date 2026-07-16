@@ -23,5 +23,7 @@ RSpec.describe RailsAiBuild::Ai::ContextEngine do
     prompt = described_class.system_prompt(workspace: workspace)
     expect(prompt).to include('build ANYTHING')
     expect(prompt).to include('Live application context')
+    expect(prompt).to include('relative to the app root')
+    expect(prompt).to include('not a directory inside the app')
   end
 end

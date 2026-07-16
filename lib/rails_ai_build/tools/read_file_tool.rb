@@ -4,10 +4,10 @@ module RailsAiBuild
   module Tools
     class ReadFileTool < BaseTool
       name "read_file"
-      description "Read the contents of a file in the Rails application workspace."
+      description "Read a file relative to the Rails app root (e.g. 'app/models/user.rb'). Do not use 'workspace' as a path prefix."
       parameters type: "object",
                  properties: {
-                   path: { type: "string", description: "Relative path from workspace root" },
+                   path: { type: "string", description: "Path relative to app root, e.g. 'config/routes.rb'" },
                    offset: { type: "integer", description: "Line number to start reading from (1-indexed)" },
                    limit: { type: "integer", description: "Maximum number of lines to read" }
                  },

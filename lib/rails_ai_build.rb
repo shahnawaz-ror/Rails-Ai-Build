@@ -11,6 +11,7 @@ require "rails_ai_build/models/anthropic_provider"
 require "rails_ai_build/models/custom_provider"
 require "rails_ai_build/models/registry"
 
+require "rails_ai_build/workspace/paths"
 require "rails_ai_build/tools/base_tool"
 require "rails_ai_build/tools/read_file_tool"
 require "rails_ai_build/tools/write_file_tool"

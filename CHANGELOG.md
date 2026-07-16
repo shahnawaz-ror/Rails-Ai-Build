@@ -17,6 +17,12 @@
 
 ## [2.2.5] - 2026-07-16
 
+### Fixed — Intelligent workspace path resolution
+- Models often call `list_files(path: "workspace")` and fail with `Not a directory: workspace`
+- **`Workspace::Paths`** maps aliases (`.`, `workspace`, `app root`, …) and strips mistaken `workspace/` prefixes to the real app root
+- Tool descriptions + system/context prompts tell the agent paths are relative to the Rails app root
+- IDE file browser uses the same resolver
+
 ### Fixed — Task queue thread storm (`can't create Thread`)
 - **`Tasks::Queue`** no longer recursively spawns workers from every idle `process_next`
 - Bounded worker pool: workers drain queued tasks, unregister themselves, then refill only up to `max_concurrent_tasks`

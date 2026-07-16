@@ -47,16 +47,9 @@ module RailsAiBuild
       attr_reader :workspace
 
       def resolve_path(path)
-        raise ArgumentError, "path is required" if path.nil? || path.to_s.strip.empty?
-
-        full = workspace.join(path.to_s.sub(%r{\A/}, ""))
-        resolved = full.expand_path
-
-        unless resolved.to_s.start_with?(workspace.expand_path.to_s)
-          raise SecurityError, "Path escapes workspace: #{path}"
-        end
-
-        resolved
+        # Root aliases (".", "workspace", …) resolve to the app root.
+        # Empty is allowed and means root — models often omit or invent "workspace".
+        Workspace::Paths.resolve(workspace, path)
       end
     end
   end

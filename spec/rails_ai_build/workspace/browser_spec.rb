@@ -21,6 +21,12 @@ RSpec.describe RailsAiBuild::Workspace::Browser do
     expect(app[:type]).to eq('directory')
   end
 
+  it 'treats path workspace as the app root' do
+    result = described_class.tree(workspace: workspace, path: 'workspace', depth: 2)
+    expect(result[:error]).to be_nil
+    expect(result[:entries].map { |e| e[:name] }).to include('app', 'Gemfile')
+  end
+
   it 'reads files via ReadFileTool' do
     result = described_class.read_file(workspace: workspace, path: 'Gemfile')
     expect(result[:content]).to include('rails')

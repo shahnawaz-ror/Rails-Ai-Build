@@ -7,9 +7,11 @@ module RailsAiBuild
 
       DEFAULT_SYSTEM_PROMPT = <<~PROMPT.freeze
         You are an AI coding agent integrated into a Rails application via the rails_ai_build gem.
-        You can read, search, and modify files in the application workspace using the provided tools.
+        You can read, search, and modify files in the application using the provided tools.
         Follow existing code conventions. Make minimal, focused changes. Explain your reasoning briefly.
         When modifying code, read relevant files first before writing changes.
+        Tool paths are relative to the Rails app root. Use "." or omit path to list the project root.
+        Never pass "workspace" as a directory — that is not a folder inside the app.
       PROMPT
 
       def initialize(
@@ -32,12 +34,17 @@ module RailsAiBuild
 
       def build_system_prompt
         parts = []
-        parts << if RailsAiBuild.configuration.universal_builder && @system_prompt == DEFAULT_SYSTEM_PROMPT
-                   Builder::Context.snapshot(workspace: @workspace)
-                 else
-                   @system_prompt
-                 end
-        memory_context = Memory::Store.context_for(workspace: @workspace) rescue nil
+        if RailsAiBuild.configuration.universal_builder && @system_prompt == DEFAULT_SYSTEM_PROMPT
+          parts << Builder::Context.snapshot(workspace: @workspace)
+        else
+          parts << @system_prompt
+          parts << Workspace::Paths.prompt_guidance(@workspace)
+        end
+        memory_context = begin
+          Memory::Store.context_for(workspace: @workspace)
+        rescue StandardError
+          nil
+        end
         parts << memory_context if memory_context
         parts.compact.join("\n\n")
       end
