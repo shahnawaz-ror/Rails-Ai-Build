@@ -636,7 +636,10 @@ components:
       required: false
       schema:
         type: string
-      description: Required for settings mutations once bootstrap has issued a token
+      description: |
+        Engine/settings token. Required for settings mutations after bootstrap.
+        When `require_engine_token` is enabled, also required for reads.
+        Production mounts accept the header only (not query/body).
 
   schemas:
     AgentInput:
