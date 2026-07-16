@@ -36,7 +36,8 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 | F | Circuit breaker + EventBus caps + activation singleton | done |
 | G | SSRF mapped-IP/CGNAT, Discord replay, write/memory/queue edges | done |
 | H | Merge to main + release notes | done |
-| I | Session/read_file caps + rate-limit headers | in progress |
+| I | Session/read_file caps + rate-limit headers | done |
+| J | Grep/logs caps + audit redaction | done |
 
 ## Acceptance (release gate)
 

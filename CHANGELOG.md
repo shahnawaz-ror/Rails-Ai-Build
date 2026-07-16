@@ -29,6 +29,8 @@
 - **AI Session** message count/byte caps; **read_file** size + default line limit
 - **RateLimit** response headers (`X-RateLimit-*`, `Retry-After`)
 - Doctor warns when `ssrf_allow_localhost` is on in production
+- **Grep** pattern/glob caps, timeout, workspace filter; **read_logs** capped tail
+- **Audit** redacts API keys/tokens from metadata
 - Tighter gemspec runtime file allowlist
 - See [RELEASE_HARDENING.md](./docs/RELEASE_HARDENING.md)
 

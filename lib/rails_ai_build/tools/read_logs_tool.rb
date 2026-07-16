@@ -24,7 +24,9 @@ module RailsAiBuild
         path = resolve_path(relative)
         return { error: "Log file not found: #{relative}" } unless path.file?
 
-        content = path.read.lines.last(line_count).map(&:chomp)
+        line_count = [[line_count, 1].max, 500].min
+        # Avoid slurping multi-GB logs into memory — read a capped tail window.
+        content = tail_lines(path, line_count)
 
         {
           path: relative,
@@ -44,6 +46,18 @@ module RailsAiBuild
         return false if normalized.include?("..")
 
         ALLOWED_LOG_DIRS.any? { |dir| normalized == dir || normalized.start_with?("#{dir}/") }
+      end
+
+      def tail_lines(path, line_count)
+        max_bytes = 256_000
+        size = path.size
+        File.open(path, "rb") do |io|
+          if size > max_bytes
+            io.seek(-max_bytes, IO::SEEK_END)
+            io.gets # drop partial first line
+          end
+          io.read.to_s.lines.last(line_count).map(&:chomp)
+        end
       end
     end
   end
