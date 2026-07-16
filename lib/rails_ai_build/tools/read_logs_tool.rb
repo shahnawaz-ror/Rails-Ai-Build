@@ -36,8 +36,16 @@ module RailsAiBuild
       private
 
       def allowed_log_path?(relative)
-        ALLOWED_LOG_DIRS.any? { |dir| relative.start_with?("#{dir}/") || relative == dir }
+        normalized = begin
+          Workspace::Paths.normalize(workspace, relative)
+        rescue SecurityError
+          return false
+        end
+        return false if normalized.include?("..")
+
+        ALLOWED_LOG_DIRS.any? { |dir| normalized == dir || normalized.start_with?("#{dir}/") }
       end
     end
   end
 end
+

@@ -32,14 +32,27 @@ module RailsAiBuild
           }
         end
 
+        raise SecurityError, "Glob must not contain '..'" if glob.to_s.include?("..")
+
         entries = Dir.glob(base.join(glob).to_s)
                      .reject { |f| f.include?("/.git/") || f.include?("/node_modules/") }
+                     .select { |f| inside_workspace?(f) }
                      .first(max)
                      .map { |f| Pathname.new(f).relative_path_from(workspace).to_s }
                      .sort
 
         { path: display, entries: entries, count: entries.size }
       end
+
+      private
+
+      def inside_workspace?(path)
+        Workspace::Paths.assert_inside!(workspace, path, allow_missing: false)
+        true
+      rescue SecurityError, Errno::ENOENT
+        false
+      end
     end
   end
 end
+

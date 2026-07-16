@@ -30,6 +30,7 @@ module RailsAiBuild
         return true if controller_name == "billing" && action_name == "webhook"
         return true if controller_name == "slack" && action_name == "command"
         return true if controller_name == "discord" && action_name == "interactions"
+        return true if controller_name == "health"
         return true if controller_name == "support" && action_name == "doctor" && !strict_read_auth?
         return true if %w[help plans].include?(controller_name) && request.get? && !strict_read_auth?
 

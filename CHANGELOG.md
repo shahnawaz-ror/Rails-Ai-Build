@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.8.0] - 2026-07-16
+
+### Security / Release hardening (5k-company scale)
+- **Workspace realpath containment** — blocks symlink + `..` escapes for tools/changes
+- **No HTTP workspace override** by default (`allow_workspace_override`)
+- **Shell allowlist** + production-off default; process-group kill on timeout
+- **Engine token protects reads** when `require_engine_token` (workspace/settings)
+- **Bootstrap locked in production** unless `RAILS_AI_BUILD_ALLOW_BOOTSTRAP=1`
+- **HttpClient** — open/read timeouts, TLS VERIFY_PEER, no redirects
+- **Thread-safe capped stores** — RateLimit, Seats, Sessions, Changes::Store
+- **RequestContext** isolation for Audit user / RBAC role
+- **Stripe webhook idempotency** via event id memory + activation metadata
+- **Slack/Discord** require signing secrets in production; Slack replay window
+- **GET /health** liveness endpoint
+- Tighter gemspec runtime file allowlist
+- See [RELEASE_HARDENING.md](./docs/RELEASE_HARDENING.md)
+
 ## [2.7.0] - 2026-07-16
 
 ### Added — Close remaining in-gem plan gaps

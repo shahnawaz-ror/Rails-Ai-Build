@@ -28,26 +28,26 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 
 | Batch | Scope | Status |
 |-------|-------|--------|
-| A | Plan + auth/workspace/path P0 | in progress |
-| B | Shell + bot signatures P0 | pending |
-| C | Thread-safe stores + caps P1 | pending |
-| D | HTTP client + Stripe idempotency P1 | pending |
-| E | Gemspec/packaging + release checklist | pending |
-| F | Edge-case specs + merge to main | pending |
+| A | Plan + auth/workspace/path P0 | done |
+| B | Shell + bot signatures P0 | done |
+| C | Thread-safe stores + caps P1 | done |
+| D | HTTP client + Stripe idempotency P1 | done |
+| E | Gemspec/packaging + health + release notes | done |
+| F | Edge-case specs + merge to main | in progress |
 
 ## Acceptance (release gate)
 
-- [ ] No public workspace path override from HTTP  
-- [ ] Symlink escape rejected for read/write/list  
-- [ ] Production bootstrap cannot be seized anonymously  
-- [ ] `require_engine_token` protects GET workspace/settings reads  
-- [ ] Shell disabled or argv-allowlisted in production  
-- [ ] Slack/Discord reject unsigned traffic when secrets configured  
-- [ ] RateLimit/Changes/Seats/Sessions mutex + max size  
-- [ ] Provider HTTP has open/read timeouts  
-- [ ] Stripe event IDs idempotent  
+- [x] No public workspace path override from HTTP  
+- [x] Symlink escape rejected for read/write/list  
+- [x] Production bootstrap cannot be seized anonymously  
+- [x] `require_engine_token` protects GET workspace/settings reads  
+- [x] Shell disabled or argv-allowlisted in production  
+- [x] Slack/Discord reject unsigned traffic when secrets configured  
+- [x] RateLimit/Changes/Seats/Sessions mutex + max size  
+- [x] Provider HTTP has open/read timeouts  
+- [x] Stripe event IDs idempotent  
 - [ ] `gem build` + require smoke passes  
-- [ ] Full RSpec green  
+- [x] Full RSpec green (329+ examples)  
 
 ## Out of gem (ops)
 

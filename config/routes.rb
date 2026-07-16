@@ -108,6 +108,7 @@ RailsAiBuild::Engine.routes.draw do
   get "help/:id", to: "help#show"
   get "support/doctor", to: "support#doctor"
   get "support/contact", to: "support#contact"
+  get "health", to: "health#show"
   get "settings", to: "settings#show"
   patch "settings", to: "settings#update"
   put "settings", to: "settings#update"
