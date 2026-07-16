@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2] - 2026-07-16
+
+### Fixed — Engine load in host Rails apps
+- Require `rails_ai_build/engine` when Rails is present so `/rails_ai_build` mounts and rake tasks register
+- Explicit `rake_tasks` load for `rails_ai_build:setup`, `:doctor`, `:ask`, etc.
+- Fixes `UnrecognizedCommandError` for `rails rails_ai_build:setup` and missing `/rails_ai_build` route
+
 ## [2.2.1] - 2026-07-16
 
 ### Added — NVIDIA API provision for host apps

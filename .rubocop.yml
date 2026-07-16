@@ -45,6 +45,7 @@ RSpec/DescribeClass:
     - "spec/rails_ai_build/analytics_integration_spec.rb"
     - "spec/rails_ai_build/errors_spec.rb"
     - "spec/rails_ai_build/tools/edge_cases_spec.rb"
+    - "spec/rails_ai_build/engine_load_spec.rb"
     - "spec/lib/tasks/**/*"
 
 Metrics/ClassLength:
