@@ -34,4 +34,29 @@ RSpec.describe RailsAiBuild::Tasks::Queue do
     task = described_class.enqueue('Fix spec')
     expect(described_class.find(task.id).description).to eq('Fix spec')
   end
+
+  it 'does not recursively spawn workers when the queue is empty' do
+    RailsAiBuild.configuration.sync_tasks = false
+    RailsAiBuild.configuration.max_concurrent_tasks = 2
+    threads_before = Thread.list.size
+    created = 0
+    allow(Thread).to receive(:new).and_wrap_original do |method, *args, &block|
+      created += 1
+      method.call(*args, &block)
+    end
+
+    task = described_class.enqueue('async noop')
+    wait_until { %i[queued running].exclude?(task.status) }
+
+    expect(task.status).to eq(:success)
+    expect(created).to be <= 4
+    expect(Thread.list.size).to be < (threads_before + 10)
+    expect(described_class.send(:workers).count(&:alive?)).to eq(0)
+  end
+
+  def wait_until(timeout: 3)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    sleep 0.01 until yield || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+    sleep 0.1
+  end
 end

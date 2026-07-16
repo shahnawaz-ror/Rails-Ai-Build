@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.2.5] - 2026-07-16
+## [2.2.6] - 2026-07-16
 
 ### Added — Complete IDE agent UX + app intelligence (build anything)
 - **`Intelligence.prepare!`** runs before every AI request — not migrations-only:
@@ -14,6 +14,13 @@
 - **Applied file feedback** in tool results + done payload (`applied_files`)
 - **Themes**: Dark, Light, Midnight, Forest, Slate (refreshed palettes + fonts)
 - Provider dropdown defaults to configured `default_provider`
+
+## [2.2.5] - 2026-07-16
+
+### Fixed — Task queue thread storm (`can't create Thread`)
+- **`Tasks::Queue`** no longer recursively spawns workers from every idle `process_next`
+- Bounded worker pool: workers drain queued tasks, unregister themselves, then refill only up to `max_concurrent_tasks`
+- Stops `ThreadError: Resource temporarily unavailable` infinite spawn loops in host apps
 
 ## [2.2.4] - 2026-07-16
 

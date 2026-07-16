@@ -5,6 +5,9 @@ require 'securerandom'
 module RailsAiBuild
   module Tasks
     # In-memory multitask queue — Cursor-style parallel background builds.
+    #
+    # Uses a bounded worker pool. Workers must NOT recursively spawn more
+    # workers on every exit (that previously exhausted OS threads).
     class Queue
       Task = Struct.new(
         :id, :description, :status, :skill, :verify, :result, :error,
@@ -50,9 +53,9 @@ module RailsAiBuild
           assign_branch!(task)
           EventBus.emit(task.id, :queued, { id: task.id, description: task.description, branch: task.branch })
           if RailsAiBuild.configuration.sync_tasks
-            run_task(task)
+            run_task_safely(task)
           else
-            spawn_workers
+            ensure_workers!
           end
           task
         end
@@ -84,6 +87,7 @@ module RailsAiBuild
           @store = {}
           @meta = {}
           @mutex = Mutex.new
+          @workers = []
           EventBus.reset!
         end
 
@@ -118,35 +122,66 @@ module RailsAiBuild
           @mutex ||= Mutex.new
         end
 
-        def spawn_workers
-          max = RailsAiBuild.configuration.max_concurrent_tasks
-          running = store.values.count { |t| t.status == :running }
-          slots = [max - running, 0].max
-          slots.times { Thread.new { process_next } }
+        def workers
+          @workers ||= []
         end
 
-        def process_next
-          task = nil
+        # Fill the pool up to max_concurrent_tasks. Never recursively explode.
+        def ensure_workers!
           mutex.synchronize do
-            task = store.values.find { |t| t.status == :queued }
-            task.status = :running if task
-            task.started_at = Time.zone.now if task
-          end
-          return unless task
+            workers.select!(&:alive?)
+            max = [RailsAiBuild.configuration.max_concurrent_tasks.to_i, 1].max
+            queued = store.values.count { |task| task.status == :queued }
+            return if queued.zero?
 
+            needed = [max - workers.size, queued].min
+            needed.times do
+              workers << Thread.new { drain_queue }
+            end
+          end
+        end
+
+        def drain_queue
+          loop do
+            task = claim_next
+            break unless task
+
+            run_task_safely(task)
+          end
+        ensure
+          # Drop this thread from the pool before refill so exiting workers don't
+          # count against max_concurrent_tasks (and never recurse unboundedly).
+          mutex.synchronize { workers.delete(Thread.current) }
+          ensure_workers!
+        end
+
+        def claim_next
+          mutex.synchronize do
+            task = store.values.find { |candidate| candidate.status == :queued }
+            return nil unless task
+
+            task.status = :running
+            task.started_at = Time.zone.now
+            task
+          end
+        end
+
+        def run_task_safely(task)
           run_task(task)
         rescue StandardError => e
           task.status = :failed
           task.error = e.message
           task.finished_at = Time.zone.now
           EventBus.emit(task.id, :error, { error: e.message })
-        ensure
-          spawn_workers
         end
 
         def run_task(task)
           meta = metadata(task.id)
           EventBus.emit(task.id, :running, { id: task.id, branch: task.branch })
+
+          # Mark running before work so slot accounting is accurate for sync mode too.
+          task.status = :running
+          task.started_at ||= Time.zone.now
 
           result = Runtime.new(
             task: task.description,
