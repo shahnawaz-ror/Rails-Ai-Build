@@ -81,7 +81,7 @@ module RailsAiBuild
         validate_api_key! if api_key
 
         payload = @request_builder.call(messages, tools, model, kwargs)
-        uri = URI(@endpoint)
+        uri = Security::UrlGuard.safe_uri(@endpoint)
 
         request = Net::HTTP::Post.new(uri)
         request["Content-Type"] = "application/json"

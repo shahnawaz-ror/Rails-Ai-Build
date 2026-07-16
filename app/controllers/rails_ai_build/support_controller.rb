@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class SupportController < ActionController::API
+  class SupportController < ApplicationController
     def doctor
       render json: Support::Doctor.check
     end

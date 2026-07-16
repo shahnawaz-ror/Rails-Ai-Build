@@ -136,7 +136,7 @@ module RailsAiBuild
       end
 
       def post(path, payload)
-        uri = URI("#{@base_url}#{path}")
+        uri = Security::UrlGuard.safe_uri("#{@base_url}#{path}")
         request = Net::HTTP::Post.new(uri)
         request["x-api-key"] = api_key
         request["anthropic-version"] = API_VERSION

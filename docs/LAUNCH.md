@@ -1,20 +1,23 @@
-# Launch Checklist — Rails AI Build v2.4.0
+# Launch Checklist — Rails AI Build v2.7.0
 
-**Activation OS + money/governance portions shipped.** See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
+**In-gem product (Activation, Host Safety, generator-first, SSRF, rate limits, seats) is shipped.**  
+Remaining items below are **ops / secrets / marketing** — they cannot be completed inside this repository alone.
+
+See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
 
 ## Distribution (Day 1)
 
 - [ ] Set `RUBYGEMS_API_KEY` secret in GitHub → publish gem
 - [ ] Set `PYPI_API_TOKEN` secret → publish Python package
 - [ ] Set `NPM_TOKEN` secret → publish `@rails-ai-build/sdk`
-- [x] Tag releases: v1.0.0 through v1.3.0 (next publish: v2.4.0)
+- [x] Tag releases through v2.7.0 (gem code ready to publish)
 - [ ] Enable GitHub Pages for landing site
 
 ## Activation / entitlements (Day 1)
 
 - [ ] Set `RAILS_AI_BUILD_SECRET` or rely on Rails `secret_key_base` for encrypted keys
 - [ ] Set `RAILS_AI_BUILD_LICENSE_SECRET` for signed license tokens (production)
-- [ ] Optional: `RAILS_AI_BUILD_SETTINGS_TOKEN` for locked-down settings mutations
+- [ ] Production: `config.require_engine_token = true` (+ bootstrap token) or mount behind host auth
 - [ ] Verify IDE wizard → Doctor green on a fresh Rails app
 
 ## Stripe (Week 1)

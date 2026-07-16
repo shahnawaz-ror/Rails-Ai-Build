@@ -4,7 +4,7 @@
 | Field | Value |
 |-------|-------|
 | **Product** | Rails AI Build (`rails_ai_build`) |
-| **Version covered** | 2.6.0+ (living document) |
+| **Version covered** | 2.7.0+ (living document) |
 | **Document status** | Normative product contract |
 | **Audience** | Engineering, Product, QA, Security, GTM, Enterprise sales |
 | **Related** | [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md), [FLOWS.md](./FLOWS.md), [SECURITY.md](../SECURITY.md), OpenAPI `packages/core-protocol/openapi.yaml` |
@@ -513,7 +513,7 @@ A release is **SRS-complete** only if:
 | SEC-04 | Settings mutation auth when token present | Must |
 | SEC-05 | Slack HMAC verification when secret set | Must |
 | SEC-06 | Host MUST authenticate engine mount in production (documented) | Must |
-| SEC-07 | SSRF controls on provider/custom URLs | Must |
+| SEC-07 | SSRF controls on provider/custom URLs (`Security::UrlGuard`) | Must |
 | SEC-08 | Destructive shell/write confirmations under approval workflow | Should |
 | SEC-09 | Security reporting channel & response SLAs (SECURITY.md) | Must |
 | SEC-10 | Supported version policy maintained | Must |

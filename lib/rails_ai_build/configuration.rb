@@ -42,7 +42,13 @@ module RailsAiBuild
                   :host_safety_fix_after_rollback,
                   :host_safety_fix_max_attempts,
                   :host_safety_rollback_on_verify_fail,
-                  :generator_first
+                  :generator_first,
+                  :ssrf_protection,
+                  :ssrf_allow_localhost,
+                  :ssrf_allow_private,
+                  :ssrf_allowed_hosts,
+                  :require_engine_token,
+                  :seat_limit
 
     def initialize
       @default_model = "gpt-4o"
@@ -86,6 +92,12 @@ module RailsAiBuild
       @host_safety_fix_max_attempts = 2
       @host_safety_rollback_on_verify_fail = true
       @generator_first = true
+      @ssrf_protection = true
+      @ssrf_allow_localhost = true
+      @ssrf_allow_private = false
+      @ssrf_allowed_hosts = []
+      @require_engine_token = false
+      @seat_limit = nil
     end
 
     def workspace_path
@@ -110,6 +122,11 @@ module RailsAiBuild
         self.default_provider = :anthropic
       elsif api_keys[:openai].present?
         self.default_provider = :openai
+      end
+
+      self.require_engine_token = true if ENV["RAILS_AI_BUILD_REQUIRE_ENGINE_TOKEN"].to_s == "1"
+      if ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_s.match?(/\A\d+\z/)
+        self.seat_limit = ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_i
       end
     end
 

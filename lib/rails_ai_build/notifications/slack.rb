@@ -25,7 +25,7 @@ module RailsAiBuild
 
         def post_webhook(url, payload)
           require "net/http"
-          uri = URI(url)
+          uri = Security::UrlGuard.safe_uri(url)
           request = Net::HTTP::Post.new(uri)
           request["Content-Type"] = "application/json"
           request.body = JSON.generate(payload)

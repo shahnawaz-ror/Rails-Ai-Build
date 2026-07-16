@@ -19,6 +19,8 @@ module RailsAiBuild
             check_providers,
             check_tools(workspace),
             check_host_safety,
+            check_ssrf,
+            check_engine_auth,
             check_plan_features,
             check_upgrade(workspace),
             check_disk_space(workspace)
@@ -153,6 +155,37 @@ module RailsAiBuild
           end
         rescue StandardError => e
           error("host_safety", e.message)
+        end
+
+        def check_ssrf
+          if RailsAiBuild.configuration.ssrf_protection != false
+            ok(
+              "ssrf",
+              "SSRF protection on (localhost=#{RailsAiBuild.configuration.ssrf_allow_localhost != false}, private=#{RailsAiBuild.configuration.ssrf_allow_private == true})"
+            )
+          else
+            warn("ssrf", "SSRF protection disabled", "Set config.ssrf_protection = true")
+          end
+        end
+
+        def check_engine_auth
+          if RailsAiBuild.configuration.require_engine_token
+            ok("engine_auth", "Engine token required on mutating API routes")
+          elsif production_like?
+            warn(
+              "engine_auth",
+              "Engine mounted without require_engine_token in production-like env",
+              "Set config.require_engine_token = true and bootstrap a settings token, or mount behind host auth"
+            )
+          else
+            ok("engine_auth", "Dev/test — token optional (enable require_engine_token for production)")
+          end
+        end
+
+        def production_like?
+          return false unless defined?(Rails)
+
+          Rails.env.production? || ENV["RAILS_AI_BUILD_REQUIRE_ENGINE_TOKEN"].to_s == "1"
         end
 
         def check_migrations(workspace)

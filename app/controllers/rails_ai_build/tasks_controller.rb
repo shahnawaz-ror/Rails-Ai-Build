@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class TasksController < ActionController::API
+  class TasksController < ApplicationController
     include ActionController::Live
 
     def index

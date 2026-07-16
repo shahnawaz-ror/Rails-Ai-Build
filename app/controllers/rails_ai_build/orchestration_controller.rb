@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class OrchestrationController < ActionController::API
+  class OrchestrationController < ApplicationController
     def create
       coordinator = Orchestration::Coordinator.new(
         provider: params[:provider],

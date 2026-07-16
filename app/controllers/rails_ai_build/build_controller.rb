@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class BuildController < ActionController::API
+  class BuildController < ApplicationController
     include ActionController::Live
 
     def create

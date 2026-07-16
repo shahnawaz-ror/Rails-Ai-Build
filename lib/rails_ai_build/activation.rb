@@ -122,6 +122,7 @@ module RailsAiBuild
       config = RailsAiBuild.configuration
       config.plan = verified[:plan].to_sym
       config.license_key = verified[:raw]
+      config.seat_limit = verified[:seats].to_i if verified[:seats].to_i.positive?
       config.diff_preview = true if Plans.feature?(:diff_preview)
       config.audit_enabled = true if Plans.feature?(:audit_log)
       Plans.apply_limits!

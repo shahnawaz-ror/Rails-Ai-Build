@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.7.0] - 2026-07-16
+
+### Added — Close remaining in-gem plan gaps
+- **SSRF protection** (`Security::UrlGuard`) on provider, cloud, Slack webhook, and MCP HTTP calls
+- **Rate limits** on all mutating engine API routes (including `/stream`, `/build*`, `/tasks*`)
+- **`require_engine_token`** — optional production gate via `X-Rails-Ai-Build-Token`
+- **Team seats** — `Entitlements::Seats` + `/seats` API; license `seats` → `config.seat_limit`
+- **SAML** — status, role mapping callback (`POST /auth/saml/callback`), richer OmniAuth snippet
+- **OpenAPI 2.7** — AI/build/stream/tasks/skills/workspace/MCP/SSO/seats and related routes
+- Doctor checks: `ssrf`, `engine_auth`
+
 ## [2.6.0] - 2026-07-16
 
 ### Added — Complete Host Safety (Slices 2 + 3)

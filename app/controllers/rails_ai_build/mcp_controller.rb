@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class McpController < ActionController::API
+  class McpController < ApplicationController
     def handle
       request_body = JSON.parse(request.body.read)
       render json: Mcp::Server.handle(request_body)

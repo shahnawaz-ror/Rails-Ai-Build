@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class AnalyticsController < ActionController::API
+  class AnalyticsController < ApplicationController
     def show
       render json: Analytics.dashboard
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class MarketplaceController < ActionController::API
+  class MarketplaceController < ApplicationController
     def index
       packs = Marketplace::Registry.all
       if defined?(CommunityPackRecord)

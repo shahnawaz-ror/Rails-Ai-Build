@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class DashboardController < ActionController::API
+  class DashboardController < ApplicationController
     def show
       payload = {
         plan: RailsAiBuild.configuration.plan,

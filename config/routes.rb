@@ -99,6 +99,10 @@ RailsAiBuild::Engine.routes.draw do
   end
 
   get "auth/saml", to: "auth#saml_config"
+  post "auth/saml/callback", to: "auth#saml_callback"
+  get "seats", to: "seats#show"
+  post "seats/claim", to: "seats#claim"
+  delete "seats/release", to: "seats#release"
 
   get "help", to: "help#index"
   get "help/:id", to: "help#show"

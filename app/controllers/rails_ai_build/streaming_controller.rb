@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class StreamingController < ActionController::API
+  class StreamingController < ApplicationController
     include ActionController::Live
 
     def create

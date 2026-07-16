@@ -2,8 +2,6 @@
 
 module RailsAiBuild
   class ChatController < ApplicationController
-    before_action :enforce_rate_limit!
-
     def create
       body = params.permit(:message, :provider, :model, :system_prompt, :skill, :workspace)
 

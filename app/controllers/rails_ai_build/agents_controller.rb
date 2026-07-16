@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class AgentsController < ActionController::API
+  class AgentsController < ApplicationController
     before_action :set_agent, only: %i[show update destroy run]
 
     def index

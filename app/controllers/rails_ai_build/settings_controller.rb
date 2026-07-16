@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class SettingsController < ActionController::API
+  class SettingsController < ApplicationController
     include Concerns::SettingsAuth
 
     before_action :require_settings_token!, only: %i[update update_keys activate_license complete_wizard]

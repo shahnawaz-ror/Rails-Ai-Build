@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class WorkspaceController < ActionController::API
+  class WorkspaceController < ApplicationController
     def tree
       result = Workspace::Browser.tree(path: params[:path] || '.', depth: depth_param)
       status = result[:error] ? :not_found : :ok

@@ -72,7 +72,7 @@ module RailsAiBuild
           require "net/http"
           require "json"
 
-          uri = URI("#{base_url}#{path}")
+          uri = Security::UrlGuard.safe_uri("#{base_url}#{path}")
           request = method == :post ? Net::HTTP::Post.new(uri) : Net::HTTP::Get.new(uri)
           request["Authorization"] = "Bearer #{api_key}"
           request["Content-Type"] = "application/json"

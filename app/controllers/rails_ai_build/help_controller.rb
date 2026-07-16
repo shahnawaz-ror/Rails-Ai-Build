@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class HelpController < ActionController::API
+  class HelpController < ApplicationController
     def index
       render json: {
         topics: Support::Help.topics,

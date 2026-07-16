@@ -56,6 +56,7 @@ module RailsAiBuild
     include ActionController::Live
 
     def stream
+      RateLimit.check!(request.remote_ip.presence || "demo")
       scenario_id = params[:scenario].to_s
       scenario = SCENARIOS[scenario_id] || SCENARIOS['health-check']
 

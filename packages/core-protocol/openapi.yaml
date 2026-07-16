@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
   title: Rails AI Build API
-  version: 2.6.0
+  version: 2.7.0
   description: |
     Language-agnostic REST API for AI coding agents.
     Implemented by the Rails engine, standalone server, or consumed by client SDKs.
-    Day-1 Activation: settings keys, license, wizard, doctor, and plan_required upgrades.
+    Covers Activation, AI/build/stream/tasks, Host Safety, billing, seats, SSO, and MCP.
 
 servers:
   - url: http://localhost:3000/rails_ai_build
@@ -342,6 +342,275 @@ paths:
       responses:
         "200":
           description: Rolled back change
+
+  /ai/chat:
+    post:
+      summary: Model-driven AI chat (session-aware)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Driver result
+        "429":
+          description: Rate limited
+        "503":
+          description: Cloud unavailable
+
+  /ai/stream:
+    post:
+      summary: SSE stream for AI chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: text/event-stream
+
+  /stream:
+    post:
+      summary: Legacy SSE chat stream
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: text/event-stream
+        "429":
+          description: Rate limited
+
+  /build:
+    post:
+      summary: Universal builder (verify loop)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [task]
+              properties:
+                task: { type: string }
+                skill: { type: string }
+                provider: { type: string }
+                model: { type: string }
+                verify: { type: boolean }
+                max_attempts: { type: integer }
+      responses:
+        "200":
+          description: Build result
+        "429":
+          description: Rate limited
+
+  /build/stream:
+    post:
+      summary: SSE universal builder
+      responses:
+        "200":
+          description: text/event-stream
+
+  /tasks:
+    get:
+      summary: List queued tasks
+      responses:
+        "200":
+          description: Task list
+    post:
+      summary: Enqueue a multitask job
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [task]
+              properties:
+                task: { type: string }
+                skill: { type: string }
+      responses:
+        "202":
+          description: Accepted
+        "429":
+          description: Rate limited
+
+  /tasks/{id}/stream:
+    post:
+      summary: Stream a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: text/event-stream
+
+  /skills:
+    get:
+      summary: List skills
+      responses:
+        "200":
+          description: Skill list
+
+  /skills/run:
+    post:
+      summary: Run a named skill
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill: { type: string }
+                message: { type: string }
+      responses:
+        "200":
+          description: Skill result
+
+  /workspace/tree:
+    get:
+      summary: Workspace file tree
+      parameters:
+        - name: path
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Tree nodes
+
+  /workspace/file:
+    get:
+      summary: Read a workspace file
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: File content
+
+  /models/test:
+    post:
+      summary: Test a provider API key
+      responses:
+        "200":
+          description: Test result
+
+  /pull_requests:
+    post:
+      summary: Create a GitHub pull request (Team+)
+      responses:
+        "200":
+          description: PR payload
+        "402":
+          description: Plan required
+
+  /marketplace:
+    get:
+      summary: Marketplace catalog
+      responses:
+        "200":
+          description: Packs
+
+  /community:
+    get:
+      summary: Community packs
+      responses:
+        "200":
+          description: Pack list
+
+  /shared_agents:
+    get:
+      summary: Shared agents (Team+)
+      responses:
+        "200":
+          description: Agents
+
+  /mcp:
+    post:
+      summary: MCP JSON-RPC handle
+      responses:
+        "200":
+          description: MCP response
+
+  /orchestrate:
+    post:
+      summary: Multi-agent orchestration
+      responses:
+        "200":
+          description: Orchestration result
+
+  /slack/command:
+    post:
+      summary: Slack slash command
+      responses:
+        "200":
+          description: Slack payload
+
+  /discord/interactions:
+    post:
+      summary: Discord interactions endpoint
+      responses:
+        "200":
+          description: Discord payload
+
+  /auth/saml:
+    get:
+      summary: SAML/SSO config + OmniAuth snippet (Enterprise)
+      responses:
+        "200":
+          description: SAML status
+        "402":
+          description: Plan required
+
+  /auth/saml/callback:
+    post:
+      summary: Apply SAML attributes to RBAC role
+      responses:
+        "200":
+          description: Authenticated role mapping
+
+  /seats:
+    get:
+      summary: Seat claim status (Team license limit)
+      responses:
+        "200":
+          description: Seats status
+
+  /seats/claim:
+    post:
+      summary: Claim a seat for X-User-Id
+      responses:
+        "200":
+          description: Claimed
+        "402":
+          description: Seat limit reached
+
+  /analytics:
+    get:
+      summary: Usage analytics (Team+)
+      responses:
+        "200":
+          description: Analytics
+
+  /help:
+    get:
+      summary: Help topics
+      responses:
+        "200":
+          description: Topics
+
+  /support/contact:
+    get:
+      summary: Support contact info
+      responses:
+        "200":
+          description: Contact
 
 components:
   parameters:

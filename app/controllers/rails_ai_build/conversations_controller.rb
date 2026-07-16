@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class ConversationsController < ActionController::API
+  class ConversationsController < ApplicationController
     before_action :set_conversation
 
     def show

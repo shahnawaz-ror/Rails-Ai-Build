@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class SessionsController < ActionController::API
+  class SessionsController < ApplicationController
     def index
       render json: { sessions: Ai::Session.all.map(&:to_h) }
     end

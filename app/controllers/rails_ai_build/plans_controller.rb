@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class PlansController < ActionController::API
+  class PlansController < ApplicationController
     def index
       plans = Plans::PLANS.map do |key, plan|
         {

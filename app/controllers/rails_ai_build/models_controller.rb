@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class ModelsController < ActionController::API
+  class ModelsController < ApplicationController
     def index
       configs = ModelConfig.enabled.order(:name)
       render json: configs

@@ -50,6 +50,8 @@ RSpec.describe RailsAiBuild::Configuration do
       expect(config.host_safety).to be true
       expect(config.host_safety_soft_preview).to be true
       expect(config.host_safety_bundle_check).to be true
+      expect(config.ssrf_protection).to be true
+      expect(config.require_engine_token).to be false
       expect(config.auto_mount).to be true
     end
   end

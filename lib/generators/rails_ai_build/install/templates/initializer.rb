@@ -40,6 +40,15 @@ RailsAiBuild.configure do |config|
   config.host_safety_fix_after_rollback = false
   config.host_safety_rollback_on_verify_fail = true
 
+  # SSRF — block private/metadata URLs on provider/webhook/MCP calls
+  config.ssrf_protection = true
+  config.ssrf_allow_localhost = true   # Ollama / local NIM
+  config.ssrf_allow_private = false
+
+  # Production: require X-Rails-Ai-Build-Token on mutating API routes
+  # config.require_engine_token = true
+  # Or mount the engine behind Devise/admin constraint instead of auto_mount.
+
   # Agent loop safety limits
   config.max_agent_iterations = 25
   config.shell_timeout = 30

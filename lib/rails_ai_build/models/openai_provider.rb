@@ -111,7 +111,7 @@ module RailsAiBuild
       end
 
       def post(path, payload)
-        uri = URI("#{@base_url}#{path}")
+        uri = Security::UrlGuard.safe_uri("#{@base_url}#{path}")
         request = Net::HTTP::Post.new(uri)
         request["Authorization"] = "Bearer #{api_key}"
         request["Content-Type"] = "application/json"
@@ -120,7 +120,7 @@ module RailsAiBuild
       end
 
       def get(path)
-        uri = URI("#{@base_url}#{path}")
+        uri = Security::UrlGuard.safe_uri("#{@base_url}#{path}")
         request = Net::HTTP::Get.new(uri)
         request["Authorization"] = "Bearer #{api_key}"
         execute(uri, request)

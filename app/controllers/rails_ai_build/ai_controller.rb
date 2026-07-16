@@ -1,12 +1,8 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class AiController < ActionController::API
+  class AiController < ApplicationController
     include ActionController::Live
-    include Concerns::PlanErrorRendering
-    include Concerns::RateLimited
-
-    before_action :enforce_rate_limit!, only: %i[chat stream]
 
     def chat
       body = params.permit(:message, :provider, :model, :skill, :session_id, :workspace)

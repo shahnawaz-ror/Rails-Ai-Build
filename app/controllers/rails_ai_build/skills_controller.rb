@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsAiBuild
-  class SkillsController < ActionController::API
+  class SkillsController < ApplicationController
     def index
       render json: { skills: Skills::Registry.all }
     end
