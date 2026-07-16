@@ -4,6 +4,7 @@
 
 | Version | Supported |
 | ------- | --------- |
+| 2.8.1+  | Yes |
 | 2.8.x   | Yes |
 | 2.7.x   | Yes |
 | 2.6.x   | Yes |

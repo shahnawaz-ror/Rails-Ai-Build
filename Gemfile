@@ -8,6 +8,8 @@ gem "sqlite3", ">= 2.1"
 eval_gemfile "gemfiles/ci_dbs.rb" if ENV["INSTALL_CI_DB"].to_s != ""
 
 group :development, :test do
+  gem "ed25519", "~> 1.3", require: false
+  gem "redis", "~> 5.0", require: false
   gem "appraisal", "~> 2.5", require: false
   gem "combustion", "~> 1.3"
   gem "rspec", "~> 3.12"

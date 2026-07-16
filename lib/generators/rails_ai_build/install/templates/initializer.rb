@@ -50,7 +50,14 @@ RailsAiBuild.configure do |config|
   # config.require_engine_token_for_reads = true
   # config.allow_workspace_override = false
   # config.shell_enabled = false
+  # config.ssrf_allow_localhost = false
   # Or mount the engine behind Devise/admin constraint instead of auto_mount.
+
+  # Multi-worker shared store (RateLimit / Seats / CircuitBreaker)
+  # Add to Gemfile: gem "redis"
+  # config.redis_url = ENV["RAILS_AI_BUILD_REDIS_URL"] || ENV["REDIS_URL"]
+
+  # Discord bot signature verify (production): gem "ed25519" + DISCORD_PUBLIC_KEY
 
   # Agent loop safety limits
   config.max_agent_iterations = 25

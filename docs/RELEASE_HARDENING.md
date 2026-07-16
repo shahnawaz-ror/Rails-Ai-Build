@@ -38,6 +38,7 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 | H | Merge to main + release notes | done |
 | I | Session/read_file caps + rate-limit headers | done |
 | J | Grep/logs caps + audit redaction | done |
+| K | Optional Redis shared store + ed25519/LAUNCH 2.8.1 | done |
 
 ## Acceptance (release gate)
 
@@ -61,13 +62,14 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 
 ## Multi-worker note
 
-In-process RateLimit / Seats / Sessions / CircuitBreaker are **per Puma worker**.
-For sticky multi-worker production at 5k tenants, front with a shared store (Redis)
-or run one worker / sticky sessions — documented here so ops does not assume
-cross-process consistency.
+Set `gem "redis"` + `RAILS_AI_BUILD_REDIS_URL` (or `REDIS_URL`) so **RateLimit /
+Seats / CircuitBreaker** share state across Puma workers. Without Redis they stay
+**per-process** (safe fallback; Doctor warns when `WEB_CONCURRENCY>1`).
+
+Sessions / Changes / EventBus remain in-process — prefer worktree isolation and
+engine-token scoping for multi-seat agency mounts.
 
 ## Out of gem (ops)
 
 - RubyGems publish keys, Stripe live products, Cloud SaaS, marketing
-- Optional: `ed25519` gem for full Discord signature verify
-- Optional: Redis adapters for seats/rate-limit/circuit across workers
+- Host Gemfile: `gem "ed25519"` for Discord production verify; `gem "redis"` for multi-worker

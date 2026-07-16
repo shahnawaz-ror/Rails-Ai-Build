@@ -21,6 +21,7 @@ module RailsAiBuild
             check_host_safety,
             check_ssrf,
             check_engine_auth,
+            check_shared_store,
             check_plan_features,
             check_upgrade(workspace),
             check_disk_space(workspace)
@@ -188,6 +189,24 @@ module RailsAiBuild
           else
             ok("engine_auth", "Dev/test — token optional (enable require_engine_token for production)")
           end
+        end
+
+        def check_shared_store
+          if RedisStore.enabled?
+            ok("shared_store", "Redis shared store on (rate limit/seats/circuit across workers)")
+          elsif production_like? && multi_worker_hint?
+            warn(
+              "shared_store",
+              "Multi-worker production without Redis — RateLimit/Seats/Circuit are per-process",
+              "Add gem \"redis\" and set RAILS_AI_BUILD_REDIS_URL (or REDIS_URL)"
+            )
+          else
+            ok("shared_store", "In-process stores (set REDIS_URL for multi-worker)")
+          end
+        end
+
+        def multi_worker_hint?
+          ENV["WEB_CONCURRENCY"].to_i > 1 || ENV["RAILS_MAX_THREADS"].to_i > 1
         end
 
         def production_like?

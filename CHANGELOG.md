@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8.1] - 2026-07-16
+
+### Added — Multi-worker shared store + Discord polish
+- **Optional Redis** (`RAILS_AI_BUILD_REDIS_URL` / `REDIS_URL` / `config.redis_url`) for RateLimit, Seats, CircuitBreaker across Puma workers — soft-requires `gem "redis"`, falls back to memory
+- Doctor check `shared_store` warns multi-worker production without Redis
+- Installer notes for Redis + `ed25519` (Discord signature verify)
+- LAUNCH checklist bumped to 2.8.1
+
 ## [2.8.0] - 2026-07-16
 
 ### Security / Release hardening (5k-company scale)

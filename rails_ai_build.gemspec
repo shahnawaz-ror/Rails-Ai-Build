@@ -45,6 +45,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activerecord", ">= 7.0"
   spec.add_dependency "activejob", ">= 7.0"
 
+  # Optional at runtime — soft-required when REDIS_URL / Discord bots are used.
+  # Hosts should add these to their Gemfile for multi-worker / Discord production:
+  #   gem "redis"
+  #   gem "ed25519"
+  spec.add_development_dependency "ed25519", "~> 1.3"
+  spec.add_development_dependency "redis", "~> 5.0"
+
   spec.add_development_dependency "appraisal", "~> 2.5"
   spec.add_development_dependency "combustion", "~> 1.3"
   spec.add_development_dependency "rspec", "~> 3.12"

@@ -1,23 +1,31 @@
-# Launch Checklist — Rails AI Build v2.7.0
+# Launch Checklist — Rails AI Build v2.8.1
 
-**In-gem product (Activation, Host Safety, generator-first, SSRF, rate limits, seats) is shipped.**  
+**In-gem product is release-ready:** Activation, Host Safety, generator-first, SSRF, rate limits, seats, circuit breaker, optional Redis shared store, health, audit redaction.
+
 Remaining items below are **ops / secrets / marketing** — they cannot be completed inside this repository alone.
 
-See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
+See [RELEASE_HARDENING.md](./RELEASE_HARDENING.md), [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md).
 
 ## Distribution (Day 1)
 
 - [ ] Set `RUBYGEMS_API_KEY` secret in GitHub → publish gem
 - [ ] Set `PYPI_API_TOKEN` secret → publish Python package
 - [ ] Set `NPM_TOKEN` secret → publish `@rails-ai-build/sdk`
-- [x] Tag releases through v2.7.0 (gem code ready to publish)
+- [x] Tag releases through v2.8.1 (gem code ready to publish)
 - [ ] Enable GitHub Pages for landing site
+
+```bash
+gem build rails_ai_build.gemspec
+gem push rails_ai_build-2.8.1.gem
+```
 
 ## Activation / entitlements (Day 1)
 
 - [ ] Set `RAILS_AI_BUILD_SECRET` or rely on Rails `secret_key_base` for encrypted keys
 - [ ] Set `RAILS_AI_BUILD_LICENSE_SECRET` for signed license tokens (production)
 - [ ] Production: `config.require_engine_token = true` (+ bootstrap token) or mount behind host auth
+- [ ] Multi-worker: `gem "redis"` + `RAILS_AI_BUILD_REDIS_URL` (or `REDIS_URL`)
+- [ ] Discord bots: `gem "ed25519"` + `DISCORD_PUBLIC_KEY`
 - [ ] Verify IDE wizard → Doctor green on a fresh Rails app
 
 ## Stripe (Week 1)
@@ -63,12 +71,10 @@ See [SRS.md](./SRS.md), [FLOWS.md](./FLOWS.md) Flow 0, and [CLIENT_JOURNEY_MASTE
 ```bash
 # Publish gem manually
 gem build rails_ai_build.gemspec
-gem push rails_ai_build-1.0.0.gem
+gem push rails_ai_build-2.8.1.gem
 
 # Run full test suite
 bundle exec rspec
-python3 -m pytest packages/python/tests/
-cd packages/javascript && npm run build
 
 # Generate everything in a Rails app
 rails generate rails_ai_build:install
@@ -76,4 +82,5 @@ rails generate rails_ai_build:admin
 rails generate rails_ai_build:ci
 rails generate rails_ai_build:enterprise
 rails rails_ai_build:setup
+rails rails_ai_build:doctor
 ```

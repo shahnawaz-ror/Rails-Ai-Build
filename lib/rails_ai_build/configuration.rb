@@ -56,7 +56,8 @@ module RailsAiBuild
                   :http_open_timeout,
                   :http_read_timeout,
                   :http_write_timeout,
-                  :max_ai_sessions
+                  :max_ai_sessions,
+                  :redis_url
 
     def initialize
       @default_model = "gpt-4o"
@@ -114,6 +115,7 @@ module RailsAiBuild
       @http_read_timeout = 60
       @http_write_timeout = 30
       @max_ai_sessions = 2_000
+      @redis_url = nil
     end
 
     def workspace_path
@@ -144,6 +146,7 @@ module RailsAiBuild
       if ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_s.match?(/\A\d+\z/)
         self.seat_limit = ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_i
       end
+      self.redis_url ||= ENV["RAILS_AI_BUILD_REDIS_URL"].presence || ENV["REDIS_URL"].presence
     end
 
     def register_provider(name, provider_class, options = {})
