@@ -13,21 +13,29 @@ namespace :rails_ai_build do
     # Step 1: Check API keys
     openai_key = ENV["OPENAI_API_KEY"]
     anthropic_key = ENV["ANTHROPIC_API_KEY"]
+    nvidia_key = ENV["NVIDIA_API_KEY"]
 
-    if openai_key.blank? && anthropic_key.blank?
+    if openai_key.blank? && anthropic_key.blank? && nvidia_key.blank?
       puts "⚠️  No API keys found."
-      puts "   Set OPENAI_API_KEY or ANTHROPIC_API_KEY in your environment."
-      puts "   Example: export OPENAI_API_KEY=sk-...\n"
+      puts "   Set NVIDIA_API_KEY (https://build.nvidia.com), OPENAI_API_KEY, or ANTHROPIC_API_KEY."
+      puts "   Example: export NVIDIA_API_KEY=nvapi-...\n"
     else
-      puts "✅ API key detected: #{openai_key.present? ? 'OpenAI' : 'Anthropic'}"
+      detected = [
+        nvidia_key.present? && "NVIDIA",
+        openai_key.present? && "OpenAI",
+        anthropic_key.present? && "Anthropic"
+      ].compact.join(", ")
+      puts "✅ API key detected: #{detected}"
     end
 
     # Step 2: Configure
     RailsAiBuild.configure do |config|
       config.api_keys[:openai] = openai_key if openai_key.present?
       config.api_keys[:anthropic] = anthropic_key if anthropic_key.present?
+      config.api_keys[:nvidia] = nvidia_key if nvidia_key.present?
+      config.apply_env_providers!
     end
-    puts "✅ Configuration loaded"
+    puts "✅ Configuration loaded (provider: #{RailsAiBuild.configuration.default_provider})"
 
     # Step 3: Check providers
     RailsAiBuild::Models::Registry.register_defaults
@@ -44,7 +52,7 @@ namespace :rails_ai_build do
     end
 
     # Step 5: Demo (if API key present)
-    if openai_key.present? || anthropic_key.present?
+    if openai_key.present? || anthropic_key.present? || nvidia_key.present?
       puts "\n🎯 Running demo: list files in app/ ..."
       begin
         agent = RailsAiBuild::Agents::Agent.new

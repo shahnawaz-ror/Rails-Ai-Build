@@ -6,17 +6,32 @@
   1. Run migrations:
        rails db:migrate
 
-  2. Set your API keys in config/initializers/rails_ai_build.rb
-     or via environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY).
+  2. Set an API key (any one is enough):
+
+       # NVIDIA NIM (free tier at https://build.nvidia.com)
+       export NVIDIA_API_KEY=nvapi-...
+       # optional model override:
+       export NVIDIA_MODEL=meta/llama-3.1-8b-instruct
+
+       # or OpenAI / Anthropic
+       export OPENAI_API_KEY=sk-...
+       export ANTHROPIC_API_KEY=sk-ant-...
+
+     Keys can also be set in config/initializers/rails_ai_build.rb.
+     When NVIDIA_API_KEY is set, the gem defaults to :nvidia automatically.
 
   3. The engine is mounted at /rails_ai_build (disable auto_mount to change).
 
   4. Create an agent via API or console:
 
-       agent = RailsAiBuild::Agents::Agent.new(
-         provider: :openai,
-         model: "gpt-4o"
-       )
+       # Uses default provider (nvidia if NVIDIA_API_KEY is set)
+       agent = RailsAiBuild::Agents::Agent.new
        result = agent.chat("Add a health check endpoint to config/routes.rb")
+
+       # Or force NVIDIA explicitly
+       agent = RailsAiBuild::Agents::Agent.new(
+         provider: :nvidia,
+         model: "meta/llama-3.1-8b-instruct"
+       )
 
   See README for full documentation.

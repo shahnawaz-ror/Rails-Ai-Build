@@ -38,15 +38,21 @@ module RailsAiBuild
         def check_api_keys
           openai = RailsAiBuild.configuration.api_key_for(:openai)
           anthropic = RailsAiBuild.configuration.api_key_for(:anthropic)
+          nvidia = RailsAiBuild.configuration.api_key_for(:nvidia)
           cloud = RailsAiBuild.configuration.cloud_api_key
 
-          if openai.present? || anthropic.present? || cloud.present?
-            ok("api_keys",
-               "API key configured (#{[openai && 'openai', anthropic && 'anthropic',
-                                       cloud && 'cloud'].compact.join(', ')})")
+          configured = [
+            openai.present? && "openai",
+            anthropic.present? && "anthropic",
+            nvidia.present? && "nvidia",
+            cloud.present? && "cloud"
+          ].compact
+
+          if configured.any?
+            ok("api_keys", "API key configured (#{configured.join(', ')})")
           else
             warn("api_keys", "No API keys set",
-                 "export OPENAI_API_KEY=sk-... or set in config/initializers/rails_ai_build.rb")
+                 "export NVIDIA_API_KEY=nvapi-... (build.nvidia.com) or OPENAI_API_KEY / ANTHROPIC_API_KEY")
           end
         end
 
@@ -147,12 +153,18 @@ module RailsAiBuild
         "api-keys" => {
           title: "API Keys",
           content: <<~HELP
-            Set via environment variables:
+            Set via environment variables (any one is enough):
+              NVIDIA_API_KEY=nvapi-...          # free key: https://build.nvidia.com
+              NVIDIA_MODEL=meta/llama-3.1-8b-instruct
               OPENAI_API_KEY=sk-...
               ANTHROPIC_API_KEY=sk-ant-...
 
             Or in config/initializers/rails_ai_build.rb:
-              config.api_keys[:openai] = ENV["OPENAI_API_KEY"]
+              config.api_keys[:nvidia] = ENV["NVIDIA_API_KEY"]
+              config.default_provider = :nvidia
+
+            When NVIDIA_API_KEY starts with nvapi-, the install initializer
+            selects :nvidia automatically.
           HELP
         },
         "skills" => {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.1] - 2026-07-16
+
+### Added — NVIDIA API provision for host apps
+- Install initializer includes `nvidia` API key + auto-selects `:nvidia` when `NVIDIA_API_KEY=nvapi-…`
+- `Configuration#apply_env_providers!` — load OpenAI / Anthropic / NVIDIA from ENV
+- Doctor + help topics recognize NVIDIA NIM keys
+- README documents NVIDIA as a first-class provider for any Rails app
+
 ## [2.2.0] - 2026-07-09
 
 ### Added — Cursor parity (real-time + git isolation + threads)

@@ -63,6 +63,22 @@ module RailsAiBuild
       api_keys[provider.to_sym] || api_keys[provider.to_s]
     end
 
+    # Load common provider keys from ENV and prefer NVIDIA when available.
+    def apply_env_providers!
+      api_keys[:openai] ||= ENV.fetch("OPENAI_API_KEY", nil)
+      api_keys[:anthropic] ||= ENV.fetch("ANTHROPIC_API_KEY", nil)
+      api_keys[:nvidia] ||= ENV.fetch("NVIDIA_API_KEY", nil)
+
+      if api_keys[:nvidia].to_s.start_with?("nvapi-")
+        self.default_provider = :nvidia
+        self.default_model = ENV.fetch("NVIDIA_MODEL", Models::NvidiaProvider::DEFAULT_MODEL)
+      elsif api_keys[:anthropic].to_s.start_with?("sk-ant-")
+        self.default_provider = :anthropic
+      elsif api_keys[:openai].present?
+        self.default_provider = :openai
+      end
+    end
+
     def register_provider(name, provider_class, options = {})
       providers[name.to_sym] = { class: provider_class, options: options }
     end

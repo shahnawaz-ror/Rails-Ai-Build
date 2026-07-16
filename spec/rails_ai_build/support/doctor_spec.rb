@@ -29,4 +29,13 @@ RSpec.describe RailsAiBuild::Support::Doctor do
     api_check = result[:checks].find { |c| c[:name] == "api_keys" }
     expect(api_check[:status]).to eq(:warning)
   end
+
+  it "accepts NVIDIA API keys" do
+    RailsAiBuild.configuration.api_keys.clear
+    RailsAiBuild.configuration.api_keys[:nvidia] = "nvapi-test"
+    result = described_class.check(workspace: workspace)
+    api_check = result[:checks].find { |c| c[:name] == "api_keys" }
+    expect(api_check[:status]).to eq(:ok)
+    expect(api_check[:message]).to include("nvidia")
+  end
 end

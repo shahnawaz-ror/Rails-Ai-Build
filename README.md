@@ -196,11 +196,31 @@ rails generate rails_ai_build:install
 rails db:migrate
 ```
 
-Set API keys in `config/initializers/rails_ai_build.rb` or via environment variables:
+Set API keys in `config/initializers/rails_ai_build.rb` or via environment variables.
+**NVIDIA NIM is fully supported** (free key at [build.nvidia.com](https://build.nvidia.com)):
 
 ```bash
+# Recommended: NVIDIA NIM
+export NVIDIA_API_KEY=nvapi-...
+export NVIDIA_MODEL=meta/llama-3.1-8b-instruct   # optional
+
+# Or OpenAI / Anthropic
 export OPENAI_API_KEY=sk-...
 export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+When `NVIDIA_API_KEY` is set, the install initializer auto-selects `provider: :nvidia`.
+
+```ruby
+# Explicit NVIDIA usage
+RailsAiBuild.configure do |config|
+  config.api_keys[:nvidia] = ENV["NVIDIA_API_KEY"]
+  config.default_provider = :nvidia
+  config.default_model = "meta/llama-3.1-8b-instruct"
+end
+
+agent = RailsAiBuild::Agents::Agent.new(provider: :nvidia)
+agent.chat("Add a health check endpoint")
 ```
 
 ## Quick Start
@@ -209,8 +229,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 ```ruby
 RailsAiBuild.configure do |config|
-  config.api_keys[:openai] = ENV["OPENAI_API_KEY"]
-  config.default_model = "gpt-4o"
+  config.apply_env_providers! # picks NVIDIA / OpenAI / Anthropic from ENV
 end
 
 result = RailsAiBuild::ChatService.ask(

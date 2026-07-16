@@ -3,15 +3,25 @@
 # rails_ai_build_version: <%= rails_ai_build_version %>
 
 RailsAiBuild.configure do |config|
-  # Default AI provider (:openai, :anthropic, or a custom registered provider)
-  config.default_provider = :openai
-  config.default_model = "gpt-4o"
-
   # API keys — prefer environment variables in production
+  # Get a free NVIDIA NIM key at https://build.nvidia.com
   config.api_keys = {
-    openai: ENV.fetch("OPENAI_API_KEY", nil),
-    anthropic: ENV.fetch("ANTHROPIC_API_KEY", nil)
+    openai: ENV.fetch('OPENAI_API_KEY', nil),
+    anthropic: ENV.fetch('ANTHROPIC_API_KEY', nil),
+    nvidia: ENV.fetch('NVIDIA_API_KEY', nil)
   }
+
+  # Prefer NVIDIA when NVIDIA_API_KEY is set; otherwise OpenAI / Anthropic
+  if ENV['NVIDIA_API_KEY'].to_s.start_with?('nvapi-')
+    config.default_provider = :nvidia
+    config.default_model = ENV.fetch('NVIDIA_MODEL', 'meta/llama-3.1-8b-instruct')
+  elsif ENV['ANTHROPIC_API_KEY'].to_s.start_with?('sk-ant-')
+    config.default_provider = :anthropic
+    config.default_model = ENV.fetch('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514')
+  else
+    config.default_provider = :openai
+    config.default_model = ENV.fetch('OPENAI_MODEL', 'gpt-4o')
+  end
 
   # Tools the agent can use
   config.allowed_tools = %i[read_file write_file grep list_files shell]
@@ -31,6 +41,10 @@ RailsAiBuild.configure do |config|
 
   # Auto-mount engine at /rails_ai_build (set false to mount manually)
   config.auto_mount = true
+
+  # Optional NVIDIA model override examples:
+  # config.default_model = "meta/llama-3.3-70b-instruct"
+  # config.default_model = "nvidia/nemotron-mini-4b-instruct"
 
   # Register a custom OpenAI-compatible provider (e.g. Ollama, Together, Groq)
   # config.register_provider(:ollama, RailsAiBuild::Models::CustomProvider,
