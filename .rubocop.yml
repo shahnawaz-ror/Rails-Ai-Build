@@ -56,6 +56,7 @@ Metrics/ClassLength:
     - "lib/rails_ai_build/tasks/runtime.rb"
     - "lib/rails_ai_build/models/anthropic_provider.rb"
     - "lib/rails_ai_build/support.rb"
+    - "lib/rails_ai_build/migrations/intelligence.rb"
 
 Metrics/CyclomaticComplexity:
   Exclude:
