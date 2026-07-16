@@ -158,6 +158,12 @@ module RailsAiBuild
     end
 
     def bootstrap_settings_token!
+      if production_like? && ENV["RAILS_AI_BUILD_ALLOW_BOOTSTRAP"].to_s != "1"
+        raise SecurityError,
+              "Bootstrap disabled in production. Set RAILS_AI_BUILD_SETTINGS_TOKEN, or " \
+              "RAILS_AI_BUILD_ALLOW_BOOTSTRAP=1 once, or run: rails rails_ai_build:rotate_settings_token"
+      end
+
       ensure_store!
       row = record
       if row.settings_token_digest.present?
@@ -183,15 +189,25 @@ module RailsAiBuild
 
     def valid_settings_token?(token)
       return true if bypass_settings_auth?
+      return false if token.blank?
 
       expected = RailsAiBuild.configuration.settings_token_digest
       expected = record&.settings_token_digest if expected.blank? && table_ready?
       env_token = ENV["RAILS_AI_BUILD_SETTINGS_TOKEN"].presence
 
-      return ActiveSupport::SecurityUtils.secure_compare(token.to_s, env_token) if env_token && expected.blank?
-      return false if expected.blank? || token.blank?
+      if env_token && expected.blank?
+        return false unless token.bytesize == env_token.bytesize
 
-      ActiveSupport::SecurityUtils.secure_compare(digest_token(token), expected)
+        return ActiveSupport::SecurityUtils.secure_compare(token.to_s, env_token)
+      end
+      return false if expected.blank?
+
+      digest = digest_token(token)
+      return false unless digest.bytesize == expected.to_s.bytesize
+
+      ActiveSupport::SecurityUtils.secure_compare(digest, expected.to_s)
+    rescue ArgumentError
+      false
     end
 
     def settings_token_required?
@@ -233,6 +249,14 @@ module RailsAiBuild
       return Rails.env.local? if Rails.env.respond_to?(:local?)
 
       Rails.env.development? || Rails.env.test?
+    end
+
+    def production_like?
+      return true if ENV["RAILS_ENV"].to_s == "production"
+      return true if defined?(Rails) && Rails.env.production?
+      return true if ENV["RAILS_AI_BUILD_REQUIRE_ENGINE_TOKEN"].to_s == "1"
+
+      false
     end
 
     def warn_log(message)

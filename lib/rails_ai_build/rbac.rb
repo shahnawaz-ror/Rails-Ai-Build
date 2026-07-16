@@ -39,10 +39,11 @@ module RailsAiBuild
       end
 
       def current_role
-        Thread.current[:rails_ai_build_role] || RailsAiBuild.configuration.default_role
+        RequestContext.rbac_role || Thread.current[:rails_ai_build_role] || RailsAiBuild.configuration.default_role
       end
 
       def current_role=(role)
+        RequestContext.rbac_role = role.to_sym
         Thread.current[:rails_ai_build_role] = role.to_sym
       end
 

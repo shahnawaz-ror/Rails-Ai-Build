@@ -127,9 +127,7 @@ module RailsAiBuild
       end
 
       def execute(uri, request)
-        Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
-          http.request(request)
-        end
+        HttpClient.request(uri, request)
       end
     end
   end

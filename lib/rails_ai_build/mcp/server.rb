@@ -101,10 +101,7 @@ module RailsAiBuild
             params: { name: tool_name, arguments: arguments }
           )
 
-          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
-            http.request(request)
-          end
-
+          response = HttpClient.request(uri, request, read_timeout: 30)
           JSON.parse(response.body)
         end
       end

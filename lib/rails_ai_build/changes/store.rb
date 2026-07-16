@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "securerandom"
+require "monitor"
 
 module RailsAiBuild
   module Changes
@@ -25,14 +26,20 @@ module RailsAiBuild
     end
 
     class Store
+      MAX_CHANGES = 5_000
+      MAX_CONTENT_BYTES = 2_000_000
+
       class << self
         def begin_session!(session_id)
-          sessions[session_id.to_s] ||= []
-          session_id.to_s
+          mutex.synchronize do
+            sessions[session_id.to_s] ||= []
+            session_id.to_s
+          end
         end
 
         def record(path:, old_content:, new_content:, workspace:, session_id: nil, source: "write_file")
           Plans.check!(:diff_preview) if RailsAiBuild.configuration.diff_preview
+          enforce_content_cap!(new_content)
 
           session_id ||= HostSafety.current_session_id
           begin_session!(session_id) if session_id
@@ -54,8 +61,11 @@ module RailsAiBuild
             soft_preview: soft
           )
 
-          memory_store << change
-          sessions[session_id.to_s] << change.id if session_id
+          mutex.synchronize do
+            memory_store << change
+            sessions[session_id.to_s] << change.id if session_id
+            evict_changes! if memory_store.size > MAX_CHANGES
+          end
 
           if queue
             {
@@ -92,25 +102,32 @@ module RailsAiBuild
             source: source,
             soft_preview: false
           )
-          memory_store << change
-          sessions[session_id.to_s] << change.id if session_id
+          mutex.synchronize do
+            memory_store << change
+            sessions[session_id.to_s] << change.id if session_id
+            evict_changes! if memory_store.size > MAX_CHANGES
+          end
           change
         end
 
         def all(status: nil)
-          list = memory_store
-          status ? list.select { |c| c.status == status } : list
+          mutex.synchronize do
+            list = memory_store.dup
+            status ? list.select { |c| c.status == status } : list
+          end
         end
 
         def find(id)
-          memory_store.find { |c| c.id == id }
+          mutex.synchronize { memory_store.find { |c| c.id == id } }
         end
 
         def session_paths(session_id)
           return [] if session_id.blank?
 
-          ids = sessions[session_id.to_s] || []
-          ids.filter_map { |id| find(id)&.path }.uniq
+          mutex.synchronize do
+            ids = sessions[session_id.to_s] || []
+            ids.filter_map { |cid| memory_store.find { |c| c.id == cid }&.path }.uniq
+          end
         end
 
         def apply(id, workspace: nil)
@@ -184,11 +201,35 @@ module RailsAiBuild
         end
 
         def clear!
-          memory_store.clear
-          sessions.clear
+          mutex.synchronize do
+            memory_store.clear
+            sessions.clear
+          end
         end
 
         private
+
+        def mutex
+          @mutex ||= Monitor.new
+        end
+
+        def enforce_content_cap!(content)
+          return if content.to_s.bytesize <= MAX_CONTENT_BYTES
+
+          raise AgentError, "Change exceeds max size (#{MAX_CONTENT_BYTES} bytes)"
+        end
+
+        def evict_changes!
+          overflow = memory_store.size - MAX_CHANGES
+          return if overflow <= 0
+
+          dropped = memory_store.shift(overflow)
+          dropped.each do |change|
+            next unless change.session_id
+
+            sessions[change.session_id.to_s]&.delete(change.id)
+          end
+        end
 
         def enforce_approval!
           return unless Plans.feature?(:approval_workflow)
@@ -213,7 +254,7 @@ module RailsAiBuild
         end
 
         def apply_change(change, workspace)
-          full = workspace.join(change.path.to_s.sub(%r{\A/}, ""))
+          full = Workspace::Paths.resolve(workspace, change.path, allow_missing: true)
           full.dirname.mkpath
           full.write(change.new_content)
           {
@@ -224,7 +265,7 @@ module RailsAiBuild
         end
 
         def restore_change!(change, workspace)
-          full = workspace.join(change.path.to_s.sub(%r{\A/}, ""))
+          full = Workspace::Paths.resolve(workspace, change.path, allow_missing: true)
           if change.old_content.to_s.empty?
             full.delete if full.file?
           else

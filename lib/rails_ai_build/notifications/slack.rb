@@ -29,7 +29,7 @@ module RailsAiBuild
           request = Net::HTTP::Post.new(uri)
           request["Content-Type"] = "application/json"
           request.body = JSON.generate(payload)
-          Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
+          HttpClient.request(uri, request, read_timeout: 15)
         end
       end
     end

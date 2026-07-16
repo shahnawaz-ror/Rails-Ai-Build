@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'securerandom'
+require "securerandom"
+require "monitor"
 
 module RailsAiBuild
   module Ai
@@ -47,32 +48,52 @@ module RailsAiBuild
       end
 
       class << self
+        MAX_SESSIONS = 2_000
+
         def create(**opts)
           session = new(**opts)
-          store[session.id] = session
+          mutex.synchronize do
+            store[session.id] = session
+            evict! if store.size > max_sessions
+          end
           session
         end
 
         def find(id)
-          store[id.to_s]
+          mutex.synchronize { store[id.to_s] }
         end
 
         def all
-          store.values.sort_by(&:created_at).reverse
+          mutex.synchronize { store.values.sort_by(&:created_at).reverse }
         end
 
         def destroy(id)
-          store.delete(id.to_s)
+          mutex.synchronize { store.delete(id.to_s) }
         end
 
         def reset!
-          @store = {}
+          mutex.synchronize { store.clear }
         end
 
         private
 
+        def mutex
+          @mutex ||= Monitor.new
+        end
+
         def store
           @store ||= {}
+        end
+
+        def max_sessions
+          (RailsAiBuild.configuration.max_ai_sessions || MAX_SESSIONS).to_i
+        end
+
+        def evict!
+          overflow = store.size - max_sessions
+          return if overflow <= 0
+
+          store.sort_by { |_id, s| s.created_at }.first(overflow).each { |id, _| store.delete(id) }
         end
       end
 

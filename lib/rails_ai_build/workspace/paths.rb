@@ -25,14 +25,34 @@ module RailsAiBuild
 
       class << self
         # Returns a Pathname inside +workspace+, or raises SecurityError / ArgumentError.
-        def resolve(workspace, path)
-          workspace = Pathname.new(workspace).expand_path
+        # Uses realpath containment to block symlink escapes outside the app root.
+        def resolve(workspace, path, allow_missing: true)
+          workspace = canonical_root(workspace)
           relative = normalize(workspace, path)
-          candidate = workspace.join(relative).expand_path
+          raise SecurityError, "Path escapes workspace: #{path}" if relative.include?("..")
 
-          raise SecurityError, "Path escapes workspace: #{path}" unless inside?(workspace, candidate)
-
+          candidate = workspace.join(relative)
+          assert_inside!(workspace, candidate, original: path, allow_missing: allow_missing)
           candidate
+        end
+
+        def assert_inside!(workspace, candidate, original: nil, allow_missing: true)
+          workspace = canonical_root(workspace)
+          candidate = Pathname.new(candidate)
+
+          if candidate.exist?
+            real = candidate.realpath
+            raise SecurityError, "Path escapes workspace (symlink): #{original || candidate}" unless inside_realpath?(workspace, real)
+          else
+            raise SecurityError, "Path does not exist: #{original || candidate}" unless allow_missing
+
+            # Ensure parent chain cannot escape via symlink
+            parent = candidate.dirname
+            parent = parent.realpath if parent.exist?
+            raise SecurityError, "Path escapes workspace: #{original || candidate}" unless inside_realpath?(workspace, parent.expand_path)
+          end
+
+          true
         end
 
         # True when path means the workspace root (omit path / use ".").
@@ -46,28 +66,33 @@ module RailsAiBuild
         end
 
         def normalize(workspace, path)
-          return '.' if root_alias?(path)
+          return "." if root_alias?(path)
 
           text = path.to_s.strip
-          text = text.sub(%r{\Afile://}i, '')
+          text = text.sub(%r{\Afile://}i, "")
           workspace = Pathname.new(workspace).expand_path
 
           # Absolute path that is the workspace (or under it) → make relative.
-          if text.start_with?('/')
+          if text.start_with?("/")
             absolute = Pathname.new(text).expand_path
             if absolute == workspace
-              return '.'
+              return "."
             elsif inside?(workspace, absolute)
               return absolute.relative_path_from(workspace).to_s
             else
               # Absolute outside workspace — treat as relative by stripping leading /
-              text = text.sub(%r{\A/+}, '')
+              text = text.sub(%r{\A/+}, "")
             end
           end
 
           text = strip_workspace_prefix(workspace, text)
-          text = text.delete_prefix('./')
-          text = '.' if text.empty? || root_alias?(text)
+          text = text.delete_prefix("./")
+          text = "." if text.empty? || root_alias?(text)
+
+          # Reject parent traversal segments after normalization
+          parts = text.split("/").reject(&:empty?)
+          raise SecurityError, "Path escapes workspace: #{path}" if parts.include?("..")
+
           text
         end
 
@@ -83,7 +108,28 @@ module RailsAiBuild
           GUIDE
         end
 
+        # Reject HTTP/API overrides that point outside the configured root.
+        def sanitize_request_workspace!(requested, configured: nil)
+          return nil if requested.blank?
+
+          configured = Pathname(configured || RailsAiBuild.configuration.workspace_path).expand_path
+          unless RailsAiBuild.configuration.allow_workspace_override
+            raise SecurityError,
+                  "workspace override disabled (set config.allow_workspace_override = true only for trusted local agents)"
+          end
+
+          requested = Pathname(requested).expand_path
+          raise SecurityError, "workspace override escapes configured root: #{requested}" unless inside_realpath?(configured, requested)
+
+          requested
+        end
+
         private
+
+        def canonical_root(workspace)
+          root = Pathname.new(workspace).expand_path
+          root.exist? ? root.realpath : root
+        end
 
         def inside?(workspace, candidate)
           workspace = workspace.expand_path
@@ -91,8 +137,17 @@ module RailsAiBuild
           return true if candidate == workspace
 
           relative = candidate.relative_path_from(workspace).to_s
-          !relative.start_with?('..')
+          !relative.start_with?("..")
         rescue ArgumentError
+          false
+        end
+
+        def inside_realpath?(workspace, candidate)
+          workspace = canonical_root(workspace)
+          candidate = Pathname.new(candidate).expand_path
+          candidate = candidate.realpath if candidate.exist?
+          inside?(workspace, candidate)
+        rescue Errno::ENOENT, ArgumentError
           false
         end
 
@@ -100,28 +155,25 @@ module RailsAiBuild
           base = workspace.basename.to_s
           return text if base.empty?
 
-          # "mailpilot/app/models" → "app/models" when workspace basename is mailpilot
           pattern = %r{\A#{Regexp.escape(base)}(?:/|\z)}i
-          text.sub(pattern, '')
+          text.sub(pattern, "")
         end
 
         def strip_workspace_prefix(workspace, text)
           stripped = text.dup
-          # Common mistaken prefixes from Cursor-like hosts
           %w[workspace /workspace ./workspace].each do |prefix|
             if stripped.downcase == prefix.downcase
-              return ''
+              return ""
             elsif stripped.downcase.start_with?("#{prefix.downcase}/")
-              stripped = stripped[(prefix.length + 1)..] || ''
+              stripped = stripped[(prefix.length + 1)..] || ""
             end
           end
 
-          # Absolute workspace path prefix
           abs = workspace.to_s
           if stripped.start_with?("#{abs}/")
-            stripped = stripped[(abs.length + 1)..] || ''
+            stripped = stripped[(abs.length + 1)..] || ""
           elsif stripped == abs
-            return ''
+            return ""
           end
 
           strip_workspace_basename_prefix(workspace, stripped)

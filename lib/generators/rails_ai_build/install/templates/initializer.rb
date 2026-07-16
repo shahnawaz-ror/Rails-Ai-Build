@@ -45,8 +45,11 @@ RailsAiBuild.configure do |config|
   config.ssrf_allow_localhost = true   # Ollama / local NIM
   config.ssrf_allow_private = false
 
-  # Production: require X-Rails-Ai-Build-Token on mutating API routes
+  # Production hardening (recommended for public mounts)
   # config.require_engine_token = true
+  # config.require_engine_token_for_reads = true
+  # config.allow_workspace_override = false
+  # config.shell_enabled = false
   # Or mount the engine behind Devise/admin constraint instead of auto_mount.
 
   # Agent loop safety limits

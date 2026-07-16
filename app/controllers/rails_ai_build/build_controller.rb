@@ -7,7 +7,7 @@ module RailsAiBuild
     def create
       body = params.permit(:task, :provider, :model, :skill, :verify, :max_attempts, :workspace)
 
-      workspace = body[:workspace].present? ? Pathname.new(body[:workspace]) : nil
+      workspace = sanitize_workspace_param(body[:workspace])
       Audit.current_user = request.headers['X-User-Id'] || 'api'
 
       result = Builder::Universal.build(
@@ -32,7 +32,7 @@ module RailsAiBuild
       response.headers['X-Accel-Buffering'] = 'no'
 
       body = params.permit(:task, :provider, :model, :skill, :verify, :max_attempts, :workspace, :composer)
-      workspace = body[:workspace].present? ? Pathname.new(body[:workspace]) : nil
+      workspace = sanitize_workspace_param(body[:workspace])
       task = compose_task(body[:task], composer: body[:composer])
 
       Builder::Universal.stream(

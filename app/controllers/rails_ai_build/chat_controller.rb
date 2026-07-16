@@ -15,7 +15,7 @@ module RailsAiBuild
         provider: body[:provider],
         model: body[:model],
         system_prompt: system_prompt,
-        workspace: body[:workspace].present? ? Pathname.new(body[:workspace]) : nil
+        workspace: sanitize_workspace_param(body[:workspace])
       )
 
       Audit.current_user = request.headers["X-User-Id"] || "api"

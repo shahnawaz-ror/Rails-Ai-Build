@@ -45,17 +45,19 @@ module RailsAiBuild
       end
 
       def current_user=(user)
-        @current_user = user
+        RequestContext.audit_user = user
       end
 
       def current_user
-        @current_user
+        RequestContext.audit_user
       end
 
       private
 
       def memory_log
         @memory_log ||= []
+        @memory_log = @memory_log.last(1_000) if @memory_log.size > 1_000
+        @memory_log
       end
     end
   end

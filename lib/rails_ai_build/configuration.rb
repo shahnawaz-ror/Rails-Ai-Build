@@ -48,7 +48,15 @@ module RailsAiBuild
                   :ssrf_allow_private,
                   :ssrf_allowed_hosts,
                   :require_engine_token,
-                  :seat_limit
+                  :require_engine_token_for_reads,
+                  :seat_limit,
+                  :allow_workspace_override,
+                  :shell_enabled,
+                  :shell_allowlist,
+                  :http_open_timeout,
+                  :http_read_timeout,
+                  :http_write_timeout,
+                  :max_ai_sessions
 
     def initialize
       @default_model = "gpt-4o"
@@ -97,7 +105,15 @@ module RailsAiBuild
       @ssrf_allow_private = false
       @ssrf_allowed_hosts = []
       @require_engine_token = false
+      @require_engine_token_for_reads = true
       @seat_limit = nil
+      @allow_workspace_override = false
+      @shell_enabled = nil # nil = auto (on in local, off in production)
+      @shell_allowlist = nil
+      @http_open_timeout = 5
+      @http_read_timeout = 60
+      @http_write_timeout = 30
+      @max_ai_sessions = 2_000
     end
 
     def workspace_path

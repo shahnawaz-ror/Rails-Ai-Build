@@ -89,9 +89,7 @@ module RailsAiBuild
         @headers.each { |k, v| request[k.to_s] = v }
         request.body = JSON.generate(payload)
 
-        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
-          http.request(request)
-        end
+        response = HttpClient.request(uri, request)
 
         body = JSON.parse(response.body)
         if response.code.to_i >= 400

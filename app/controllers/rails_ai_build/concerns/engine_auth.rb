@@ -3,6 +3,7 @@
 module RailsAiBuild
   module Concerns
     # Optional engine-wide token gate for production mounts (config.require_engine_token).
+    # When enabled, GET reads of workspace/settings are also protected (5k-company default).
     module EngineAuth
       extend ActiveSupport::Concern
 
@@ -15,8 +16,6 @@ module RailsAiBuild
         token = request.headers["X-Rails-Ai-Build-Token"].presence || params[:settings_token]
         return if Activation.bypass_settings_auth?
         return if Activation.valid_settings_token?(token)
-
-        # Allow bootstrap path to issue the first token
         return if controller_name == "settings" && action_name == "bootstrap"
 
         render json: {
@@ -27,12 +26,18 @@ module RailsAiBuild
       end
 
       def engine_auth_exempt?
-        return true if request.get? || request.head?
+        # Verified inbound webhooks / bot platforms only
         return true if controller_name == "billing" && action_name == "webhook"
         return true if controller_name == "slack" && action_name == "command"
         return true if controller_name == "discord" && action_name == "interactions"
+        return true if controller_name == "support" && action_name == "doctor" && !strict_read_auth?
+        return true if %w[help plans].include?(controller_name) && request.get? && !strict_read_auth?
 
         false
+      end
+
+      def strict_read_auth?
+        RailsAiBuild.configuration.require_engine_token_for_reads != false
       end
     end
   end

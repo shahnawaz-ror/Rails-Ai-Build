@@ -78,10 +78,7 @@ module RailsAiBuild
           request["Content-Type"] = "application/json"
           request.body = JSON.generate(payload) if payload
 
-          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
-                                                           open_timeout: 5, read_timeout: 60) do |http|
-            http.request(request)
-          end
+          response = HttpClient.request(uri, request, open_timeout: 5, read_timeout: 60)
 
           body = JSON.parse(response.body)
           raise ProviderError, body["error"] || "Cloud API error" if response.code.to_i >= 400

@@ -63,24 +63,33 @@ module RailsAiBuild
         end
 
         def handle_event(event)
-          case event["type"]
-          when "checkout.session.completed"
-            object = event.dig("data", "object") || {}
-            plan = object.dig("metadata", "plan")&.to_sym || :pro
-            customer_id = object["customer"]
-            Activation.apply_plan!(plan, source: "billing")
-            if customer_id.present? && Activation.table_ready?
-              row = Activation.record
-              meta = (row.metadata || {}).merge("stripe_customer_id" => customer_id)
-              row.update!(metadata: meta)
-            end
-            { status: "upgraded", plan: plan, durable: Activation.table_ready?, customer_id: customer_id }
-          when "customer.subscription.deleted"
-            Activation.apply_plan!(:free, source: "billing")
-            { status: "downgraded", plan: :free, durable: Activation.table_ready? }
-          else
-            { status: "ignored", type: event["type"] }
+          event_id = event["id"].to_s
+          if event_id.present? && processed_event?(event_id)
+            return { status: "duplicate", id: event_id, type: event["type"] }
           end
+
+          result =
+            case event["type"]
+            when "checkout.session.completed"
+              object = event.dig("data", "object") || {}
+              plan = object.dig("metadata", "plan")&.to_sym || :pro
+              customer_id = object["customer"]
+              Activation.apply_plan!(plan, source: "billing")
+              if customer_id.present? && Activation.table_ready?
+                row = Activation.record
+                meta = (row.metadata || {}).merge("stripe_customer_id" => customer_id)
+                row.update!(metadata: meta)
+              end
+              { status: "upgraded", plan: plan, durable: Activation.table_ready?, customer_id: customer_id }
+            when "customer.subscription.deleted"
+              Activation.apply_plan!(:free, source: "billing")
+              { status: "downgraded", plan: :free, durable: Activation.table_ready? }
+            else
+              { status: "ignored", type: event["type"] }
+            end
+
+          mark_event_processed!(event_id) if event_id.present?
+          result.merge(id: event_id.presence)
         end
 
         # Build a valid Stripe-Signature header for tests.
@@ -120,18 +129,41 @@ module RailsAiBuild
           require "net/http"
           require "uri"
 
-          uri = URI("#{STRIPE_API}#{path}")
+          uri = Security::UrlGuard.safe_uri("#{STRIPE_API}#{path}")
           request = Net::HTTP::Post.new(uri)
           request.basic_auth(ENV.fetch("STRIPE_SECRET_KEY"), "")
           request.set_form_data(params)
 
-          response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(request) }
+          response = HttpClient.request(uri, request, read_timeout: 30)
           body = JSON.parse(response.body)
           if response.code.to_i >= 400
             raise ConfigurationError, body["error"]&.dig("message") || "Stripe API error #{response.code}"
           end
 
           body
+        end
+
+        def processed_event?(event_id)
+          return processed_memory.key?(event_id) unless Activation.table_ready?
+
+          row = Activation.record
+          Array((row.metadata || {})["stripe_event_ids"]).include?(event_id)
+        end
+
+        def mark_event_processed!(event_id)
+          processed_memory[event_id] = Time.now
+          processed_memory.shift if processed_memory.size > 5_000
+          return unless Activation.table_ready?
+
+          row = Activation.record
+          ids = Array((row.metadata || {})["stripe_event_ids"])
+          ids << event_id
+          ids = ids.last(500)
+          row.update!(metadata: (row.metadata || {}).merge("stripe_event_ids" => ids))
+        end
+
+        def processed_memory
+          @processed_memory ||= {}
         end
       end
     end

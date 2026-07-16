@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
     rails_ai_build brings AI coding agents into any Rails application.
     Create agents that read, search, and modify your codebase using multiple
     AI model providers (OpenAI, Anthropic, custom). Includes a Rails engine
-    with REST API, background jobs, and extensible tool system.
+    with REST API, Host Safety, generator-first routing, and extensible tools.
   DESC
   spec.homepage = "https://github.com/shahnawaz-ror/Rails-Ai-Build"
   spec.license = "MIT"
@@ -24,17 +24,21 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
+  # Explicit runtime package — no landing/, packages/, server/, or specs.
   spec.files = Dir.chdir(__dir__) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      f.start_with?("spec/", ".github/", "Gemfile", "gemfiles/", "Appraisals")
-    end
-  rescue StandardError
-    Dir["{app,config,db,lib}/**/*", "README.md", "LICENSE.txt", "rails_ai_build.gemspec",
-        "Rakefile", ".rubocop.yml", ".ruby-version", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md"]
+    runtime = Dir[
+      "{app,config,db,lib}/**/*",
+      "LICENSE*",
+      "README*",
+      "CHANGELOG*",
+      "SECURITY*",
+      "rails_ai_build.gemspec"
+    ]
+    runtime.select { |f| File.file?(f) }
   end
 
   spec.require_paths = ["lib"]
-  spec.extra_rdoc_files = ["README.md", "CHANGELOG.md"]
+  spec.extra_rdoc_files = %w[README.md CHANGELOG.md]
 
   spec.add_dependency "rails", ">= 7.0"
   spec.add_dependency "activesupport", ">= 7.0"

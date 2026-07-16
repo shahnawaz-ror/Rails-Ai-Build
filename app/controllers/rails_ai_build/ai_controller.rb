@@ -9,7 +9,7 @@ module RailsAiBuild
       Audit.current_user = request.headers['X-User-Id'] || 'api'
 
       session = Ai::Session.find(body[:session_id]) if body[:session_id].present?
-      workspace = body[:workspace].present? ? Pathname.new(body[:workspace]) : nil
+      workspace = sanitize_workspace_param(body[:workspace])
 
       result = Ai::Driver.run(
         body[:message],
