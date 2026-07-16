@@ -98,6 +98,7 @@ class CreateRailsAiBuildTables < ActiveRecord::Migration<%= migration_version %>
     add_index :rails_ai_build_community_packs, :slug, unique: true
 
     create_table :rails_ai_build_activations do |t|
+      t.string :singleton_key, null: false, default: "default"
       t.text :encrypted_api_keys
       t.text :encrypted_cloud_api_key
       t.text :license_token
@@ -110,5 +111,6 @@ class CreateRailsAiBuildTables < ActiveRecord::Migration<%= migration_version %>
       t.json :metadata
       t.timestamps
     end
+    add_index :rails_ai_build_activations, :singleton_key, unique: true
   end
 end

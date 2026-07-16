@@ -80,7 +80,17 @@ module RailsAiBuild
         end
 
         def clear_finished!
-          store.delete_if { |_, t| %i[success failed cancelled].include?(t.status) }
+          finished_ids = []
+          mutex.synchronize do
+            store.delete_if do |id, t|
+              finished = %i[success failed cancelled].include?(t.status)
+              finished_ids << id if finished
+              finished
+            end
+            finished_ids.each { |id| @meta&.delete(id) }
+          end
+          finished_ids.each { |id| EventBus.clear(id) }
+          finished_ids.size
         end
 
         def reset!

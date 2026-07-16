@@ -79,17 +79,35 @@ module RailsAiBuild
           request.body = JSON.generate(payload) if payload
 
           response = HttpClient.request(uri, request, open_timeout: 5, read_timeout: 60)
-
+          code = response.code.to_i
           body = JSON.parse(response.body)
-          raise ProviderError, body["error"] || "Cloud API error" if response.code.to_i >= 400
+
+          if code >= 500
+            raise_unavailable!("HTTP #{code}: #{body['error'] || 'server error'}")
+          end
+          raise ProviderError, body["error"] || "Cloud API error" if code >= 400
 
           body
+        rescue CircuitBreaker::OpenError => e
+          raise_unavailable!(e.message)
+        rescue ProviderError => e
+          raise unless connection_like_error?(e)
+
+          raise_unavailable!(e.message)
         rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+          raise_unavailable!("#{e.class}: #{e.message}")
+        end
+
+        def raise_unavailable!(detail)
           byok_ready = Activation.configured_providers.any? { |p| p != :cloud }
           raise CloudUnavailableError.new(
-            "Rails AI Cloud unavailable (#{e.class}: #{e.message}). #{byok_ready ? 'BYOK keys are configured — switch default_provider.' : 'Add a BYOK key to continue.'}",
+            "Rails AI Cloud unavailable (#{detail}). #{byok_ready ? 'BYOK keys are configured — switch default_provider.' : 'Add a BYOK key to continue.'}",
             fallback_available: byok_ready
           )
+        end
+
+        def connection_like_error?(error)
+          error.message.to_s.match?(/timeout|connection error|TLS error|Circuit open|redirect not followed/i)
         end
 
         def parse_chat_response(body)

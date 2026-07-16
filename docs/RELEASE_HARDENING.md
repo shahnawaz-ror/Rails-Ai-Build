@@ -33,7 +33,8 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 | C | Thread-safe stores + caps P1 | done |
 | D | HTTP client + Stripe idempotency P1 | done |
 | E | Gemspec/packaging + health + release notes | done |
-| F | Edge-case specs + merge to main | in progress |
+| F | Circuit breaker + EventBus caps + activation singleton | done |
+| G | Edge-case specs + merge to main | in progress |
 
 ## Acceptance (release gate)
 
@@ -46,9 +47,21 @@ Think Cursor-class: **prevent bad actions**, **isolate blast radius**, **recover
 - [x] RateLimit/Changes/Seats/Sessions mutex + max size  
 - [x] Provider HTTP has open/read timeouts  
 - [x] Stripe event IDs idempotent  
-- [ ] `gem build` + require smoke passes  
-- [x] Full RSpec green (329+ examples)  
+- [x] Per-host circuit breaker on outbound HTTP  
+- [x] EventBus capped + unsubscribe + clear on finished tasks  
+- [x] Activation singleton unique guard  
+- [x] `gem build` + require smoke passes  
+- [ ] Full RSpec green (350+ examples)  
+
+## Multi-worker note
+
+In-process RateLimit / Seats / Sessions / CircuitBreaker are **per Puma worker**.
+For sticky multi-worker production at 5k tenants, front with a shared store (Redis)
+or run one worker / sticky sessions — documented here so ops does not assume
+cross-process consistency.
 
 ## Out of gem (ops)
 
 - RubyGems publish keys, Stripe live products, Cloud SaaS, marketing
+- Optional: `ed25519` gem for full Discord signature verify
+- Optional: Redis adapters for seats/rate-limit/circuit across workers

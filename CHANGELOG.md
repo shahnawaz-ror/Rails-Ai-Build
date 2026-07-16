@@ -13,7 +13,11 @@
 - **RequestContext** isolation for Audit user / RBAC role
 - **Stripe webhook idempotency** via event id memory + activation metadata
 - **Slack/Discord** require signing secrets in production; Slack replay window
-- **GET /health** liveness endpoint
+- **GET /health** liveness endpoint (+ open circuit count)
+- **CircuitBreaker** on outbound HttpClient (per-host open/cooldown)
+- **EventBus** mutex, buffer caps, unsubscribe, clear on finished tasks
+- **Activation singleton_key** unique guard (migration + upgrade generator)
+- Cloud soft-fail wraps timeouts/5xx/circuit-open as `CloudUnavailableError` + BYOK CTA
 - Tighter gemspec runtime file allowlist
 - See [RELEASE_HARDENING.md](./docs/RELEASE_HARDENING.md)
 

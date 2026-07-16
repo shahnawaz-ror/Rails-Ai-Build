@@ -31,15 +31,23 @@ module RailsAiBuild
         migrate_dir = File.join(destination_root, 'db/migrate')
         FileUtils.mkdir_p(migrate_dir)
 
-        if activations_migration_present?(migrate_dir)
+        unless activations_migration_present?(migrate_dir)
+          migration_template 'create_rails_ai_build_activations.rb',
+                             'db/migrate/create_rails_ai_build_activations.rb',
+                             migration_version: migration_version
+          say '✅ Added activations migration (encrypted keys + durable plan)', :green
+        else
           say '✓ Activations table already covered by existing migration', :green
-          return
         end
 
-        migration_template 'create_rails_ai_build_activations.rb',
-                           'db/migrate/create_rails_ai_build_activations.rb',
-                           migration_version: migration_version
-        say '✅ Added activations migration (encrypted keys + durable plan)', :green
+        if singleton_guard_migration_present?(migrate_dir)
+          say '✓ Activation singleton guard already covered', :green
+        else
+          migration_template 'add_singleton_guard_to_activations.rb',
+                             'db/migrate/add_singleton_guard_to_activations.rb',
+                             migration_version: migration_version
+          say '✅ Added activation singleton unique guard migration', :green
+        end
       end
 
       def stamp_initializer
@@ -71,6 +79,13 @@ module RailsAiBuild
       def activations_migration_present?(migrate_dir)
         Dir.glob(File.join(migrate_dir, '*rails_ai_build*')).any? do |path|
           File.read(path).include?('rails_ai_build_activations')
+        end
+      end
+
+      def singleton_guard_migration_present?(migrate_dir)
+        Dir.glob(File.join(migrate_dir, '*.rb')).any? do |path|
+          body = File.read(path)
+          body.include?('singleton_key') && body.include?('rails_ai_build_activations')
         end
       end
     end

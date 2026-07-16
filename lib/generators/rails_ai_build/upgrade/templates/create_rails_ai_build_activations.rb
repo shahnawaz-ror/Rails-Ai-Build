@@ -5,6 +5,7 @@ class CreateRailsAiBuildActivations < ActiveRecord::Migration<%= migration_versi
     return if table_exists?(:rails_ai_build_activations)
 
     create_table :rails_ai_build_activations do |t|
+      t.string :singleton_key, null: false, default: "default"
       t.text :encrypted_api_keys
       t.text :encrypted_cloud_api_key
       t.text :license_token
@@ -17,5 +18,6 @@ class CreateRailsAiBuildActivations < ActiveRecord::Migration<%= migration_versi
       t.json :metadata
       t.timestamps
     end
+    add_index :rails_ai_build_activations, :singleton_key, unique: true
   end
 end

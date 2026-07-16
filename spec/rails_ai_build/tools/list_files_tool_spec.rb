@@ -33,4 +33,9 @@ RSpec.describe RailsAiBuild::Tools::ListFilesTool do
     expect(result[:error]).to be_nil
     expect(result[:entries]).to include('app/controllers/home_controller.rb')
   end
+
+  it 'rejects glob patterns that escape with ..' do
+    expect { tool.call('path' => '.', 'glob' => '../**/*') }
+      .to raise_error(RailsAiBuild::SecurityError, /\.\./)
+  end
 end
