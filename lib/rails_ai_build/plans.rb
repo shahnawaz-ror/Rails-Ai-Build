@@ -2,6 +2,8 @@
 
 module RailsAiBuild
   module Plans
+    UPGRADE_URL = "https://railsaibuild.com/pricing"
+
     PLANS = {
       free: {
         name: "Free",
@@ -62,10 +64,16 @@ module RailsAiBuild
       def check!(feature)
         return if feature?(feature)
 
-        plan_name = current[:name]
-        raise ConfigurationError,
-              "Feature :#{feature} requires a higher plan (current: #{plan_name}). " \
-              "Upgrade at https://railsaibuild.com/pricing"
+        raise PlanRequiredError.new(
+          feature: feature,
+          current_plan: RailsAiBuild.configuration.plan
+        )
+      end
+
+      def required_plan_for(feature)
+        %i[free pro team enterprise].find do |plan|
+          PLANS[plan][:features].include?(feature.to_sym)
+        end
       end
 
       def limit(key)

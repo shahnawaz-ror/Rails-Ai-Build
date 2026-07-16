@@ -49,12 +49,11 @@ module RailsAiBuild
           case event["type"]
           when "checkout.session.completed"
             plan = event.dig("data", "object", "metadata", "plan")&.to_sym || :pro
-            RailsAiBuild.configuration.plan = plan
-            RailsAiBuild.configuration.diff_preview = true if Plans.feature?(:diff_preview)
-            { status: "upgraded", plan: plan }
+            Activation.apply_plan!(plan, source: "billing")
+            { status: "upgraded", plan: plan, durable: Activation.table_ready? }
           when "customer.subscription.deleted"
-            RailsAiBuild.configuration.plan = :free
-            { status: "downgraded", plan: :free }
+            Activation.apply_plan!(:free, source: "billing")
+            { status: "downgraded", plan: :free, durable: Activation.table_ready? }
           else
             { status: "ignored", type: event["type"] }
           end

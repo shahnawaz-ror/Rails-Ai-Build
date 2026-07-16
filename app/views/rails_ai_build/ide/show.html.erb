@@ -6,14 +6,17 @@
      data-streaming="<%= @features[:streaming] %>"
      data-pr="<%= @features[:pr_creation] %>"
      data-audit="<%= @features[:audit_log] %>"
-     data-auto-apply="<%= !RailsAiBuild.configuration.diff_preview %>">
+     data-auto-apply="<%= !RailsAiBuild.configuration.diff_preview %>"
+     data-needs-wizard="<%= @activation[:needs_wizard] %>"
+     data-upgrade-url="<%= @upgrade_url %>"
+     data-plan="<%= @plan %>">
 
   <header class="rab-topbar">
     <div class="rab-logo">⬥ Rails AI Build <span>IDE v<%= @version %></span></div>
     <% if @git[:available] && @git[:branch].present? %>
       <span class="rab-branch">⎇ <%= @git[:branch] %></span>
     <% end %>
-    <span class="rab-badge rab-badge-plan"><%= @plan_name %></span>
+    <button type="button" class="rab-badge rab-badge-plan" id="rab-plan-badge" title="Upgrade plan"><%= @plan_name %></button>
     <% if @plan == :enterprise %>
       <span class="rab-badge rab-badge-enterprise">Enterprise</span>
     <% end %>
@@ -24,6 +27,7 @@
       <span class="rab-badge rab-badge-role"><%= @enterprise[:role] %></span>
     <% end %>
     <div class="rab-spacer"></div>
+    <button type="button" class="rab-btn rab-btn-secondary" id="rab-open-wizard" style="padding:0.25rem 0.55rem;font-size:0.7rem">Activate</button>
     <select id="rab-theme" title="Theme">
       <option value="dark">Dark</option>
       <option value="light">Light</option>
@@ -39,6 +43,62 @@
     <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui/demo') %>">Demo</a>
     <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui') %>">Dashboard</a>
   </header>
+
+  <div class="rab-wizard-overlay" id="rab-wizard" hidden>
+    <div class="rab-wizard-card">
+      <h2>Activate Rails AI Build</h2>
+      <p class="rab-wizard-sub">Same loop as Cursor — pick one door to start coding with AI in this app.</p>
+      <div class="rab-wizard-doors">
+        <button type="button" class="rab-wizard-door active" data-door="byok">BYOK</button>
+        <button type="button" class="rab-wizard-door" data-door="cloud">Cloud key</button>
+        <button type="button" class="rab-wizard-door" data-door="license">License</button>
+      </div>
+
+      <div class="rab-wizard-pane" id="rab-door-byok">
+        <label>OpenAI / Anthropic / NVIDIA key</label>
+        <select id="rab-wizard-provider">
+          <option value="nvidia">NVIDIA (free NIM)</option>
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic</option>
+        </select>
+        <input id="rab-wizard-key" type="password" placeholder="Paste API key" autocomplete="off" />
+        <button type="button" class="rab-btn rab-btn-primary" id="rab-wizard-save-key">Save key &amp; continue</button>
+      </div>
+
+      <div class="rab-wizard-pane" id="rab-door-cloud" hidden>
+        <label>Rails AI Cloud API key</label>
+        <input id="rab-wizard-cloud" type="password" placeholder="rab_cloud_…" autocomplete="off" />
+        <p class="rab-wizard-hint">Hosted models without your own OpenAI/Anthropic key. Get one at railsaibuild.com.</p>
+        <button type="button" class="rab-btn rab-btn-primary" id="rab-wizard-save-cloud">Save cloud key</button>
+      </div>
+
+      <div class="rab-wizard-pane" id="rab-door-license" hidden>
+        <label>Signed license token</label>
+        <textarea id="rab-wizard-license" rows="3" placeholder="Paste license token from your purchase"></textarea>
+        <button type="button" class="rab-btn rab-btn-primary" id="rab-wizard-save-license">Activate license</button>
+      </div>
+
+      <p class="rab-wizard-status" id="rab-wizard-status"></p>
+      <div class="rab-wizard-actions">
+        <button type="button" class="rab-btn rab-btn-secondary" id="rab-wizard-skip">Skip for now</button>
+        <button type="button" class="rab-btn rab-btn-secondary" id="rab-wizard-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rab-modal-overlay" id="rab-upgrade-modal" hidden>
+    <div class="rab-modal-card">
+      <h2>Upgrade required</h2>
+      <p id="rab-upgrade-message">This feature needs a higher plan.</p>
+      <p class="rab-wizard-hint">Suggested: <strong id="rab-upgrade-plan">Pro</strong></p>
+      <div class="rab-wizard-actions">
+        <button type="button" class="rab-btn rab-btn-primary" id="rab-upgrade-checkout">Checkout</button>
+        <a class="rab-btn rab-btn-secondary" id="rab-upgrade-pricing" href="<%= @upgrade_url %>" target="_blank" rel="noopener">View pricing</a>
+        <button type="button" class="rab-btn rab-btn-secondary" id="rab-upgrade-close">Not now</button>
+      </div>
+      <p class="rab-wizard-status" id="rab-upgrade-status"></p>
+    </div>
+  </div>
 
   <div class="rab-workspace">
     <nav class="rab-activity">
@@ -111,6 +171,7 @@
         <button class="rab-right-tab" data-right="tasks">Tasks</button>
         <button class="rab-right-tab active" data-right="changes">Changes</button>
         <button class="rab-right-tab" data-right="git">Git</button>
+        <button class="rab-right-tab" data-right="doctor">Doctor</button>
         <button class="rab-right-tab" data-right="enterprise">Enterprise</button>
       </div>
       <div class="rab-right-body">
@@ -159,15 +220,28 @@
           <% end %>
         </section>
 
+        <section id="rab-panel-doctor" style="display:none">
+          <button class="rab-btn rab-btn-secondary" id="rab-refresh-doctor" style="width:100%;margin-bottom:0.5rem">Run doctor</button>
+          <div id="rab-doctor-summary" class="rab-doctor-summary">Checking…</div>
+          <div id="rab-doctor-list"></div>
+        </section>
+
         <section id="rab-panel-enterprise" style="display:none">
           <div class="rab-enterprise-item">
             <strong>Plan:</strong> <%= @plan_name %>
             <% if @plan == :enterprise %><span class="rab-badge rab-badge-enterprise" style="margin-left:0.5rem">SSO · RBAC · SOC2</span><% end %>
           </div>
+          <div class="rab-enterprise-item">
+            <strong>Entitlement:</strong> <%= @activation[:entitlement_source] %>
+            <% if @activation[:license_present] %> · license<% end %>
+          </div>
           <% @features.each do |name, enabled| %>
             <div class="rab-enterprise-item">
               <span class="<%= enabled ? 'rab-feature-on' : 'rab-feature-off' %>"><%= enabled ? '✓' : '○' %></span>
               <%= name.to_s.humanize %>
+              <% unless enabled %>
+                <button type="button" class="rab-upgrade-link" data-feature="<%= name %>">Upgrade</button>
+              <% end %>
             </div>
           <% end %>
           <% if @features[:audit_log] %>
@@ -177,6 +251,7 @@
           <% if @features[:sso] %>
             <p style="margin-top:0.75rem;font-size:0.72rem;color:var(--rab-muted)">SSO: <code>GET /auth/saml</code> — mount behind your IdP</p>
           <% end %>
+          <button type="button" class="rab-btn rab-btn-accent" id="rab-open-upgrade" style="width:100%;margin-top:0.75rem">Upgrade plan</button>
         </section>
       </div>
     </aside>

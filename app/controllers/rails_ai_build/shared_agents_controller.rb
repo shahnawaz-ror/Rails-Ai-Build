@@ -6,16 +6,16 @@ module RailsAiBuild
       Plans.check!(:shared_agents)
       agents = SharedAgentRecord.published.order(:name)
       render json: { agents: agents }
-    rescue ConfigurationError => e
-      render json: { error: e.message }, status: :payment_required
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
     end
 
     def create
       Plans.check!(:shared_agents)
       agent = SharedAgentRecord.create!(shared_agent_params)
       render json: agent, status: :created
-    rescue ConfigurationError => e
-      render json: { error: e.message }, status: :payment_required
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
     end
 
     def run
@@ -23,8 +23,8 @@ module RailsAiBuild
       agent = SharedAgentRecord.find(params[:id])
       result = agent.to_agent.chat(params[:message])
       render json: result
-    rescue ConfigurationError => e
-      render json: { error: e.message }, status: :payment_required
+    rescue PlanRequiredError => e
+      render json: e.as_json, status: :payment_required
     end
 
     private

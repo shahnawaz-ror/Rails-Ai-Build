@@ -16,6 +16,22 @@ rails db:migrate
 open http://localhost:3000/rails_ai_build/ui/ide
 ```
 
+## Day-1 Activation OS (v2.3)
+
+On first open, the IDE shows an **Activate** wizard with three doors:
+
+1. **BYOK** — paste OpenAI / Anthropic / NVIDIA key (`POST /settings/keys`)
+2. **Cloud key** — Rails AI Cloud hosted models
+3. **License** — signed entitlement token (`POST /settings/license`)
+
+Other surfaces:
+
+- **Doctor** right-tab → `GET /support/doctor` (keys, encryption, activation, migrations)
+- **Plan badge / Upgrade** → modal with Stripe checkout or pricing link
+- **402 responses** include `code: plan_required`, `suggested_plan`, and `checkout`
+
+Settings mutations accept `X-Rails-Ai-Build-Token` (issue once via `POST /settings/bootstrap`). Plan cannot be spoofed via `PATCH /settings`.
+
 ## Layout
 
 ```

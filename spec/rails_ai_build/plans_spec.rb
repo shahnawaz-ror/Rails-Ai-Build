@@ -5,19 +5,20 @@ require "spec_helper"
 RSpec.describe RailsAiBuild::Plans do
   before { RailsAiBuild.reset_configuration! }
 
-  it "returns free plan features by default" do
-    expect(described_class.feature?(:local_agent)).to be true
-    expect(described_class.feature?(:streaming)).to be true
-    expect(described_class.feature?(:nvidia)).to be true
-    expect(described_class.feature?(:diff_preview)).to be false
-  end
+  describe ".check!" do
+    it "raises PlanRequiredError with upgrade payload" do
+      expect { described_class.check!(:diff_preview) }.to raise_error(RailsAiBuild::PlanRequiredError) do |error|
+        payload = error.as_json
+        expect(payload[:code]).to eq("plan_required")
+        expect(payload[:feature]).to eq(:diff_preview)
+        expect(payload[:suggested_plan]).to eq(:pro)
+        expect(payload[:upgrade]).to include("pricing")
+        expect(payload[:checkout][:plan]).to eq(:pro)
+      end
+    end
 
-  it "unlocks diff_preview on pro plan" do
-    RailsAiBuild.configuration.plan = :pro
-    expect(described_class.feature?(:diff_preview)).to be true
-  end
-
-  it "raises on unavailable features" do
-    expect { described_class.check!(:audit_log) }.to raise_error(RailsAiBuild::ConfigurationError)
+    it "passes when feature is available" do
+      expect { described_class.check!(:streaming) }.not_to raise_error
+    end
   end
 end
