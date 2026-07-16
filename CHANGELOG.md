@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.6.0] - 2026-07-16
+
+### Added — Complete Host Safety (Slices 2 + 3)
+- **Prevent guards** — migration `\d{14}_` + Migration class; Gemfile empty-gem / syntax; Ruby `ruby -c`
+- **Soft-preview** — `config/**`, `Gemfile*`, `db/migrate/**` queue for approval even on Free (`host_safety_soft_preview`)
+- **Detect ladder** — syntax → `bundle check` → `rails runner` → `zeitwerk:check` → optional smoke routes (subprocess)
+- **Isolate** — optional shadow worktree (`host_safety_shadow_worktree`) with promote-on-green / discard-on-fail
+- **Git checkpoint** — `git stash create` when repo available
+- **Heal** — optional bounded FixSkill after rollback (`host_safety_fix_after_rollback`)
+- **Runtime** — rollback session after N verify failures (`host_safety_rollback_on_verify_fail`)
+- **`host_safety_check` tool** + IDE **Host unhealthy** banner + SSE `host_safety` phases
+- Apply-time re-validation + Gemfile `bundle check` on manual apply
+
 ## [2.5.0] - 2026-07-16
 
 ### Added — Generator-first + Host Safety MVP

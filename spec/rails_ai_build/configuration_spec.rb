@@ -45,9 +45,11 @@ RSpec.describe RailsAiBuild::Configuration do
       config = described_class.new
       expect(config.default_model).to eq("gpt-4o")
       expect(config.max_agent_iterations).to eq(25)
-      expect(config.allowed_tools).to include(:read_file, :grep, :run_generator)
+      expect(config.allowed_tools).to include(:read_file, :grep, :run_generator, :host_safety_check)
       expect(config.generator_first).to be true
       expect(config.host_safety).to be true
+      expect(config.host_safety_soft_preview).to be true
+      expect(config.host_safety_bundle_check).to be true
       expect(config.auto_mount).to be true
     end
   end

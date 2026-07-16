@@ -31,13 +31,24 @@ module RailsAiBuild
                   :settings_token_digest,
                   :host_safety,
                   :host_safety_boot_check,
+                  :host_safety_bundle_check,
+                  :host_safety_zeitwerk_check,
+                  :host_safety_soft_preview,
+                  :host_safety_shadow_worktree,
+                  :host_safety_smoke_routes,
+                  :host_safety_smoke_paths,
+                  :host_safety_always_boot,
+                  :host_safety_git_checkpoint,
+                  :host_safety_fix_after_rollback,
+                  :host_safety_fix_max_attempts,
+                  :host_safety_rollback_on_verify_fail,
                   :generator_first
 
     def initialize
       @default_model = "gpt-4o"
       @default_provider = :openai
       @api_keys = {}
-      @allowed_tools = %i[read_file write_file grep list_files shell run_generator]
+      @allowed_tools = %i[read_file write_file grep list_files shell run_generator host_safety_check]
       @workspace_root = -> { Rails.root }
       @max_agent_iterations = 25
       @shell_timeout = 30
@@ -63,6 +74,17 @@ module RailsAiBuild
       @settings_token_digest = nil
       @host_safety = true
       @host_safety_boot_check = true
+      @host_safety_bundle_check = true
+      @host_safety_zeitwerk_check = true
+      @host_safety_soft_preview = true
+      @host_safety_shadow_worktree = false
+      @host_safety_smoke_routes = false
+      @host_safety_smoke_paths = %w[/]
+      @host_safety_always_boot = false
+      @host_safety_git_checkpoint = true
+      @host_safety_fix_after_rollback = false
+      @host_safety_fix_max_attempts = 2
+      @host_safety_rollback_on_verify_fail = true
       @generator_first = true
     end
 

@@ -24,13 +24,21 @@ RailsAiBuild.configure do |config|
   end
 
   # Tools the agent can use (run_generator preferred over freeform writes)
-  config.allowed_tools = %i[read_file write_file grep list_files shell run_generator]
+  config.allowed_tools = %i[read_file write_file grep list_files shell run_generator host_safety_check]
 
   # Prefer Rails generators (catalog scoring) over inventing files with AI
   config.generator_first = true
-  # Syntax gate + session rollback when boot-critical files break
+
+  # Host Safety — prevent → detect → isolate → rollback → report
   config.host_safety = true
   config.host_safety_boot_check = true
+  config.host_safety_bundle_check = true
+  config.host_safety_zeitwerk_check = true
+  config.host_safety_soft_preview = true       # queue config/Gemfile/migrate even on Free
+  config.host_safety_shadow_worktree = false   # set true for isolate/promote-on-green
+  config.host_safety_smoke_routes = false
+  config.host_safety_fix_after_rollback = false
+  config.host_safety_rollback_on_verify_fail = true
 
   # Agent loop safety limits
   config.max_agent_iterations = 25

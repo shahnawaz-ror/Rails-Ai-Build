@@ -6,6 +6,7 @@ module RailsAiBuild
     class Runtime
       Result = Struct.new(
         :task, :status, :attempts, :content, :iterations, :usage, :verify, :messages,
+        :host_safety, :session_id,
         keyword_init: true
       ) do
         def to_h
@@ -17,6 +18,8 @@ module RailsAiBuild
             iterations: iterations,
             usage: usage,
             verify: verify,
+            host_safety: host_safety,
+            session_id: session_id,
             pending_changes: RailsAiBuild::Changes::Store.all(status: :pending).map(&:to_h)
           }
         end
@@ -77,6 +80,7 @@ module RailsAiBuild
         end
 
         result = failed_result(last_result)
+        result = apply_verify_fail_rollback!(result, last_result, emit)
         emit&.call(:complete, result.to_h)
         result
       end
@@ -121,7 +125,9 @@ module RailsAiBuild
           content: result.content,
           iterations: result.iterations,
           usage: result.usage,
-          messages: result.messages
+          messages: result.messages,
+          session_id: result.session&.id,
+          host_safety: result.host_safety
         }
       end
 
@@ -145,6 +151,38 @@ module RailsAiBuild
         end
       end
 
+      def apply_verify_fail_rollback!(result, last_result, emit)
+        return result unless RailsAiBuild.configuration.host_safety_rollback_on_verify_fail != false
+        return result unless RailsAiBuild.configuration.host_safety != false
+
+        session_id = last_result&.dig(:session_id)
+        return result if session_id.blank?
+
+        emit&.call(:status, { phase: 'rollback', message: 'Verify failed — Host Safety rolling back session…' })
+        rolled = Changes::Store.rollback_session(session_id, workspace: @workspace)
+        host_safety = {
+          healthy: false,
+          failure_class: :test,
+          rolled_back: true,
+          rollback: rolled,
+          session_id: session_id,
+          phase: 'report'
+        }
+        emit&.call(:host_safety, host_safety)
+        Result.new(
+          task: result.task,
+          status: result.status,
+          attempts: result.attempts,
+          content: "#{result.content}\n\n⚠️ Host Safety rolled back session changes after verify failures.",
+          iterations: result.iterations,
+          usage: result.usage,
+          verify: result.verify,
+          messages: result.messages,
+          host_safety: host_safety,
+          session_id: session_id
+        )
+      end
+
       def success_result(agent_result, verify_result)
         Result.new(
           task: @task,
@@ -154,7 +192,9 @@ module RailsAiBuild
           iterations: agent_result[:iterations],
           usage: agent_result[:usage],
           verify: verify_result,
-          messages: agent_result[:messages]
+          messages: agent_result[:messages],
+          host_safety: agent_result[:host_safety],
+          session_id: agent_result[:session_id]
         )
       end
 
@@ -167,7 +207,9 @@ module RailsAiBuild
           iterations: agent_result&.dig(:iterations),
           usage: agent_result&.dig(:usage),
           verify: @attempts.last&.dig(:verify),
-          messages: agent_result&.dig(:messages)
+          messages: agent_result&.dig(:messages),
+          host_safety: agent_result&.dig(:host_safety),
+          session_id: agent_result&.dig(:session_id)
         )
       end
     end

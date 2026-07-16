@@ -6,7 +6,7 @@ module RailsAiBuild
   module Changes
     PendingChange = Struct.new(
       :id, :path, :old_content, :new_content, :diff, :status, :created_at,
-      :session_id, :source,
+      :session_id, :source, :soft_preview,
       keyword_init: true
     ) do
       def to_h
@@ -18,7 +18,8 @@ module RailsAiBuild
           stats: diff&.dig(:stats),
           created_at: created_at,
           session_id: session_id,
-          source: source
+          source: source,
+          soft_preview: soft_preview
         }
       end
     end
@@ -36,6 +37,9 @@ module RailsAiBuild
           session_id ||= HostSafety.current_session_id
           begin_session!(session_id) if session_id
 
+          soft = HostSafety.soft_preview_required?(path) && !RailsAiBuild.configuration.diff_preview
+          queue = RailsAiBuild.configuration.diff_preview || soft
+
           diff = Diff.compute(old_content, new_content, path: path)
           change = PendingChange.new(
             id: SecureRandom.uuid,
@@ -46,31 +50,33 @@ module RailsAiBuild
             status: :pending,
             created_at: Time.now,
             session_id: session_id,
-            source: source
+            source: source,
+            soft_preview: soft
           )
 
           memory_store << change
           sessions[session_id.to_s] << change.id if session_id
 
-          if RailsAiBuild.configuration.diff_preview
+          if queue
             {
               status: "pending_approval",
               change_id: change.id,
               path: path,
               diff: diff[:unified],
               stats: diff[:stats],
-              message: "Change queued for review. Apply with RailsAiBuild::Changes::Store.apply('#{change.id}')"
+              soft_preview: soft,
+              message: soft ?
+                "Boot-critical path queued for approval (Host Safety soft-preview). Apply with Changes::Store.apply('#{change.id}')" :
+                "Change queued for review. Apply with RailsAiBuild::Changes::Store.apply('#{change.id}')"
             }
           else
             apply_change(change, workspace)
             change.status = :applied
-            # Keep status "written" for tool/IDE compatibility (immediate apply).
             result_for(change, "written")
           end
         end
 
         # Track files already written by rails generate (no second write).
-        # Pass +old_content+ captured BEFORE the external write for rollback.
         def track_external(path:, content:, workspace:, session_id: nil, source: "generator", old_content: "")
           session_id ||= HostSafety.current_session_id
           begin_session!(session_id) if session_id
@@ -83,7 +89,8 @@ module RailsAiBuild
             status: :applied,
             created_at: Time.now,
             session_id: session_id,
-            source: source
+            source: source,
+            soft_preview: false
           )
           memory_store << change
           sessions[session_id.to_s] << change.id if session_id
@@ -113,8 +120,20 @@ module RailsAiBuild
           raise AgentError, "Change already #{change.status}" unless change.status == :pending
 
           workspace ||= RailsAiBuild.configuration.workspace_path
+          HostSafety.validate_write!(change.path, change.new_content)
           apply_change(change, workspace)
           change.status = :applied
+
+          # Gemfile apply → immediate bundle check
+          if change.path.to_s.match?(/\AGemfile/) && RailsAiBuild.configuration.host_safety_bundle_check != false
+            check = HostSafety::Ladder.bundle_ok?(Pathname(workspace))
+            unless check[:status] == :ok
+              restore_change!(change, workspace)
+              change.status = :rolled_back
+              raise AgentError, "bundle check failed after apply: #{check[:message]}"
+            end
+          end
+
           Audit.log(action: "change.apply", path: change.path, metadata: { change_id: change.id })
           result_for(change, "applied")
         end
@@ -155,7 +174,8 @@ module RailsAiBuild
             next unless change
             next if change.status == :rolled_back || change.status == :rejected
 
-            restore_change!(change, workspace)
+            # Pending soft-preview never touched disk — only restore applied writes.
+            restore_change!(change, workspace) if change.status == :applied
             change.status = :rolled_back
             result_for(change, "rolled_back")
           end
@@ -220,7 +240,8 @@ module RailsAiBuild
             status: status,
             diff: change.diff&.dig(:unified),
             session_id: change.session_id,
-            source: change.source
+            source: change.source,
+            soft_preview: change.soft_preview
           }
         end
       end

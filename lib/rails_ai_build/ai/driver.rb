@@ -59,7 +59,8 @@ module RailsAiBuild
         emit(on_event, :status, { phase: 'start', message: 'Understanding your request…' })
 
         Intelligence.prepare!(workspace: @workspace, on_event: on_event)
-        HostSafety.begin_session!(@session.id)
+        session_info = HostSafety.begin_session!(@session.id, workspace: @workspace, on_event: on_event)
+        @workspace = Pathname(session_info[:workspace]) if session_info[:workspace]
 
         begin
           route_generators!(message, on_event)
@@ -86,12 +87,15 @@ module RailsAiBuild
           result = runner.run!
 
           content = result[:content].to_s
-          @host_safety = HostSafety.verify_after_turn!(workspace: @workspace, session_id: @session.id)
+          @host_safety = HostSafety.verify_after_turn!(
+            workspace: @workspace,
+            session_id: @session.id,
+            on_event: on_event
+          )
           content = append_safety_note(content)
           result = result.merge(content: content)
 
           @session.add_message(Agents::Message.assistant(content))
-          emit(on_event, :host_safety, @host_safety) if @host_safety
           emit(on_event, :status, { phase: 'done', message: finish_message(result) })
           emit(on_event, :done, done_payload(result))
 
@@ -108,6 +112,7 @@ module RailsAiBuild
         'list_files' => ->(_ctx) { 'Listing files…' },
         'shell' => ->(_ctx) { 'Running shell command…' },
         'run_generator' => ->(ctx) { "Running rails g #{ctx[:generator] || '…'}…" },
+        'host_safety_check' => ->(_ctx) { 'Running Host Safety ladder…' },
         'run_rails_check' => ->(_ctx) { 'Verifying Rails app (zeitwerk / tests)…' },
         'list_migrations' => ->(_ctx) { 'Inspecting migrations…' },
         'list_routes' => ->(_ctx) { 'Reading routes…' },
@@ -167,7 +172,11 @@ module RailsAiBuild
 
         context = ContextEngine.snapshot(workspace: @workspace)
         @session.add_message(Agents::Message.user(message))
-        @host_safety = HostSafety.verify_after_turn!(workspace: @workspace, session_id: @session.id)
+        @host_safety = HostSafety.verify_after_turn!(
+          workspace: @workspace,
+          session_id: @session.id,
+          on_event: on_event
+        )
         content = append_safety_note(content)
         @session.add_message(Agents::Message.assistant(content))
 
@@ -178,7 +187,6 @@ module RailsAiBuild
           finish_reason: 'generator',
           messages: @session.messages
         }
-        emit(on_event, :host_safety, @host_safety) if @host_safety
         emit(on_event, :delta, { content: content, final: true })
         emit(on_event, :status, { phase: 'done', message: finish_message(result) })
         emit(on_event, :done, done_payload(result))

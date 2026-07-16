@@ -368,6 +368,7 @@
       attempt: 'rab-tag-start', verify: 'rab-tag-iteration', queued: 'rab-tag-start', running: 'rab-tag-start',
       tool_call: 'rab-tag-tool', tool_result: 'rab-tag-tool', delta: 'rab-tag-delta', iteration: 'rab-tag-iteration',
       complete: 'rab-tag-complete', done: 'rab-tag-done', finished: 'rab-tag-complete', pr_ready: 'rab-tag-complete',
+      host_safety: 'rab-tag-error', generator_plan: 'rab-tag-status', generator_result: 'rab-tag-status',
       error: 'rab-tag-error', user: 'rab-tag-start'
     };
     let body = '';
@@ -408,6 +409,14 @@
       body = data.content || '';
       if (data.token) return '<span class="rab-token-delta">' + escapeHtml(body) + '</span>';
       body = escapeHtml(body);
+    } else if (event === 'host_safety') {
+      applyHostSafety(data);
+      if (data.healthy) {
+        body = 'Host Safety OK' + (data.promoted ? ' · shadow promoted' : '');
+      } else {
+        body = 'Host unhealthy (' + escapeHtml(String(data.failure_class || 'unknown')) + ')' +
+          (data.rolled_back ? ' · rolled back' : '');
+      }
     } else if (event === 'complete' || event === 'done' || event === 'finished') {
       body = escapeHtml(data.content || (data.status ? 'Status: ' + data.status : 'Done.'));
       if (data.applied_files?.length) {
@@ -416,6 +425,7 @@
         loadTree();
       }
       if (data.pending_changes?.length) refreshChanges(data.pending_changes);
+      if (data.host_safety) applyHostSafety(data.host_safety);
       if (data.compare_url || data.pr_url) body += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
     } else if (event === 'pr_ready') {
       body = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' + (data.branch || 'compare') + '</a>';
@@ -591,7 +601,21 @@
     await fetch(base + '/changes/apply_all', { method: 'POST' });
     location.reload();
   });
-  document.getElementById('rab-undo-last-run')?.addEventListener('click', async () => {
+  function applyHostSafety(data) {
+    const banner = document.getElementById('rab-host-banner');
+    const msg = document.getElementById('rab-host-banner-msg');
+    if (!banner || !data) return;
+    if (data.healthy && !data.rolled_back) {
+      banner.hidden = true;
+      return;
+    }
+    banner.hidden = false;
+    const klass = data.failure_class || 'unknown';
+    msg.textContent = (data.rolled_back ? 'Rolled back' : 'Unhealthy') +
+      ' (' + klass + '). Auto-apply paused until you dismiss or Undo.';
+  }
+
+  async function undoLastRun() {
     if (!sessionId) {
       alert('No AI session yet — run a prompt first, then Undo.');
       return;
@@ -609,6 +633,13 @@
     }
     alert('Rolled back ' + (data.count || 0) + ' change(s).');
     location.reload();
+  }
+
+  document.getElementById('rab-undo-last-run')?.addEventListener('click', undoLastRun);
+  document.getElementById('rab-host-banner-undo')?.addEventListener('click', undoLastRun);
+  document.getElementById('rab-host-banner-dismiss')?.addEventListener('click', () => {
+    const banner = document.getElementById('rab-host-banner');
+    if (banner) banner.hidden = true;
   });
 
   document.querySelectorAll('.rab-change-item[data-change-id]').forEach(item => {

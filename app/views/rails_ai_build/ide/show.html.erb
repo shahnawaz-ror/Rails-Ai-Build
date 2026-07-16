@@ -44,6 +44,13 @@
     <a href="<%= request.path.sub(%r{/ui/ide.*}, '/ui') %>">Dashboard</a>
   </header>
 
+  <div id="rab-host-banner" class="rab-host-banner" hidden role="alert">
+    <strong>Host unhealthy</strong>
+    <span id="rab-host-banner-msg">Last agent run was rolled back to keep the app bootable.</span>
+    <button type="button" class="rab-btn rab-btn-secondary" id="rab-host-banner-undo" style="margin-left:0.75rem;padding:0.2rem 0.5rem;font-size:0.7rem">Undo last run</button>
+    <button type="button" class="rab-btn rab-btn-secondary" id="rab-host-banner-dismiss" style="margin-left:0.35rem;padding:0.2rem 0.5rem;font-size:0.7rem">Dismiss</button>
+  </div>
+
   <div class="rab-wizard-overlay" id="rab-wizard" hidden>
     <div class="rab-wizard-card">
       <h2>Activate Rails AI Build</h2>

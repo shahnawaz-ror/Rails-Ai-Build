@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Rails AI Build API
-  version: 2.5.0
+  version: 2.6.0
   description: |
     Language-agnostic REST API for AI coding agents.
     Implemented by the Rails engine, standalone server, or consumed by client SDKs.

@@ -9,7 +9,8 @@ module RailsAiBuild
         grep: GrepTool,
         list_files: ListFilesTool,
         shell: ShellTool,
-        run_generator: RunGeneratorTool
+        run_generator: RunGeneratorTool,
+        host_safety_check: HostSafetyCheckTool
       }.freeze
 
       BOOST_TOOLS = {

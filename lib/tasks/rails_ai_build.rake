@@ -216,13 +216,10 @@ namespace :rails_ai_build do
 
   desc "Show Host Safety + generator catalog status"
   task host_safety: :environment do
-    cfg = RailsAiBuild.configuration
+    summary = RailsAiBuild::HostSafety.status_summary
     puts "\n🛡  Rails AI Build Host Safety\n#{'=' * 40}"
-    puts "host_safety:           #{cfg.host_safety != false}"
-    puts "host_safety_boot_check:#{cfg.host_safety_boot_check != false}"
-    puts "generator_first:       #{cfg.generator_first != false}"
-    puts "allowed run_generator: #{cfg.allowed_tools.map(&:to_sym).include?(:run_generator)}"
-    puts "catalog entries:       #{RailsAiBuild::Generators::Catalog.entries.size}"
+    summary.each { |k, v| puts format("%-22s %s", "#{k}:", v.inspect) }
+    puts "\nCatalog:"
     RailsAiBuild::Generators::Catalog.entries.each do |e|
       puts "  - #{e['id']}: rails g #{e['generator']}"
     end

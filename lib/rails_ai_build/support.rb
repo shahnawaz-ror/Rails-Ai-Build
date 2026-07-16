@@ -132,22 +132,23 @@ module RailsAiBuild
         end
 
         def check_host_safety
+          summary = HostSafety.status_summary
           allowed = RailsAiBuild.configuration.allowed_tools.map(&:to_sym)
-          generator_ok = allowed.include?(:run_generator)
-          safety_on = RailsAiBuild.configuration.host_safety != false
-          first = RailsAiBuild.configuration.generator_first != false
-          catalog = Generators::Catalog.entries.size
+          tool_ok = allowed.include?(:host_safety_check) || allowed.include?(:run_generator)
 
-          if safety_on && first && generator_ok && catalog.positive?
-            ok(
-              "host_safety",
-              "Generator-first + Host Safety on (#{catalog} catalog entries; boot check #{RailsAiBuild.configuration.host_safety_boot_check != false ? 'on' : 'off'})"
-            )
+          if summary[:enabled] && tool_ok && summary[:catalog_entries].positive?
+            bits = [
+              "soft_preview=#{summary[:soft_preview]}",
+              "bundle=#{summary[:bundle_check]}",
+              "zeitwerk=#{summary[:zeitwerk_check]}",
+              "shadow=#{summary[:shadow_worktree]}"
+            ]
+            ok("host_safety", "Host Safety complete (#{bits.join(', ')}; catalog=#{summary[:catalog_entries]})")
           else
             warn(
               "host_safety",
-              "Host Safety incomplete (safety=#{safety_on}, generator_first=#{first}, run_generator=#{generator_ok}, catalog=#{catalog})",
-              "Ensure config.host_safety / generator_first are true and allowed_tools includes :run_generator"
+              "Host Safety incomplete: #{summary.inspect}",
+              "Enable host_safety + generator_first; include :run_generator / :host_safety_check in allowed_tools"
             )
           end
         rescue StandardError => e

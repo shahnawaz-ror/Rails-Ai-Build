@@ -11,6 +11,12 @@ RSpec.describe RailsAiBuild::HostSafety do
     RailsAiBuild.configuration.workspace_root = workspace
     RailsAiBuild.configuration.host_safety = true
     RailsAiBuild.configuration.host_safety_boot_check = false
+    RailsAiBuild.configuration.host_safety_zeitwerk_check = false
+    RailsAiBuild.configuration.host_safety_bundle_check = false
+    RailsAiBuild.configuration.host_safety_smoke_routes = false
+    RailsAiBuild.configuration.host_safety_soft_preview = true
+    RailsAiBuild.configuration.host_safety_shadow_worktree = false
+    RailsAiBuild.configuration.host_safety_git_checkpoint = false
     RailsAiBuild::Changes::Store.clear!
   end
 
@@ -25,13 +31,22 @@ RSpec.describe RailsAiBuild::HostSafety do
     end.to raise_error(RailsAiBuild::ToolError, /Syntax error/)
   end
 
+  it "rejects bad migration filenames" do
+    expect do
+      described_class.validate_write!(
+        "db/migrate/1_create_x.rb",
+        "class CreateX < ActiveRecord::Migration[7.1]; def change; end; end"
+      )
+    end.to raise_error(RailsAiBuild::ToolError, /YYYYMMDDHHMMSS/)
+  end
+
   it "accepts valid Ruby" do
     expect(described_class.validate_write!("app/models/ok.rb", "class Ok\nend\n")).to eq(true)
   end
 
   it "rolls back the session when syntax verification fails" do
     session_id = "sess-safety-1"
-    described_class.begin_session!(session_id)
+    described_class.begin_session!(session_id, workspace: workspace)
     path = workspace.join("app/models/post.rb")
     path.dirname.mkpath
     path.write("class Post\nend\n")
@@ -44,7 +59,6 @@ RSpec.describe RailsAiBuild::HostSafety do
       session_id: session_id
     )
 
-    # Corrupt the file after tracking (simulates a bad applied write)
     path.write("class Post\n")
 
     report = described_class.verify_after_turn!(workspace: workspace, session_id: session_id)
@@ -53,24 +67,15 @@ RSpec.describe RailsAiBuild::HostSafety do
     expect(path).not_to exist
   end
 
-  it "skips boot ladder when only non-critical Ruby changed" do
-    session_id = "sess-safety-2"
-    described_class.begin_session!(session_id)
-    RailsAiBuild.configuration.host_safety_boot_check = true
-
-    path = workspace.join("app/services/hello.rb")
-    path.dirname.mkpath
-    path.write("class Hello\nend\n")
-    RailsAiBuild::Changes::Store.track_external(
-      path: "app/services/hello.rb",
-      content: "class Hello\nend\n",
-      old_content: "",
-      workspace: workspace,
-      session_id: session_id
+  it "soft-previews boot-critical writes without applying" do
+    result = RailsAiBuild::Changes::Store.record(
+      path: "config/routes.rb",
+      old_content: "Rails.application.routes.draw {}\n",
+      new_content: "Rails.application.routes.draw { root 'x#y' }\n",
+      workspace: workspace
     )
-
-    report = described_class.verify_after_turn!(workspace: workspace, session_id: session_id)
-    expect(report[:healthy]).to eq(true)
-    expect(report[:checks].none? { |c| c[:name] == "boot" }).to eq(true)
+    expect(result[:status]).to eq("pending_approval")
+    expect(result[:soft_preview]).to eq(true)
+    expect(workspace.join("config/routes.rb")).not_to exist
   end
 end

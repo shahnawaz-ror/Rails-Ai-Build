@@ -23,21 +23,6 @@ That is not a “nice-to-have.” That is **trust**. If we don’t own this loop
 | **Zeitwerk / load** | Wrong constant / file name | Boot or eager-load fails |
 | **Test red** | Specs fail after change | Quality gate (less severe than boot) |
 
-### Why today’s verify loop is not enough
-
-We already have useful pieces:
-
-- `Intelligence.prepare!` — missing dirs + **gem migration version** heal  
-- Builder / multitask **verify** — `zeitwerk` + tests (retry up to N)  
-- `run_until_green` orchestration  
-- Diff preview / apply / reject (Pro+)  
-- `FixSkill`  
-
-**Gap:** Those assume the host can still **boot**.  
-If the agent bricks `config/application.rb` or `Gemfile`, `zeitwerk:check` never runs — and there is **no rollback of applied writes**.
-
-Default Free mode: `diff_preview = false` → writes **auto-apply to disk**. That maximizes speed and maximizes blast radius.
-
 ---
 
 ## 2. Solution principle
@@ -55,104 +40,95 @@ Never: *unbounded “fix” on a dead process*.
 
 ---
 
-## 3. Host Safety Loop (product design)
+## 3. Host Safety Loop (implemented in v2.6.0)
 
-### Phase A — Prevent (before write lands)
+### Phase A — Prevent (`HostSafety::Guards`)
 
-| Guard | Rule |
-|-------|------|
-| **Session checkpoint** | Before agent run: snapshot contents of files about to change (or `git stash create`) |
-| **Syntax gate** | For `*.rb`: `ruby -c` before apply |
-| **Migration gate** | Version must be `\d{14}_…`; reject padded/short versions; optional dry parse |
-| **Gemfile gate** | Gemfile/Gemfile.lock changes require confirm + `bundle check` in subprocess; never silent auto-apply on Free for Gemfile |
-| **Boot-critical paths** | Soft-preview for `config/**`, `Gemfile*`, `db/migrate/**` even on Free |
+| Guard | Behavior |
+|-------|----------|
+| Session checkpoint | `git stash create` when repo available |
+| Syntax gate | `ruby -c` for `.rb` / Gemfile before apply |
+| Migration gate | Filename `\d{14}_name.rb` + `ActiveRecord::Migration` class |
+| Gemfile gate | Reject empty gems; soft-preview + `bundle check` on apply/ladder |
+| Boot-critical soft-preview | `config/**`, `Gemfile*`, `db/migrate/**` queue even when `diff_preview=false` |
 
-### Phase B — Detect (after turn / after write set)
+### Phase B — Detect (`HostSafety::Ladder`)
 
-**Boot ladder** (cheap → expensive), tool: `host_safety_check`:
-
-1. `ruby -c` on changed Ruby files  
+1. `ruby -c` on changed Ruby / Gemfile  
 2. `bundle check` if Gemfile touched  
-3. `bin/rails runner 'puts :ok'` (true boot)  
-4. `zeitwerk:check`  
-5. Optional: smoke `GET` critical routes  
-6. Existing tests / rubocop only if boot is green  
+3. `bin/rails runner 'puts :rab_boot_ok'` when boot-critical (or `host_safety_always_boot`)  
+4. `zeitwerk:check` when Ruby changed  
+5. Optional smoke `recognize_path` for `host_safety_smoke_paths`  
+6. Runtime verify (zeitwerk+tests) remains in `Tasks::Runtime`; on final fail → `rollback_session`
 
-Failure class enum: `syntax | bundle | boot | zeitwerk | runtime_500 | test`
+Failure classes: `syntax | bundle | boot | zeitwerk | runtime_500 | test`
 
-### Phase C — Isolate
+### Phase C — Isolate (`HostSafety::Shadow`)
 
-- Run ladder in a **subprocess** (never trust in-process load after bad writes)  
-- Team+: optional **shadow worktree** — agent writes there; promote only when green  
-- IDE shows **Host unhealthy** banner; pause auto-apply until recover  
+- Ladder runs via subprocess commands (never in-process load after bad writes)  
+- Optional **shadow worktree** (`host_safety_shadow_worktree = true`) — write there; **promote** only when green; **discard** on fail  
+- IDE **Host unhealthy** banner + pause messaging  
 
-### Phase D — Heal (bounded)
+### Phase D — Heal
 
 | Class | Auto action |
 |-------|-------------|
-| Our migration version collision | Existing `Migrations::Intelligence.auto_heal!` |
-| Missing dirs | Existing `Intelligence.ensure_workspace_dirs!` |
-| Syntax/boot from known write set | **Rollback first**, then optional 1–2 `FixSkill` attempts |
+| Gem migration version collision | `Migrations::Intelligence.auto_heal!` |
+| Missing dirs | `Intelligence.ensure_workspace_dirs!` |
+| Syntax/boot/bundle from write set | **Rollback / shadow discard first**, optional FixSkill (`host_safety_fix_after_rollback`) |
 | Never | Infinite `run_until_green` on a dead host |
 
-### Phase E — Rollback (must ship)
+### Phase E — Rollback
 
 | Capability | Behavior |
 |------------|----------|
-| `Changes::Store.rollback(id)` | Restore `old_content` for an applied change |
-| `rollback_session(session_id)` | Undo entire agent turn write set (reverse order) |
-| Checkpoint restore | `git checkout -- paths` / stash apply if process restarted |
-| Verify failure policy | After N failed boot ladders → **auto-rollback**, then report |
-| IDE | **Undo last agent run** button |
+| `Changes::Store.rollback(id)` | Restore one change |
+| `rollback_session(session_id)` | Undo entire turn write set |
+| Shadow discard | Host tree untouched |
+| Verify failure policy | After N failed verify attempts → auto-rollback |
+| IDE | **Undo last run** + banner |
 
 ### Phase F — Report
 
-- SSE phases: `prevent → detect → isolate → heal → rollback → report`  
-- Payload: `{ healthy, failure_class, files, actions[], boot_ok, rolled_back }`  
+- SSE phases: `prevent → detect → isolate → heal → rollback → report` (`host_safety` event)  
+- Payload: `{ healthy, failure_class, checks, actions[], rolled_back, promoted }`  
 - Doctor + `rails rails_ai_build:host_safety`  
-- Audit events: `host_safety.detect|heal|rollback`
+- Audit: `host_safety.detect|isolate|promote|rollback|report`
 
 ---
 
-## 4. Integration into the agent loop
+## 4. Integration
 
 ```
 Ai::Driver.run / Tasks::Runtime
-  → Intelligence.prepare!                 # today
-  → HostSafety.checkpoint!(session)       # NEW
-  → tools / write_file
-       → prevent guards (syntax/migration/gemfile)
-       → Changes::Store.record
+  → Intelligence.prepare!
+  → HostSafety.begin_session!   # checkpoint + optional shadow
+  → tools / write_file / run_generator
+       → Guards (syntax/migration/gemfile)
+       → soft-preview for boot-critical
   → end of turn
-       → HostSafety.ladder                # NEW (before zeitwerk/test)
-       → if boot fail → rollback + optional FixSkill (max 2)
-       → else existing verify_builds loop
+       → HostSafety::Ladder
+       → healthy ? Shadow.promote! : rollback/discard (+ optional FixSkill)
   → HostSafety.report → SSE + Doctor
 ```
 
 ---
 
-## 5. Delivery slices
+## 5. Config flags
 
-### Slice 1 — MVP (must)
-
-1. Session file checkpoint  
-2. `ruby -c` before applying `.rb` writes  
-3. Subprocess `rails runner` boot check after agent turn  
-4. `rollback_session` + IDE “Undo last run”  
-5. Auto-rollback when boot check fails  
-
-### Slice 2 — Gems & migrations
-
-1. Gemfile change soft-preview + `bundle check`  
-2. Migration pre-write validator (all migrations, not only gem collisions)  
-3. Doctor check: `host_safety`  
-
-### Slice 3 — Enterprise isolation
-
-1. Shadow worktree promote-on-green  
-2. Routes smoke tests  
-3. Policy: never auto-apply boot-critical paths without approval  
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `host_safety` | `true` | Master switch |
+| `host_safety_boot_check` | `true` | `rails runner` step |
+| `host_safety_bundle_check` | `true` | `bundle check` when Gemfile changes |
+| `host_safety_zeitwerk_check` | `true` | `zeitwerk:check` after Ruby changes |
+| `host_safety_soft_preview` | `true` | Queue boot-critical on Free |
+| `host_safety_shadow_worktree` | `false` | Isolate writes; promote-on-green |
+| `host_safety_smoke_routes` | `false` | Route smoke after boot |
+| `host_safety_smoke_paths` | `["/"]` | Paths for smoke |
+| `host_safety_git_checkpoint` | `true` | `git stash create` |
+| `host_safety_fix_after_rollback` | `false` | Bounded FixSkill |
+| `host_safety_rollback_on_verify_fail` | `true` | Runtime final-fail rollback |
 
 ---
 
@@ -160,37 +136,32 @@ Ai::Driver.run / Tasks::Runtime
 
 | ID | Scenario | Pass |
 |----|----------|------|
-| HS-01 | Agent writes invalid Ruby in `routes.rb` | Syntax gate OR boot fail → auto-rollback; app boots |
-| HS-02 | Agent adds broken Gemfile line | Blocked or rolled back; `bundle check` green |
-| HS-03 | Agent adds bad migration file | Validator or rollback; `db:migrate` not left half-broken |
-| HS-04 | Verify fails twice | Rollback write set; IDE shows Undo + report |
-| HS-05 | User clicks Undo last run | Files restored to checkpoint |
-| HS-06 | Only gem migration version collision | Existing heal still works without full rollback |
+| HS-01 | Invalid Ruby in `routes.rb` | Soft-preview or syntax/boot → rollback; app boots |
+| HS-02 | Broken Gemfile line | Guard / bundle check / rollback |
+| HS-03 | Bad migration file | Validator rejects or rollback |
+| HS-04 | Verify fails N times | Rollback write set; IDE shows Undo + banner |
+| HS-05 | User clicks Undo last run | Files restored |
+| HS-06 | Gem migration version collision | Existing heal without full rollback |
+| HS-07 | Shadow enabled + bad write | Discard; host untouched |
+| HS-08 | Shadow enabled + green | Promote to host |
 
 ---
 
-## 7. What we tell the customer
+## 7. Customer message
 
 **Before:** “AI might break your app; run tests.”  
-**After:** “Every agent run is checkpointed. If boot breaks, we roll back automatically and show you exactly what was undone. You can also Undo last run in one click.”
-
-That is the Cursor-class safety story for **in-app** agents — Cursor can trash a file too, but the desktop IDE stays open. Our gem shares the host process: **host safety is the product.**
+**After:** “Every agent run is checkpointed (and optionally isolated). If boot or bundle breaks, we roll back automatically and show exactly what was undone. You can also Undo last run in one click.”
 
 ---
 
-## 8. Related
+## 8. Code map
 
-- [SRS.md](./SRS.md) — Host Safety + generator-first under AI / Operate  
-- [CLIENT_JOURNEY_MASTER_PLAN.md](./CLIENT_JOURNEY_MASTER_PLAN.md) — pillar “Operate”  
-
-### Implemented (v2.5.0)
-- Declarative `Generators::Catalog` + `IntentRouter` (score, don’t branch)
-- `run_generator` tool + `Generators::Runner` (allowlisted `rails g`)
-- `Ai::Driver` session: begin → generator route → AI when needed → `HostSafety.verify_after_turn!`
-- Syntax gate on `write_file`; boot check for `config/` / `Gemfile` / `db/migrate/`
-- `Changes::Store.rollback` / `rollback_session`; IDE **Undo last run**; Doctor `host_safety`
-
-### Still later
-- Gemfile `bundle check` before apply  
-- Shadow worktree / isolate subprocess for risky writes  
-- Migration dry-run validator beyond syntax/boot
+| Piece | Path |
+|-------|------|
+| Facade | `lib/rails_ai_build/host_safety.rb` |
+| Guards | `lib/rails_ai_build/host_safety/guards.rb` |
+| Ladder | `lib/rails_ai_build/host_safety/ladder.rb` |
+| Shadow | `lib/rails_ai_build/host_safety/shadow.rb` |
+| Checkpoint | `lib/rails_ai_build/host_safety/checkpoint.rb` |
+| Tool | `lib/rails_ai_build/tools/host_safety_check_tool.rb` |
+| Generator-first | `lib/rails_ai_build/generators/*` |
