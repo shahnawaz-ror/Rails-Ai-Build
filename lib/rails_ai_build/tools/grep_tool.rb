@@ -4,11 +4,11 @@ module RailsAiBuild
   module Tools
     class GrepTool < BaseTool
       name "grep"
-      description "Search for a pattern in files within the workspace (uses ripgrep if available, otherwise Ruby fallback)."
+      description "Search for a pattern under the Rails app root (ripgrep if available). Paths are relative — use '.' or omit for the whole app."
       parameters type: "object",
                  properties: {
                    pattern: { type: "string", description: "Regular expression pattern to search" },
-                   path: { type: "string", description: "Directory or file to search in (default: workspace root)" },
+                   path: { type: "string", description: "Directory or file relative to app root (default '.'). Not 'workspace'." },
                    glob: { type: "string", description: "Glob filter, e.g. '*.rb'" },
                    case_insensitive: { type: "boolean", description: "Case insensitive search" }
                  },
@@ -18,7 +18,7 @@ module RailsAiBuild
 
       def execute(args)
         pattern = args["pattern"]
-        search_path = args["path"] ? resolve_path(args["path"]) : workspace
+        search_path = resolve_path(args["path"].nil? || args["path"].to_s.strip.empty? ? '.' : args["path"])
 
         if system_grep_available?
           run_ripgrep(pattern, search_path, args)

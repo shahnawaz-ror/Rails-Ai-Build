@@ -63,11 +63,7 @@ module RailsAiBuild
         end
 
         def resolve(workspace, path)
-          full = workspace.join(path.to_s.delete_prefix('/'))
-          resolved = full.expand_path
-          raise SecurityError, "Path escapes workspace: #{path}" unless resolved.to_s.start_with?(workspace.expand_path.to_s)
-
-          resolved
+          Paths.resolve(workspace, path)
         end
       end
     end

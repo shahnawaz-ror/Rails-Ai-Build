@@ -29,6 +29,8 @@ module RailsAiBuild
         - One logical feature per run; keep diffs small
         - Never commit secrets; use ENV for credentials
         - Stop only when the task is done AND checks pass (when verify is enabled)
+        - Paths are relative to the Rails app root. list_files path="." (or omit) for the root.
+        - Do not use path "workspace" — explore with application_info, list_files("."), list_routes
       PROMPT
 
       class << self
@@ -41,8 +43,11 @@ module RailsAiBuild
           <<~SNAPSHOT
             ## Application context (auto-detected)
             - Rails: #{rails_version || 'unknown'}
+            - App root: #{workspace}
             - Conventions: #{profile.to_h.map { |k, v| "#{k}=#{v}" }.join(', ')}
             - Guidance: #{recs.join(' | ')}
+
+            #{Workspace::Paths.prompt_guidance(workspace)}
 
             #{UNIVERSAL_PROMPT}
           SNAPSHOT

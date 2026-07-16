@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.5] - 2026-07-16
+
+### Fixed — Intelligent workspace path resolution
+- Models often call `list_files(path: "workspace")` and fail with `Not a directory: workspace`
+- **`Workspace::Paths`** maps aliases (`.`, `workspace`, `app root`, …) and strips mistaken `workspace/` prefixes to the real app root
+- Tool descriptions + system/context prompts tell the agent paths are relative to the Rails app root
+- IDE file browser uses the same resolver
+
 ## [2.2.4] - 2026-07-16
 
 ### Added — Migration intelligence (auto-heal DuplicateMigrationVersionError)
