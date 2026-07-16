@@ -8,6 +8,11 @@
 - Tool descriptions + system/context prompts tell the agent paths are relative to the Rails app root
 - IDE file browser uses the same resolver
 
+### Fixed — Task queue thread storm (`can't create Thread`)
+- **`Tasks::Queue`** no longer recursively spawns workers from every idle `process_next`
+- Bounded worker pool: workers drain queued tasks, unregister themselves, then refill only up to `max_concurrent_tasks`
+- Stops `ThreadError: Resource temporarily unavailable` infinite spawn loops in host apps
+
 ## [2.2.4] - 2026-07-16
 
 ### Added — Migration intelligence (auto-heal DuplicateMigrationVersionError)
