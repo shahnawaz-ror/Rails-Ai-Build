@@ -43,3 +43,7 @@ spec/internal/log/
 /server/.bundle/
 /gemfiles/vendor/
 /gemfiles/.bundle/
+
+# AI session / shadow / memory (host + dummy app)
+.rails_ai_build/
+spec/internal/.rails_ai_build/
