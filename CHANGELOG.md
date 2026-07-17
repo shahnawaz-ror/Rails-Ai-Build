@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.3] - 2026-07-17
+
+### Fixed — Previous chats / requests missing from Agent tab
+- Threads were **in-memory only** and the IDE **never reloaded** message history
+- Sessions now persist under `.rails_ai_build/sessions/*.json` (survives refresh + restart)
+- Agent tab hydrates the current thread on load; **Chats** button + Threads panel open prior requests
+- Clicking a thread restores user prompts + assistant replies; delete removes a thread
+- `done` / generator-only paths always include `session_id` so the client keeps the same thread
+
 ## [2.9.2] - 2026-07-17
 
 ### Fixed — `Tool not allowed: run_generator` + stuck runs with empty Changes

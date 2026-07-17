@@ -63,6 +63,9 @@ module RailsAiBuild
         @workspace = Pathname(session_info[:workspace]) if session_info[:workspace]
 
         begin
+          # Emit session id early so the IDE can persist/restore this thread
+          emit(on_event, :session, @session.to_h.merge(model: @model, provider: @provider))
+
           route_generators!(message, on_event)
 
           if skip_ai_after_generator?
@@ -170,6 +173,7 @@ module RailsAiBuild
           'No custom AI follow-up required for this request.'
         ].join(' ')
 
+        emit(on_event, :session, @session.to_h.merge(model: @model, provider: @provider))
         context = ContextEngine.snapshot(workspace: @workspace)
         @session.add_message(Agents::Message.user(message))
         @host_safety = HostSafety.verify_after_turn!(
@@ -262,7 +266,6 @@ module RailsAiBuild
         return unless on_event
 
         streamed_tokens = false
-        emit(on_event, :session, @session.to_h.merge(model: @model, provider: @provider))
 
         runner.on(:on_delta) do |chunk|
           emit(on_event, :status, { phase: 'reply', message: 'Streaming reply…' }) unless streamed_tokens
@@ -376,7 +379,9 @@ module RailsAiBuild
           applied_files: @applied_files || [],
           generator_plan: @generator_plan&.to_h,
           host_safety: @host_safety,
-          pending_changes: Changes::Store.all(status: :pending).map(&:to_h)
+          pending_changes: Changes::Store.all(status: :pending).map(&:to_h),
+          session_id: @session.id,
+          session: @session.to_h
         }
       end
 
