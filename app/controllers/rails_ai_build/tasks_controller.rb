@@ -4,6 +4,10 @@ module RailsAiBuild
   class TasksController < ApplicationController
     include ActionController::Live
 
+    TERMINAL_EVENTS = %w[complete done finished error cancelled].freeze
+    TERMINAL_STATUSES = %i[success failed cancelled].freeze
+    STREAM_MAX_SECONDS = 1_800
+
     def index
       render json: { tasks: Tasks::Queue.all }
     end
@@ -39,8 +43,9 @@ module RailsAiBuild
       render json: task.to_h
     end
 
+    # Long-lived SSE. Must stay open until the task finishes or the client disconnects —
+    # previously this action closed immediately and the IDE reconnect-stormed Puma.
     def stream
-      # params.require works on Rails 7.1+; params.expect is Rails 8-only
       task = Tasks::Queue.find(params.require(:id))
       return render json: { error: "Not found" }, status: :not_found unless task
 
@@ -48,19 +53,60 @@ module RailsAiBuild
       response.headers["Cache-Control"] = "no-cache"
       response.headers["X-Accel-Buffering"] = "no"
 
+      inbox = ::Queue.new
       unsub = nil
       begin
         unsub = Tasks::EventBus.subscribe(task.id) do |event, data|
-          response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
+          inbox << [event, data]
+        rescue StandardError
+          nil
         end
 
-        response.stream.write(Streaming::Sse.format_sse(event: :snapshot, data: task.to_h)) if task.status != :running
-      rescue StandardError => e
-        response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message }))
+        response.stream.write(Streaming::Sse.format_sse(event: :snapshot, data: task.to_h))
+
+        deadline = monotonic_now + STREAM_MAX_SECONDS
+        last_ping = monotonic_now
+
+        loop do
+          now = monotonic_now
+          break if now >= deadline
+
+          drained = false
+          loop do
+            event, data = inbox.pop(true)
+            drained = true
+            response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
+            return if TERMINAL_EVENTS.include?(event.to_s)
+          rescue ThreadError
+            break
+          end
+
+          current = Tasks::Queue.find(params[:id])
+          break if current.nil? || TERMINAL_STATUSES.include?(current.status.to_sym)
+
+          if now - last_ping >= 15
+            response.stream.write(": keepalive\n\n")
+            last_ping = now
+          end
+
+          sleep(drained ? 0.05 : 0.4)
+        end
+      rescue IOError, ActionController::Live::ClientDisconnected
+        # Client closed the EventSource / fetch stream
       ensure
         unsub&.call
-        response.stream.close
+        begin
+          response.stream.close
+        rescue StandardError
+          nil
+        end
       end
+    end
+
+    private
+
+    def monotonic_now
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
   end
 end
