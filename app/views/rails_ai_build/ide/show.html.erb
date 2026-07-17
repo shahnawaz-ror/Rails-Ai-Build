@@ -59,7 +59,7 @@
   <div class="rab-wizard-overlay" id="rab-wizard" hidden>
     <div class="rab-wizard-card">
       <h2>Activate Rails AI Build</h2>
-      <p class="rab-wizard-sub">Same loop as Cursor — pick one door to start coding with AI in this app.</p>
+      <p class="rab-wizard-sub">Pick one door to start coding with AI in this Rails app.</p>
       <div class="rab-wizard-doors">
         <button type="button" class="rab-wizard-door active" data-door="byok">BYOK</button>
         <button type="button" class="rab-wizard-door" data-door="cloud">Cloud key</button>
@@ -129,9 +129,12 @@
     </aside>
 
     <aside class="rab-sidebar" id="rab-sidebar-sessions" style="display:none">
-      <div class="rab-sidebar-header" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Threads</span>
-        <button type="button" class="rab-btn rab-btn-secondary" id="rab-new-session" style="padding:0.2rem 0.4rem;font-size:0.65rem">New</button>
+      <div class="rab-sidebar-header" style="display:flex;justify-content:space-between;align-items:center;gap:0.35rem">
+        <span>Chats</span>
+        <span style="display:flex;gap:0.25rem">
+          <button type="button" class="rab-btn rab-btn-secondary" id="rab-prune-sessions" style="padding:0.2rem 0.4rem;font-size:0.65rem" title="Remove empty and junk threads">Clean</button>
+          <button type="button" class="rab-btn rab-btn-secondary" id="rab-new-session" style="padding:0.2rem 0.4rem;font-size:0.65rem">New</button>
+        </span>
       </div>
       <div class="rab-sidebar-body" id="rab-session-list">
         <p class="rab-locked">Loading threads…</p>

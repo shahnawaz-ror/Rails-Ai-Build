@@ -49,6 +49,7 @@ module RailsAiBuild
       end
 
       def to_h
+        refresh_title!
         {
           id: id,
           title: title || default_title,
@@ -73,6 +74,7 @@ module RailsAiBuild
           next if role == :system
 
           content = msg.content.to_s
+          content = strip_routing_wrappers(content) if role == :user
           if role == :tool
             content = content[0, 240]
             content = "#{content}…" if msg.content.to_s.length > 240
@@ -86,6 +88,21 @@ module RailsAiBuild
             name: msg.name
           }
         end
+      end
+
+      def refresh_title!
+        return unless @title.nil? || wrapper_title?(@title)
+
+        auto_title!
+        self.class.persist!(self) if @title.present? && !wrapper_title?(@title)
+      end
+
+      def empty?
+        messages.none? { |m| %i[user assistant].include?(m.role.to_sym) && m.content.to_s.strip.present? }
+      end
+
+      def junk?
+        empty? || wrapper_title?(@title)
       end
 
       class << self
@@ -124,12 +141,29 @@ module RailsAiBuild
           end
         end
 
+        # Drop empty threads and ones still stuck on wrapper titles after refresh.
+        def prune_junk!
+          removed = []
+          all.each do |session|
+            session.refresh_title!
+            next unless session.empty? || wrapper_title?(session.title)
+
+            destroy(session.id)
+            removed << session.id
+          end
+          removed
+        end
+
         def reset!
           mutex.synchronize { store.clear }
         end
 
         def persist!(session)
           mutex.synchronize { persist_unlocked!(session) }
+        end
+
+        def wrapper_title?(title)
+          title.to_s.match?(/\A#\s*(Task|Composer mode)\b/i)
         end
 
         private
@@ -278,7 +312,10 @@ module RailsAiBuild
 
       def last_user_or_assistant_preview
         msg = messages.reverse.find { |m| %i[user assistant].include?(m.role.to_sym) && m.content.to_s.strip.present? }
-        msg&.content.to_s[0, 120]
+        return "" unless msg
+
+        text = msg.role.to_sym == :user ? strip_routing_wrappers(msg.content) : msg.content.to_s
+        text[0, 120]
       end
 
       def auto_title!

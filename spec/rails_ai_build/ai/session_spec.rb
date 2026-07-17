@@ -68,4 +68,14 @@ RSpec.describe RailsAiBuild::Ai::Session do
     expect(session.title).to include("remove sql injection")
     expect(session.title).not_to match(/Composer mode/i)
   end
+
+  it "prunes empty junk threads" do
+    keep = described_class.create
+    keep.add_message(RailsAiBuild::Agents::Message.user("keep this chat"))
+    junk = described_class.create
+    removed = described_class.prune_junk!
+    expect(removed).to include(junk.id)
+    expect(removed).not_to include(keep.id)
+    expect(described_class.find(keep.id)).not_to be_nil
+  end
 end

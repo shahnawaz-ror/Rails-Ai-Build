@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.5] - 2026-07-17
+
+### Fixed — Stop saying “Cursor” to end users + clean chat mess
+- Removed user-facing “Cursor-style / Cursor-class” copy from the IDE wizard and upgrade prompts
+- Plan first no longer injects `# Composer mode (Cursor-style…)` into the user message (that polluted titles + history)
+- Build runtime keeps the **real user ask** in the thread (no `# Task` wrapper)
+- Threads panel renamed to **Chats** with a **Clean** action to prune empty/junk threads
+- Old wrapper titles are retitled from the real prompt when the session list loads
+
 ## [2.9.4] - 2026-07-17
 
 ### Fixed — Agent chat jumping between threads
