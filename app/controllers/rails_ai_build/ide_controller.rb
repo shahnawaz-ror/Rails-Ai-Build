@@ -16,9 +16,22 @@ module RailsAiBuild
       @git = safe_git_summary
       @activation = Activation.status
       @upgrade_url = Plans::UPGRADE_URL
+      @isolation = isolation_context
     end
 
     private
+
+    def isolation_context
+      {
+        shadow_worktree: RailsAiBuild.configuration.host_safety_shadow_worktree == true,
+        soft_preview: RailsAiBuild.configuration.host_safety_soft_preview != false,
+        label: if RailsAiBuild.configuration.host_safety_shadow_worktree == true
+                 'Isolated worktree'
+               else
+                 'Direct writes'
+               end
+      }
+    end
 
     def feature_flags
       {

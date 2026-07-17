@@ -501,6 +501,14 @@
       return;
     }
 
+    if (event === 'status' && data.phase === 'isolate') {
+      setTurnPhase('planning');
+      const title = data.message || (data.shadow ? 'Isolated worktree ready' : 'Direct host writes');
+      setLive(title, 'planning');
+      addStep('plan', title, data.branch ? escapeHtml('branch ' + data.branch) : '');
+      return;
+    }
+
     if (event === 'status' || event === 'start' || event === 'attempt' || event === 'queued' || event === 'running') {
       setTurnPhase('planning');
       setLive(data.message || data.task || 'Planning…', 'planning');

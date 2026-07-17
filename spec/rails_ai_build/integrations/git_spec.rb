@@ -28,6 +28,16 @@ RSpec.describe RailsAiBuild::Integrations::Git do
     end
   end
 
+  describe '.create_branch' do
+    it 'creates a branch ref without checking out the host tree' do
+      before = described_class.current_branch
+      described_class.create_branch('ai/task-test1234')
+      expect(described_class.current_branch).to eq(before)
+      branches = Dir.chdir(workspace) { `git branch --list ai/task-test1234` }
+      expect(branches).to include('ai/task-test1234')
+    end
+  end
+
   describe '.commit' do
     it 'requires team plan' do
       expect { described_class.commit(message: 'test') }

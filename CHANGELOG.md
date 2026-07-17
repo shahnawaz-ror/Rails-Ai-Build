@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.9.0] - 2026-07-17
+
+### Changed — Shadow worktree isolation ON by default
+- AI no longer writes straight into the running host tree by default
+- Each agent turn **forks** into `.rails_ai_build/shadow/<session>/` (git worktree when possible)
+- Changes **promote** into the host only when Host Safety is green; failures **discard** the shadow
+- Task branches are created with `git branch` (no host `checkout -b`) so Puma’s tree is not flipped
+- IDE badge shows **Isolated worktree** vs **Direct writes**
+- Opt out: `config.host_safety_shadow_worktree = false` or `RAILS_AI_BUILD_SHADOW_WORKTREE=0`
+
 ## [2.8.5] - 2026-07-17
 
 ### Fixed — Placeholder migrations brick the host (`PendingMigrationError`)

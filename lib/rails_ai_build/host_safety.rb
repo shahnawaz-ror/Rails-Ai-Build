@@ -41,17 +41,26 @@ module RailsAiBuild
         checkpoint = Checkpoint.create!(session_id, workspace: workspace)
 
         effective = Shadow.prepare!(session_id, workspace: workspace)
+        isolated = Shadow.enabled? && Shadow.meta.present?
         emit(on_event, :status, {
                phase: "isolate",
-               message: Shadow.enabled? ? "Isolating writes in shadow worktree…" : "Writing in host workspace (shadow off)"
-             }) if Shadow.enabled?
+               message: if isolated
+                          "Forked into shadow worktree — host app stays untouched until promote"
+                        else
+                          "Writing in host workspace (shadow isolation off)"
+                        end,
+               shadow: isolated,
+               workspace: effective.to_s,
+               branch: Shadow.meta&.dig(:branch)
+             })
 
         {
           session_id: session_id,
           checkpointed: checkpoint[:ok],
           checkpoint: checkpoint,
           workspace: effective.to_s,
-          shadow: Shadow.enabled?
+          shadow: isolated,
+          branch: Shadow.meta&.dig(:branch)
         }
       end
 

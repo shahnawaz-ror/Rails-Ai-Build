@@ -9,13 +9,18 @@
      data-auto-apply="<%= !RailsAiBuild.configuration.diff_preview %>"
      data-needs-wizard="<%= @activation[:needs_wizard] %>"
      data-upgrade-url="<%= @upgrade_url %>"
-     data-plan="<%= @plan %>">
+     data-plan="<%= @plan %>"
+     data-shadow="<%= @isolation[:shadow_worktree] %>">
 
   <header class="rab-topbar">
     <div class="rab-logo">⬥ Rails AI Build <span>IDE v<%= @version %></span></div>
     <% if @git[:available] && @git[:branch].present? %>
       <span class="rab-branch">⎇ <%= @git[:branch] %></span>
     <% end %>
+    <span class="rab-badge <%= @isolation[:shadow_worktree] ? 'rab-badge-isolate' : 'rab-badge-direct' %>"
+          title="<%= @isolation[:shadow_worktree] ? 'AI writes in a git worktree; promote only when green' : 'AI writes directly into this app tree' %>">
+      <%= @isolation[:label] %>
+    </span>
     <button type="button" class="rab-badge rab-badge-plan" id="rab-plan-badge" title="Upgrade plan"><%= @plan_name %></button>
     <% if @plan == :enterprise %>
       <span class="rab-badge rab-badge-enterprise">Enterprise</span>

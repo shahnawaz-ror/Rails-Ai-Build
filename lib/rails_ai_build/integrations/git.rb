@@ -17,8 +17,17 @@ module RailsAiBuild
           in_repo { `git branch --show-current 2>/dev/null`.strip }
         end
 
-        def create_branch(name)
-          in_repo { run!("git checkout -b #{Shellwords.escape(name)}") }
+        # Create a branch ref. By default does NOT checkout — checking out would flip
+        # the running host app's working tree mid-request. Pass checkout: true only
+        # for explicit interactive flows.
+        def create_branch(name, checkout: false)
+          in_repo do
+            if checkout
+              run!("git checkout -b #{Shellwords.escape(name)}")
+            else
+              run!("git branch #{Shellwords.escape(name)} HEAD")
+            end
+          end
         end
 
         def checkout_branch(name)

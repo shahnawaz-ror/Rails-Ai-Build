@@ -51,6 +51,7 @@ RSpec.describe RailsAiBuild::Configuration do
       expect(config.generator_first).to be true
       expect(config.host_safety).to be true
       expect(config.host_safety_soft_preview).to be true
+      expect(config.host_safety_shadow_worktree).to be true
       expect(config.host_safety_bundle_check).to be true
       expect(config.ssrf_protection).to be true
       expect(config.require_engine_token).to be false
@@ -64,6 +65,33 @@ RSpec.describe RailsAiBuild::Configuration do
       config.allowed_tools = %i[read_file write_file]
       config.ensure_explore_tools!
       expect(config.allowed_tools).to include(:read_file, :write_file, :application_info, :list_models)
+    end
+  end
+
+  describe "#apply_shadow_isolation_env!" do
+    around do |example|
+      previous = ENV["RAILS_AI_BUILD_SHADOW_WORKTREE"]
+      previous_direct = ENV["RAILS_AI_BUILD_ALLOW_DIRECT_WRITES"]
+      ENV.delete("RAILS_AI_BUILD_SHADOW_WORKTREE")
+      ENV.delete("RAILS_AI_BUILD_ALLOW_DIRECT_WRITES")
+      example.run
+    ensure
+      ENV["RAILS_AI_BUILD_SHADOW_WORKTREE"] = previous
+      ENV["RAILS_AI_BUILD_ALLOW_DIRECT_WRITES"] = previous_direct
+    end
+
+    it "forces shadow isolation on for upgraded hosts" do
+      config = described_class.new
+      config.host_safety_shadow_worktree = false
+      config.apply_shadow_isolation_env!
+      expect(config.host_safety_shadow_worktree).to be true
+    end
+
+    it "allows opt-out via ENV" do
+      ENV["RAILS_AI_BUILD_SHADOW_WORKTREE"] = "0"
+      config = described_class.new
+      config.apply_shadow_isolation_env!
+      expect(config.host_safety_shadow_worktree).to be false
     end
   end
 end

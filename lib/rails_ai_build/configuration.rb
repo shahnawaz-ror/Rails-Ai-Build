@@ -106,7 +106,9 @@ module RailsAiBuild
       @host_safety_bundle_check = true
       @host_safety_zeitwerk_check = true
       @host_safety_soft_preview = true
-      @host_safety_shadow_worktree = false
+      # Isolate AI writes in a git worktree (or copy); promote to host only when green.
+      # Set false or RAILS_AI_BUILD_SHADOW_WORKTREE=0 to write directly into the running app.
+      @host_safety_shadow_worktree = true
       @host_safety_smoke_routes = false
       @host_safety_smoke_paths = %w[/]
       @host_safety_always_boot = false
@@ -161,7 +163,21 @@ module RailsAiBuild
         self.seat_limit = ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_i
       end
       self.redis_url ||= ENV["RAILS_AI_BUILD_REDIS_URL"].presence || ENV["REDIS_URL"].presence
+      apply_shadow_isolation_env!
       ensure_explore_tools!
+    end
+
+    # Prefer isolation. Old installers set shadow_worktree=false — upgrade flips them on
+    # unless the host explicitly opts out via ENV.
+    def apply_shadow_isolation_env!
+      if ENV.key?("RAILS_AI_BUILD_SHADOW_WORKTREE")
+        self.host_safety_shadow_worktree =
+          %w[0 false no off].exclude?(ENV["RAILS_AI_BUILD_SHADOW_WORKTREE"].to_s.downcase)
+      elsif ENV["RAILS_AI_BUILD_ALLOW_DIRECT_WRITES"].to_s == "1"
+        self.host_safety_shadow_worktree = false
+      else
+        self.host_safety_shadow_worktree = true
+      end
     end
 
     # Host initializers often omit Boost explore tools; merge them so planning works.

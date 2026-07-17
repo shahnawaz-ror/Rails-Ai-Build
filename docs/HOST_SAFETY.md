@@ -66,7 +66,7 @@ Failure classes: `syntax | bundle | boot | zeitwerk | runtime_500 | test`
 ### Phase C — Isolate (`HostSafety::Shadow`)
 
 - Ladder runs via subprocess commands (never in-process load after bad writes)  
-- Optional **shadow worktree** (`host_safety_shadow_worktree = true`) — write there; **promote** only when green; **discard** on fail  
+- **Shadow worktree** (default on) — AI writes in `.rails_ai_build/shadow/<session>/` (git worktree or copy); **promote** only when green; **discard** on fail. Set `host_safety_shadow_worktree = false` or `RAILS_AI_BUILD_SHADOW_WORKTREE=0` to write the live host tree.  
 - IDE **Host unhealthy** banner + pause messaging  
 
 ### Phase D — Heal
@@ -123,7 +123,7 @@ Ai::Driver.run / Tasks::Runtime
 | `host_safety_bundle_check` | `true` | `bundle check` when Gemfile changes |
 | `host_safety_zeitwerk_check` | `true` | `zeitwerk:check` after Ruby changes |
 | `host_safety_soft_preview` | `true` | Queue boot-critical on Free |
-| `host_safety_shadow_worktree` | `false` | Isolate writes; promote-on-green |
+| `host_safety_shadow_worktree` | `true` | Isolate writes in a worktree; promote-on-green (set `false` / `RAILS_AI_BUILD_SHADOW_WORKTREE=0` to write the live tree) |
 | `host_safety_smoke_routes` | `false` | Route smoke after boot |
 | `host_safety_smoke_paths` | `["/"]` | Paths for smoke |
 | `host_safety_git_checkpoint` | `true` | `git stash create` |

@@ -40,7 +40,10 @@ RailsAiBuild.configure do |config|
   config.host_safety_bundle_check = true
   config.host_safety_zeitwerk_check = true
   config.host_safety_soft_preview = true       # queue config/Gemfile/migrate even on Free
-  config.host_safety_shadow_worktree = false   # set true for isolate/promote-on-green
+  # Isolate AI writes in a git worktree under .rails_ai_build/shadow/<session>/
+  # Promote into the running app only when Host Safety checks are green.
+  # Set false (or RAILS_AI_BUILD_SHADOW_WORKTREE=0) to write directly (riskier).
+  config.host_safety_shadow_worktree = true
   config.host_safety_smoke_routes = false
   config.host_safety_fix_after_rollback = false
   config.host_safety_rollback_on_verify_fail = true

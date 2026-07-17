@@ -34,6 +34,8 @@ module RailsAiBuild
         - Do not use path "workspace" — explore with application_info, list_files("."), list_routes
         - Never create migrations with placeholder names like "your" (e.g. AddYourToYour) —
           use real model/table/column names or the host app will hit PendingMigrationError.
+        - When shadow isolation is on, you write inside a forked worktree — the running host
+          tree is updated only after Host Safety promotes green changes.
       PROMPT
 
       class << self
