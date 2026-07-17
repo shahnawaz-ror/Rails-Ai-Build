@@ -250,9 +250,10 @@ module RailsAiBuild
         return unless RailsAiBuild.configuration.generator_first != false
 
         <<~HINT
-          ## Generator-first (Host Safety)
-          Prefer `run_generator` for scaffolds, models, migrations, controllers, mailers, jobs, channels, devise.
-          Use `write_file` for custom business logic after generators — never invent whole Rails resources by hand when a generator exists.
+          ## When to use generators (Host Safety)
+          Use `run_generator` only when the user asks to create a new scaffold/model/migration/controller/mailer/job/channel/devise.
+          For refactor, security hardening, SQL injection fixes, query optimization, or editing existing code:
+          use read_file/grep/write_file — do NOT call run_generator or scaffold.
           Ruby syntax is checked before writes; boot-critical failures auto-rollback the turn.
         HINT
       end

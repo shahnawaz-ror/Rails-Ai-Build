@@ -40,4 +40,51 @@ RSpec.describe RailsAiBuild::Agents::Runner do
     summary = RailsAiBuild::TokenUsage.summary(since: Time.now - 60)
     expect(summary[:total_tokens]).to be >= 15
   end
+
+  it "returns ToolError to the model instead of aborting the turn" do
+    calls = 0
+    provider = Class.new(RailsAiBuild::Models::BaseProvider) do
+      define_method(:name) { :mock }
+      define_method(:list_models) { ["mock"] }
+      define_method(:chat) do |messages:, tools: [], model: nil, **|
+        calls += 1
+        if calls == 1
+          {
+            role: "assistant",
+            content: "",
+            tool_calls: [{
+              id: "call_1",
+              name: "run_generator",
+              arguments: { "generator" => "scaffold", "args" => ["title:string"] }
+            }],
+            usage: { "prompt_tokens" => 1, "completion_tokens" => 1, "total_tokens" => 2 },
+            finish_reason: "tool_calls"
+          }
+        else
+          {
+            role: "assistant",
+            content: "I'll edit existing files instead.",
+            tool_calls: [],
+            usage: { "prompt_tokens" => 1, "completion_tokens" => 1, "total_tokens" => 2 },
+            finish_reason: "stop"
+          }
+        end
+      end
+    end.new(name: :mock)
+
+    RailsAiBuild.configuration.allowed_tools = %i[read_file write_file]
+    # Intentionally skip ensure_explore_tools! so run_generator stays disallowed
+    agent = RailsAiBuild::Agents::Agent.new
+    agent.instance_variable_set(:@provider, provider)
+    agent.add_message(RailsAiBuild::Agents::Message.user("fix sql injection"))
+
+    results = []
+    runner = described_class.new(agent: agent)
+    runner.on(:on_tool_result) { |tr| results << tr }
+    outcome = runner.run!
+
+    expect(outcome[:content]).to include("edit existing")
+    expect(results.first[:result]).to include("Tool not allowed")
+    expect(results.first[:result]).to include("write_file")
+  end
 end

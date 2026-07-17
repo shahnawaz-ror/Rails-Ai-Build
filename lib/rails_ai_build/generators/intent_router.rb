@@ -39,7 +39,28 @@ module RailsAiBuild
         @settings = Catalog.settings
       end
 
+      # Edit/security/perf intents must not trigger scaffold/model generators.
+      EDIT_ONLY = /
+        (?i)\b(
+          refactor|optimize|optimisation|optimization|sql\s*injection|
+          sql\s*inject|injection|sanitize|parameteriz|secure\s+quer|
+          harden|performance|n\+1|nplusone|query\s*plan|slow\s+quer|
+          cleanup|clean\s*up|lint\b|rubocop
+        )\b
+      /x
+
+      CREATE_HINT = /
+        (?i)\b(
+          scaffold|generate|generator|create\s+(a\s+)?(model|controller|migration|resource|crud)|
+          add\s+(a\s+)?(model|controller|migration|scaffold)|new\s+(model|controller|resource)
+        )\b
+      /x
+
       def plan
+        if edit_only_intent?
+          return ai_only("Edit/security/perf task — use read_file/grep/write_file (no generator)")
+        end
+
         scored = Catalog.entries.map { |entry| score_entry(entry) }.compact
         best = scored.max_by { |s| s[:score] }
 
@@ -86,6 +107,12 @@ module RailsAiBuild
       end
 
       private
+
+      def edit_only_intent?
+        return false if @message.match?(CREATE_HINT)
+
+        @message.match?(EDIT_ONLY)
+      end
 
       def score_entry(entry)
         score = 0.0

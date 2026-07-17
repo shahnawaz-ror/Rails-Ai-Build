@@ -28,4 +28,11 @@ RSpec.describe RailsAiBuild::Generators::IntentRouter do
     expect(plan.mode).to eq(:ai)
     expect(plan.generator).to be_nil
   end
+
+  it "skips generators for SQL injection / query optimization refactors" do
+    plan = described_class.plan("remove all sql injection stuff optimize all query", skill: "refactor")
+    expect(plan.mode).to eq(:ai)
+    expect(plan.generator).to be_nil
+    expect(plan.reason).to match(/no generator/i)
+  end
 end

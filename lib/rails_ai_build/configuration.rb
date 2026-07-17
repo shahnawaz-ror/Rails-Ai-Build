@@ -9,6 +9,12 @@ module RailsAiBuild
       run_rails_check
     ].freeze
 
+    # Write/build tools every agent turn needs. Host initializers often omit these
+    # while prompts still say "prefer run_generator" → "Tool not allowed: run_generator".
+    CORE_TOOLS = %i[
+      read_file write_file grep list_files run_generator host_safety_check
+    ].freeze
+
     attr_accessor :default_model,
                   :default_provider,
                   :api_keys,
@@ -180,10 +186,12 @@ module RailsAiBuild
       end
     end
 
-    # Host initializers often omit Boost explore tools; merge them so planning works.
+    # Host initializers often omit Boost explore / core write tools; merge them so
+    # planning and generator-first edits work on Free BYOK installs.
     def ensure_explore_tools!
-      self.allowed_tools = Array(allowed_tools).map(&:to_sym) | EXPLORE_TOOLS
+      self.allowed_tools = Array(allowed_tools).map(&:to_sym) | CORE_TOOLS | EXPLORE_TOOLS
     end
+    alias ensure_agent_tools! ensure_explore_tools!
 
     def register_provider(name, provider_class, options = {})
       providers[name.to_sym] = { class: provider_class, options: options }

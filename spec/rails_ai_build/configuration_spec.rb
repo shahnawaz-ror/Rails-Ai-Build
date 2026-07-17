@@ -60,11 +60,13 @@ RSpec.describe RailsAiBuild::Configuration do
   end
 
   describe "#ensure_explore_tools!" do
-    it "merges explore tools into a restricted host allowlist" do
+    it "merges explore + core write tools into a restricted host allowlist" do
       config = described_class.new
       config.allowed_tools = %i[read_file write_file]
       config.ensure_explore_tools!
-      expect(config.allowed_tools).to include(:read_file, :write_file, :application_info, :list_models)
+      expect(config.allowed_tools).to include(
+        :read_file, :write_file, :application_info, :list_models, :run_generator, :host_safety_check, :grep
+      )
     end
   end
 
