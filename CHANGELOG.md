@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.2] - 2026-07-17
+
+### Fixed — Boot crash `TSort::Cyclic` on host apps
+- `rails_ai_build.heal_migrations` used `before: :load_config_initializers` while declared after
+  `load_activation` (`after: :load_config_initializers`), which Rails chained into a cycle
+- Heal now runs **after** `load_activation` so `rails server` boots cleanly in development
+
 ## [2.8.1] - 2026-07-16
 
 ### Added — Multi-worker shared store + Discord polish

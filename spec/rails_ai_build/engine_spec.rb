@@ -16,4 +16,16 @@ RSpec.describe RailsAiBuild::Engine do
   it "registers default model providers on boot" do
     expect(RailsAiBuild::Providers.registered_providers).to include(:openai)
   end
+
+  it "orders heal_migrations after load_activation (no TSort cycle)" do
+    names = described_class.initializers.map(&:name)
+    heal = described_class.initializers.find { |i| i.name == "rails_ai_build.heal_migrations" }
+    activation = described_class.initializers.find { |i| i.name == "rails_ai_build.load_activation" }
+
+    expect(heal).to be_present
+    expect(activation).to be_present
+    expect(names.index("rails_ai_build.load_activation")).to be < names.index("rails_ai_build.heal_migrations")
+    expect(heal.before).not_to eq(:load_config_initializers)
+    expect(activation.after).to eq(:load_config_initializers)
+  end
 end

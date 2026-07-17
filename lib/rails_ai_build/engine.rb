@@ -16,6 +16,9 @@ module RailsAiBuild
       RailsAiBuild::Providers.register_defaults
     end
 
+    # Must run after host initializers so config/initializers/rails_ai_build.rb is loaded.
+    # Do NOT place another initializer before :load_config_initializers after this one —
+    # Rails chains engine initializers in declaration order and that creates a TSort cycle.
     initializer "rails_ai_build.load_activation", after: :load_config_initializers do
       RailsAiBuild.configuration.apply_env_providers!
       RailsAiBuild::Activation.load_into_configuration!
@@ -23,8 +26,8 @@ module RailsAiBuild
       Rails.logger.warn("[rails_ai_build] Activation load skipped: #{e.message}") if defined?(Rails)
     end
 
-    # Auto-heal host blockers (migrations, etc.) in local envs before the IDE boots.
-    initializer "rails_ai_build.heal_migrations", before: :load_config_initializers do
+    # Auto-heal host blockers (migrations, etc.) in local envs after config is ready.
+    initializer "rails_ai_build.heal_migrations", after: "rails_ai_build.load_activation" do
       next unless defined?(Rails)
       next unless rails_env_local?
 
