@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.10.0] - 2026-07-17
+
+### Added — Agents-first IDE layout (chat like modern agent UIs)
+- **Left:** Agents history with **+ New agent**, Clean, and dated groups (Today / Yesterday / This week) + relative times
+- **Center:** Agent chat is the primary full-height surface; Editor is a secondary tab
+- **Right utility rail:** Changes · Files · Git · Doctor · More (tasks + plan)
+- Empty state prompts “What should we build?” instead of a buried bottom chat
+- Files openable from left explorer or right Files rail into the Editor tab
+
 ## [2.9.7] - 2026-07-17
 
 ### Fixed — Task SSE reconnect storm (GET /tasks + POST /stream dozens/sec)

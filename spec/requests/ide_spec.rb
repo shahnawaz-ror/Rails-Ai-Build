@@ -4,14 +4,16 @@ require 'rails_helper'
 
 RSpec.describe 'Rails AI Build IDE', type: :request do
   describe 'GET /rails_ai_build/ui/ide' do
-    it 'renders the Cursor-like IDE' do
+    it 'renders the Agents-first IDE' do
       get '/rails_ai_build/ui/ide'
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Rails AI Build')
       expect(response.body).to include('rab-ide')
-      expect(response.body).to include('Explorer')
-      expect(response.body).to include('Enterprise')
+      expect(response.body).to include('New agent')
+      expect(response.body).to include('rab-layout-agents')
+      expect(response.body).to include('Changes')
+      expect(response.body).to include('What should we build?')
     end
   end
 
