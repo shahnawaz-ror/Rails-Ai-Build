@@ -145,8 +145,22 @@ See our strategic plans for turning this gem into a platform company:
 - [Client Journey Master Plan](./docs/CLIENT_JOURNEY_MASTER_PLAN.md) — install → BYOK / Cloud / paid → full Cursor-class capability map
 - [Business Plan](./docs/BUSINESS_PLAN.md) — market, revenue model, path to $1M+ ARR
 - [Product Roadmap](./docs/PRODUCT_ROADMAP.md) — revenue-aligned feature tiers
+- [Platform Roadmap](./docs/PLATFORM_ROADMAP.md) — multitask / IDE / cloud layers
 - [Go-to-Market Playbook](./docs/GTM_PLAYBOOK.md) — "Forgot Cursor?" launch strategy
 - **Day-1 Activation (v2.4):** IDE wizard (BYOK / Cloud / License), Doctor, upgrade + billing portal, signed Stripe webhooks, cloud soft-fail BYOK CTA, approval workflow, audit export, rate limits.
+
+### Needs a cloud / runtime product (not the Rails engine alone)
+
+These Cursor-class surfaces **cannot** be delivered by the mountable Rails gem by itself. They need a hosted **cloud/runtime** layer (VM or container per workspace, network egress, session broker, billing). Track as **must-build** work — see [`docs/PLATFORM_ROADMAP.md`](./docs/PLATFORM_ROADMAP.md) § *Cloud runtime*.
+
+| Capability | Why the gem alone is not enough | What we need to build |
+|------------|----------------------------------|------------------------|
+| **Remote Desktop** | Interactive desktop session to the machine that runs the app | Cloud VM/desktop broker + auth + streaming client in the IDE |
+| **Browser VM** | Isolated browser for the agent to click/test the host app | Headless/browser farm attached to each workspace runtime |
+| **Live host Terminal pane** | Real PTY into the *host* process (not just sandboxed `shell` tool output) | Runtime sidecar with PTY over WebSocket, wired into the IDE Terminal panel |
+
+**In scope for the gem today:** agent loop, tools (`read_file` / `write_file` / `shell`), in-app IDE, task queue, SSE, Host Safety, BYOK providers.  
+**Out of scope for gem-only:** Remote Desktop, Browser VM, live host Terminal — those ship with the cloud/runtime product.
 
 ---
 
