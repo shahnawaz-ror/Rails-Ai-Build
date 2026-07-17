@@ -37,4 +37,16 @@ RSpec.describe 'Tasks API', type: :request do
       expect(json_response[:tasks].size).to eq(1)
     end
   end
+
+  describe 'POST /rails_ai_build/tasks/:id/stream' do
+    it 'streams without raising on Rails 7.1 params API' do
+      post '/rails_ai_build/tasks', params: { task: 'Stream me' }
+      id = json_response[:id]
+      expect(id).to be_present
+
+      post "/rails_ai_build/tasks/#{id}/stream", headers: { 'Accept' => 'text/event-stream' }
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('event:')
+    end
+  end
 end

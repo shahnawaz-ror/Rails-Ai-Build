@@ -9,7 +9,7 @@ module RailsAiBuild
     end
 
     def show
-      task = Tasks::Queue.find(params.expect(:id))
+      task = Tasks::Queue.find(params.require(:id))
       return render json: { error: "Not found" }, status: :not_found unless task
 
       render json: task.to_h
@@ -40,7 +40,8 @@ module RailsAiBuild
     end
 
     def stream
-      task = Tasks::Queue.find(params.expect(:id))
+      # params.require works on Rails 7.1+; params.expect is Rails 8-only
+      task = Tasks::Queue.find(params.require(:id))
       return render json: { error: "Not found" }, status: :not_found unless task
 
       response.headers["Content-Type"] = "text/event-stream"

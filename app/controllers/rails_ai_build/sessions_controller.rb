@@ -7,7 +7,7 @@ module RailsAiBuild
     end
 
     def show
-      session = Ai::Session.find(params.expect(:id))
+      session = Ai::Session.find(params.require(:id))
       return render json: { error: 'Not found' }, status: :not_found unless session
 
       render json: session.to_h.merge(messages: session.messages_preview)
@@ -24,7 +24,7 @@ module RailsAiBuild
     end
 
     def destroy
-      session = Ai::Session.find(params.expect(:id))
+      session = Ai::Session.find(params.require(:id))
       return render json: { error: 'Not found' }, status: :not_found unless session
 
       Ai::Session.destroy(params[:id])

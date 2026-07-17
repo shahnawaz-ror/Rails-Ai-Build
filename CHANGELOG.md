@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.4] - 2026-07-17
+
+### Fixed — Rails 7.1 task stream 500 (`params.expect`)
+- `TasksController` / `SessionsController` used `params.expect` (Rails 8 only)
+- Host apps on Rails 7.1 crashed with `NoMethodError: undefined method 'expect'`
+- Switched to `params.require` for 7.1+ compatibility
+
 ## [2.8.3] - 2026-07-17
 
 ### Fixed / UX — Cursor-style agent timeline + Enter-to-send
