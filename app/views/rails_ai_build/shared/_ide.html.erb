@@ -329,7 +329,16 @@
   const liveText = document.getElementById('rab-live-text');
   const promptEl = document.getElementById('rab-prompt');
   let running = false;
+  let awaitingPlan = false;
   let sessionId = localStorage.getItem('rab-session-id') || null;
+  const modeSel = document.getElementById('rab-mode');
+  (function restoreMode() {
+    if (!modeSel) return;
+    const saved = localStorage.getItem('rab-mode');
+    if (saved && [...modeSel.options].some((o) => o.value === saved)) modeSel.value = saved;
+    else modeSel.value = 'stream';
+    modeSel.addEventListener('change', () => localStorage.setItem('rab-mode', modeSel.value));
+  })();
 
   // Guided first mission after activation
   if (localStorage.getItem('rab-first-mission') === '1') {
@@ -349,7 +358,10 @@
 
   let currentTurn = null;
   let replyBufferEl = null;
+  let lastStepKey = '';
+  let turnFiles = [];
   const phaseOrder = { planning: 0, executing: 1, reply: 2, done: 3 };
+  const QUIET_STATUS = new Set(['prepare', 'heal', 'ready', 'prevent', 'start', 'route', 'context']);
 
   function setLive(message, phase) {
     if (!liveBar || !liveText) return;
@@ -418,6 +430,9 @@
   }
 
   function addStep(kind, title, detailHtml) {
+    const key = kind + '|' + title;
+    if (key === lastStepKey) return null;
+    lastStepKey = key;
     const turn = ensureTurn();
     const step = document.createElement('div');
     step.className = 'rab-step rab-step-' + kind;
@@ -430,6 +445,99 @@
     turn.steps.appendChild(step);
     streamEl.scrollTop = streamEl.scrollHeight;
     return step;
+  }
+
+  function showPlanCard(prompt, mode, skill, onApprove) {
+    const empty = streamEl.querySelector('.rab-empty-chat');
+    if (empty) empty.remove();
+    awaitingPlan = true;
+    setLive('Review the plan, then Run plan or Cancel', 'planning');
+    const card = document.createElement('div');
+    card.className = 'rab-plan-card';
+    card.innerHTML =
+      '<div class="rab-plan-title">Plan — approve before changes</div>' +
+      '<div class="rab-plan-body">' +
+        '<p><strong>Request:</strong> ' + escapeHtml(prompt) + '</p>' +
+        '<ul>' +
+          '<li>Mode: ' + escapeHtml(modeLabel(mode)) + (skill ? ' · skill ' + escapeHtml(skill) : '') + '</li>' +
+          '<li>Explore the app, then make focused edits</li>' +
+          '<li>List every file that changed when done (Changes → This run)</li>' +
+        '</ul>' +
+        '<p class="rab-plan-ask">Does this look right? Approve to execute, or Cancel to edit your prompt.</p>' +
+      '</div>' +
+      '<div class="rab-plan-actions">' +
+        '<button type="button" class="rab-btn rab-btn-primary" data-rab-approve>Run plan</button>' +
+        '<button type="button" class="rab-btn rab-btn-secondary" data-rab-cancel>Cancel</button>' +
+      '</div>';
+    streamEl.appendChild(card);
+    streamEl.scrollTop = streamEl.scrollHeight;
+    card.querySelector('[data-rab-approve]')?.addEventListener('click', () => {
+      awaitingPlan = false;
+      card.remove();
+      onApprove();
+    });
+    card.querySelector('[data-rab-cancel]')?.addEventListener('click', () => {
+      awaitingPlan = false;
+      card.remove();
+      setLive(null);
+      if (promptEl && !promptEl.value.trim()) promptEl.value = prompt;
+      promptEl?.focus();
+    });
+  }
+
+  function modeLabel(mode) {
+    return ({ stream: 'Agent', composer: 'Plan first', build: 'Build', queue: 'Background queue' })[mode] || mode;
+  }
+
+  function renderAppliedFiles(files) {
+    const list = document.getElementById('rab-applied-list');
+    if (!list) return;
+    const items = (files || []).filter(Boolean);
+    if (!items.length) {
+      list.innerHTML = '<p class="rab-locked" id="rab-applied-empty">Nothing changed yet — run the agent to see files here.</p>';
+      return;
+    }
+    list.innerHTML = items.map((f) => {
+      const path = f.path || f;
+      const status = f.status || 'changed';
+      return '<div class="rab-change-item rab-applied-item" data-path="' + escapeHtml(path) + '">' +
+        '<div class="rab-change-path">' + escapeHtml(path) + '</div>' +
+        '<div style="font-size:0.68rem;color:var(--rab-muted)">' + escapeHtml(status) + '</div></div>';
+    }).join('');
+    document.querySelector('[data-right="changes"]')?.click();
+    list.querySelectorAll('[data-path]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const path = el.dataset.path;
+        const treeItem = document.querySelector('.rab-tree-file[data-path="' + CSS.escape(path) + '"]');
+        treeItem?.click();
+      });
+    });
+  }
+
+  function showDoneSummary(data) {
+    const files = data.applied_files || turnFiles || [];
+    const paths = files.map((f) => f.path || f).filter(Boolean);
+    const turn = ensureTurn();
+    setTurnPhase('done');
+    turn.reply.hidden = false;
+    let html = '<div class="rab-done-summary">';
+    html += '<div class="rab-done-title">Done</div>';
+    if (data.content) html += '<div class="rab-reply-final">' + escapeHtml(String(data.content).slice(0, 2000)) + '</div>';
+    if (paths.length) {
+      html += '<div class="rab-done-files"><strong>Changed files</strong><ul>' +
+        paths.map((p) => '<li>' + escapeHtml(p) + '</li>').join('') + '</ul></div>';
+    } else {
+      html += '<div class="rab-done-files rab-muted">No file writes in this run.</div>';
+    }
+    if (data.compare_url || data.pr_url) {
+      html += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
+    }
+    html += '</div>';
+    turn.reply.insertAdjacentHTML('beforeend', html);
+    renderAppliedFiles(files);
+    if (data.pending_changes?.length) refreshChanges(data.pending_changes);
+    if (paths.length) loadTree();
+    streamEl.scrollTop = streamEl.scrollHeight;
   }
 
   function humanGeneratorPlan(data) {
@@ -509,11 +617,51 @@
       return;
     }
 
-    if (event === 'status' || event === 'start' || event === 'attempt' || event === 'queued' || event === 'running') {
-      setTurnPhase('planning');
-      setLive(data.message || data.task || 'Planning…', 'planning');
-      addStep('plan', data.message || data.task || 'Planning…');
+    if (event === 'status') {
+      const phase = data.phase || '';
+      const msg = data.message || 'Working…';
+      // Never dump checks/JSON — keep the timeline short like Cursor
+      if (QUIET_STATUS.has(phase)) {
+        setTurnPhase('planning');
+        setLive(msg, 'planning');
+        if (phase === 'ready' || phase === 'prepare') addStep('plan', msg.split(';')[0]);
+        return;
+      }
+      setTurnPhase(phase === 'tool' || phase === 'reply' ? phase === 'reply' ? 'reply' : 'executing' : 'planning');
+      setLive(msg, phase === 'reply' ? 'reply' : (phase === 'tool' ? 'executing' : 'planning'));
+      addStep(phase === 'tool' ? 'tool' : 'plan', msg);
       return;
+    }
+
+    if (event === 'start') {
+      setTurnPhase('planning');
+      const title = 'Starting: ' + (data.task || data.message || 'request');
+      setLive(title, 'planning');
+      addStep('plan', title);
+      return;
+    }
+
+    if (event === 'attempt') {
+      setTurnPhase('planning');
+      addStep('plan', 'Attempt ' + (data.number || 1) + '/' + (data.max || '?'));
+      return;
+    }
+
+    if (event === 'queued') {
+      setTurnPhase('planning');
+      addStep('plan', 'Queued background task', data.branch ? escapeHtml(data.branch) : '');
+      return;
+    }
+
+    if (event === 'running') {
+      setTurnPhase('executing');
+      setLive('Running background task…', 'executing');
+      addStep('tool', 'Task running', data.branch ? escapeHtml(data.branch) : '');
+      return;
+    }
+
+    if (event === 'snapshot') {
+      return; // ignore raw task snapshots
     }
 
     if (event === 'generator_plan') {
@@ -554,6 +702,8 @@
       const detail = toolArgsSummary(data.name, data.arguments);
       setLive('Running ' + (data.name || 'tool') + '…', 'executing');
       addStep('tool', data.name || 'tool', detail);
+      const path = data.arguments && (data.arguments.path || data.arguments.file);
+      if (data.name === 'write_file' && path) turnFiles.push({ path: path, status: 'writing' });
       return;
     }
 
@@ -562,7 +712,11 @@
       const summary = data.summary || ('Finished ' + (data.name || 'tool'));
       setLive(summary, 'executing');
       addStep(/error|fail/i.test(summary) ? 'error' : 'ok', summary);
-      if (/applied|written/i.test(summary)) loadTree();
+      if (/applied|written|generated/i.test(summary)) {
+        loadTree();
+        const m = summary.match(/(?:Applied|Queued|Writing|Finished)\s+(\S+)/i);
+        // keep turnFiles; render on done
+      }
       return;
     }
 
@@ -597,29 +751,10 @@
     }
 
     if (event === 'complete' || event === 'done' || event === 'finished' || event === 'pr_ready') {
-      setTurnPhase('done');
-      const turn = ensureTurn();
-      turn.reply.hidden = false;
-      let html = '';
-      if (event === 'pr_ready') {
-        html = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' +
-          escapeHtml(data.branch || 'compare') + '</a>';
-      } else {
-        html = escapeHtml(data.content || (data.status ? 'Status: ' + data.status : 'Done.'));
-      }
-      if (data.applied_files?.length) {
-        html += '<div class="rab-applied">Files: ' +
-          data.applied_files.map(f => escapeHtml(f.path) + ' (' + escapeHtml(f.status) + ')').join(', ') + '</div>';
-        loadTree();
-      }
-      if (data.pending_changes?.length) refreshChanges(data.pending_changes);
       if (data.host_safety) applyHostSafety(data.host_safety);
-      if (data.compare_url || data.pr_url) {
-        html += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
-      }
-      turn.reply.insertAdjacentHTML('beforeend', '<div class="rab-reply-final">' + html + '</div>');
-      setLive('Done', 'reply');
-      streamEl.scrollTop = streamEl.scrollHeight;
+      if (data.applied_files?.length) turnFiles = data.applied_files;
+      showDoneSummary(data);
+      setLive('Done — review Changes → This run', 'reply');
       return;
     }
 
@@ -630,9 +765,11 @@
       return;
     }
 
-    // Unknown events → compact step, never dump raw JSON for plans
+    // Unknown events → one short line, NEVER raw JSON dumps
+    const short = data?.message || data?.description || data?.reason || data?.status || '';
+    if (!short && (event === 'delta' || !event)) return;
     setTurnPhase(currentTurn?.phase || 'planning');
-    addStep('plan', event, escapeHtml(typeof data === 'string' ? data : (data.message || data.reason || '')).slice(0, 200));
+    addStep('plan', event, escapeHtml(String(short)).slice(0, 160));
   }
 
   async function consumeSse(res, onChunk) {
@@ -655,38 +792,32 @@
     }
   }
 
-  async function runAgent(e) {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
+  async function executeAgent(prompt, mode) {
     if (running) return;
-    const prompt = promptEl?.value.trim();
-    if (!prompt) {
-      promptEl?.focus();
-      return;
-    }
-    const mode = document.getElementById('rab-mode')?.value || 'stream';
-
-    appendEvent('user', { content: prompt });
-    if (promptEl) {
-      promptEl.value = '';
-      promptEl.style.height = 'auto';
-    }
+    const skill = document.getElementById('rab-skill')?.value || undefined;
+    turnFiles = [];
+    lastStepKey = '';
+    currentTurn = null;
+    replyBufferEl = null;
 
     if (mode === 'queue') {
       setLive('Queueing task…', 'planning');
       try {
         const res = await fetch(base + '/tasks', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
+          body: JSON.stringify({ task: prompt, skill: skill, verify: true })
         });
         const data = await res.json();
-        appendEvent('complete', { content: 'Queued task ' + data.id, status: data.status });
+        if (data.error) {
+          appendEvent('error', { error: data.error });
+          return;
+        }
+        appendEvent('queued', { description: data.description || prompt, branch: data.branch, id: data.id });
+        setLive('Background task running…', 'executing');
         watchTask(data.id);
         loadTasks();
       } catch (err) {
         appendEvent('error', { error: err.message });
-      } finally {
-        setLive(null);
       }
       return;
     }
@@ -696,7 +827,7 @@
       runBtn.disabled = true;
       runBtn.textContent = 'Working…';
     }
-    setLive(mode === 'composer' ? 'Composing plan…' : (mode === 'build' ? 'Building…' : 'Planning…'), 'planning');
+    setLive(mode === 'composer' ? 'Executing plan…' : (mode === 'build' ? 'Building…' : 'Planning…'), 'planning');
     ensureTurn();
     setTurnPhase('planning');
 
@@ -707,7 +838,7 @@
           headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
           body: JSON.stringify({
             task: prompt,
-            skill: document.getElementById('rab-skill').value || undefined,
+            skill: skill,
             verify: true,
             composer: mode === 'composer'
           })
@@ -723,7 +854,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: prompt,
-            skill: document.getElementById('rab-skill').value || undefined,
+            skill: skill,
             session_id: sessionId,
             provider: document.getElementById('rab-provider')?.value
           })
@@ -742,7 +873,7 @@
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify({
           message: prompt,
-          skill: document.getElementById('rab-skill').value || undefined,
+          skill: skill,
           provider: document.getElementById('rab-provider')?.value,
           session_id: sessionId
         })
@@ -761,6 +892,34 @@
     }
   }
 
+  async function runAgent(e) {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (running || awaitingPlan) return;
+    const prompt = promptEl?.value.trim();
+    if (!prompt) {
+      promptEl?.focus();
+      return;
+    }
+    const mode = modeSel?.value || 'stream';
+    localStorage.setItem('rab-mode', mode);
+    const skill = document.getElementById('rab-skill')?.value || '';
+
+    appendEvent('user', { content: prompt });
+    if (promptEl) {
+      promptEl.value = '';
+      promptEl.style.height = 'auto';
+    }
+
+    // Cursor-style: ask before writing (Agent / Plan first / Build)
+    if (mode === 'stream' || mode === 'composer' || mode === 'build') {
+      showPlanCard(prompt, mode, skill, () => { executeAgent(prompt, mode); });
+      return;
+    }
+
+    await executeAgent(prompt, mode);
+  }
+
   const promptForm = document.getElementById('rab-prompt-form');
   promptForm?.addEventListener('submit', runAgent);
 
@@ -774,7 +933,7 @@
     if (!isSendHotkey(ev)) return;
     ev.preventDefault();
     ev.stopPropagation();
-    if (running) return;
+    if (running || awaitingPlan) return;
     if (promptForm?.requestSubmit) promptForm.requestSubmit();
     else runAgent(ev);
   }, true);
@@ -785,14 +944,24 @@
     promptEl.style.height = Math.min(promptEl.scrollHeight, 128) + 'px';
   });
 
-  // Changes
+  // Changes — pending review diffs (separate from This run applied files)
   function refreshChanges(changes) {
-    const panel = document.getElementById('rab-panel-changes');
-    if (!panel || !changes) return;
-    const list = changes.map(c =>
-      '<div class="rab-change-item"><div class="rab-change-path">' + c.path + '</div></div>'
-    ).join('');
-    panel.querySelector('h3').insertAdjacentHTML('afterend', list);
+    const list = document.getElementById('rab-pending-list');
+    if (!list || !changes) return;
+    const items = (Array.isArray(changes) ? changes : []).filter((c) => c && (c.path || c.id));
+    if (!items.length) return;
+    list.innerHTML = items.map((c) => {
+      const path = c.path || 'unknown';
+      const id = c.id || '';
+      return '<div class="rab-change-item"' + (id ? ' data-change-id="' + escapeHtml(String(id)) + '"' : '') + '>' +
+        '<div class="rab-change-path">' + escapeHtml(path) + '</div>' +
+        (id ? '<div style="margin-top:0.4rem;display:flex;gap:0.4rem">' +
+          '<button class="rab-btn rab-btn-secondary rab-apply-btn" data-id="' + escapeHtml(String(id)) + '" style="padding:0.25rem 0.5rem;font-size:0.7rem">Apply</button>' +
+          '<button class="rab-btn rab-btn-secondary rab-reject-btn" data-id="' + escapeHtml(String(id)) + '" style="padding:0.25rem 0.5rem;font-size:0.7rem">Reject</button>' +
+        '</div>' : '') +
+      '</div>';
+    }).join('');
+    document.querySelector('[data-right="changes"]')?.click();
   }
 
   document.querySelectorAll('.rab-apply-btn').forEach(btn => {
@@ -898,13 +1067,17 @@
         method: 'POST',
         headers: { Accept: 'text/event-stream' }
       });
+      // Same Cursor timeline as Agent mode — never dump raw JSON via formatEvent
       await consumeSse(res, (event, data) => {
         if (event === 'delta' && data.token) return;
-        streamEl.insertAdjacentHTML('beforeend', formatEvent(event, data));
-        loadTasks();
+        appendEvent(event, data);
+        if (event === 'complete' || event === 'done' || event === 'finished' || event === 'error') {
+          loadTasks();
+        }
       });
     } catch (e) { /* task may have finished before subscribe */ }
     watchedTasks.delete(id);
+    loadTasks();
   }
 
   async function loadSessions() {
@@ -934,7 +1107,9 @@
     localStorage.setItem('rab-session-id', sessionId);
     document.querySelectorAll('.rab-session-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    streamEl.innerHTML = formatEvent('session', { id: sessionId });
+    streamEl.innerHTML = '';
+    currentTurn = null;
+    appendEvent('session', { id: sessionId });
   });
 
   document.getElementById('rab-new-session')?.addEventListener('click', async () => {

@@ -281,6 +281,31 @@
   .rab-token-delta { color: var(--rab-text); }
   .rab-applied { color: var(--rab-green); font-weight: 600; margin-top: 0.35rem; }
 
+  .rab-plan-card {
+    margin: 0 0 1rem; padding: 0.85rem 1rem; border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--rab-blue) 42%, var(--rab-border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--rab-blue) 12%, var(--rab-elevated)), var(--rab-surface));
+    animation: rab-fade-in 200ms ease-out;
+  }
+  .rab-plan-title {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--rab-blue); margin-bottom: 0.45rem;
+  }
+  .rab-plan-body { font-family: var(--rab-font-ui); font-size: 0.84rem; line-height: 1.45; color: var(--rab-text); }
+  .rab-plan-body ul { margin: 0.45rem 0 0; padding-left: 1.15rem; color: var(--rab-muted); }
+  .rab-plan-ask { margin: 0.65rem 0 0; color: var(--rab-text); font-size: 0.8rem; }
+  .rab-plan-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; flex-wrap: wrap; }
+  .rab-done-summary { margin-top: 0.25rem; }
+  .rab-done-title {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--rab-green); margin-bottom: 0.35rem;
+  }
+  .rab-done-files { margin-top: 0.5rem; font-size: 0.8rem; font-family: var(--rab-font-ui); }
+  .rab-done-files ul { margin: 0.35rem 0 0; padding-left: 1.1rem; font-family: var(--rab-font-mono); font-size: 0.72rem; }
+  .rab-applied-item { cursor: pointer; transition: border-color 140ms ease; }
+  .rab-applied-item:hover { border-color: color-mix(in srgb, var(--rab-accent) 50%, var(--rab-border)); }
+  .rab-muted { color: var(--rab-muted); }
+
   .rab-event { margin-bottom: 0.6rem; animation: rab-fade-in 180ms ease-out; }
   .rab-event-tag { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 3px; margin-right: 0.4rem; font-weight: 600; }
   .rab-tag-start, .rab-tag-status, .rab-tag-context, .rab-tag-session { background: color-mix(in srgb, var(--rab-blue) 25%, transparent); color: var(--rab-blue); }
@@ -298,7 +323,7 @@
     display: flex; gap: 0.5rem; padding: 0.6rem; border-top: 1px solid var(--rab-border);
     background: var(--rab-input-bg); align-items: flex-end;
   }
-  .rab-prompt-bar select { flex: 0 0 120px; }
+  .rab-prompt-bar select { flex: 0 0 148px; max-width: 160px; }
   .rab-prompt-bar textarea {
     flex: 1; resize: none; min-height: 2.75rem; max-height: 8rem; background: var(--rab-elevated);
     border: 1px solid var(--rab-border); border-radius: 10px; color: var(--rab-text);
