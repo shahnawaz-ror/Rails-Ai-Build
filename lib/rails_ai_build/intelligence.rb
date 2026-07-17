@@ -84,7 +84,7 @@ module RailsAiBuild
         healed = RailsAiBuild::Migrations::Intelligence.auto_heal!(migrate_dir: migrate_dir)
         healed[:healed].map do |h|
           {
-            type: 'migration_rename',
+            type: h[:action] == :quarantine ? 'migration_quarantine' : 'migration_rename',
             from: h[:from],
             to: h[:to],
             reason: h[:reason]

@@ -58,6 +58,7 @@ module RailsAiBuild
         created = (after.keys - before.keys).sort
         changed = after.select { |path, content| before[path] != content }.keys.sort
         track_changed_files!(before, after, changed)
+        quarantine_bad_migrations!(created)
 
         Result.new(
           ok: status.exitstatus.to_i.zero?,
@@ -135,6 +136,15 @@ module RailsAiBuild
             source: "generator"
           )
         end
+      end
+
+      # Generators can emit placeholder stubs (AddYourToYour) that brick PendingMigrationError.
+      def quarantine_bad_migrations!(created_paths)
+        return if created_paths.none? { |p| p.to_s.start_with?('db/migrate/') }
+
+        Migrations::Intelligence.auto_heal!(migrate_dir: @workspace.join('db/migrate'))
+      rescue StandardError => e
+        Rails.logger.warn("[rails_ai_build] post-generator migration heal skipped: #{e.message}") if defined?(Rails)
       end
     end
   end

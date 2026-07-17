@@ -32,6 +32,8 @@ module RailsAiBuild
         - Stop only when the task is done AND checks pass (when verify is enabled)
         - Paths are relative to the Rails app root. list_files path="." (or omit) for the root.
         - Do not use path "workspace" — explore with application_info, list_files("."), list_routes
+        - Never create migrations with placeholder names like "your" (e.g. AddYourToYour) —
+          use real model/table/column names or the host app will hit PendingMigrationError.
       PROMPT
 
       class << self

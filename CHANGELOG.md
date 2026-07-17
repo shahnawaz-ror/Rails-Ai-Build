@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.8.5] - 2026-07-17
+
+### Fixed — Placeholder migrations brick the host (`PendingMigrationError`)
+- AI sometimes writes junk like `db/migrate/*_add_your_to_your.rb` (empty `change`)
+- That leaves Rails stuck on every request until `db:migrate`
+- **`Migrations::Intelligence`** now detects placeholder / empty stub migrations and
+  **quarantines** them to `db/migrate/.rails_ai_build_quarantine/`
+- **`HostSafety::Guards`** rejects writing those stubs; generator runs auto-heal after create
+- Boot `Intelligence.prepare!` / `rails rails_ai_build:fix_migrations` cleans existing junk
+
 ## [2.8.4] - 2026-07-17
 
 ### Fixed — Rails 7.1 task stream 500 (`params.expect`)

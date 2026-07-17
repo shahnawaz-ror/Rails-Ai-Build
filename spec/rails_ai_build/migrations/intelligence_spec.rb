@@ -9,7 +9,8 @@ RSpec.describe RailsAiBuild::Migrations::Intelligence do
 
   after { FileUtils.rm_rf(dir) }
 
-  def write_migration(name, body = "class X < ActiveRecord::Migration[7.1]; def change; end; end\n")
+  def write_migration(name, body = nil)
+    body ||= "class X < ActiveRecord::Migration[7.1]\n  def change\n    create_table :xs\n  end\nend\n"
     dir.join(name).write(body)
   end
 
@@ -19,6 +20,23 @@ RSpec.describe RailsAiBuild::Migrations::Intelligence do
 
     report = described_class.diagnose(migrate_dir: dir)
     expect(report[:healthy]).to be true
+  end
+
+  it 'detects and quarantines placeholder add_your_to_your migrations' do
+    write_migration(
+      '20260717135137_add_your_to_your.rb',
+      "class AddYourToYour < ActiveRecord::Migration[7.1]\n  def change\n  end\nend\n"
+    )
+
+    report = described_class.diagnose(migrate_dir: dir)
+    expect(report[:healthy]).to be false
+    expect(report[:stubs].first[:file]).to eq('20260717135137_add_your_to_your.rb')
+
+    result = described_class.auto_heal!(migrate_dir: dir)
+    expect(result[:healed].first[:action]).to eq(:quarantine)
+    expect(dir.join('20260717135137_add_your_to_your.rb')).not_to exist
+    expect(dir.join('.rails_ai_build_quarantine/20260717135137_add_your_to_your.rb')).to exist
+    expect(described_class.diagnose(migrate_dir: dir)[:healthy]).to be true
   end
 
   it 'detects duplicate version from zero-padded filename (2024 collision)' do

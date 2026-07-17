@@ -24,13 +24,31 @@ RSpec.describe RailsAiBuild::HostSafety::Guards do
       end.to raise_error(RailsAiBuild::ToolError, /ActiveRecord::Migration/)
     end
 
-    it "accepts a valid migration" do
+    it "accepts a valid migration with schema DSL" do
       expect(
         described_class.validate_migration!(
           "db/migrate/20260716120000_create_posts.rb",
-          "class CreatePosts < ActiveRecord::Migration[7.1]\n  def change\n  end\nend\n"
+          "class CreatePosts < ActiveRecord::Migration[7.1]\n  def change\n    create_table :posts do |t|\n      t.string :title\n    end\n  end\nend\n"
         )
       ).to eq(true)
+    end
+
+    it "rejects placeholder add_your_to_your migrations" do
+      expect do
+        described_class.validate_migration!(
+          "db/migrate/20260717135137_add_your_to_your.rb",
+          "class AddYourToYour < ActiveRecord::Migration[7.1]\n  def change\n  end\nend\n"
+        )
+      end.to raise_error(RailsAiBuild::ToolError, /placeholder|your/i)
+    end
+
+    it "rejects empty change migrations with no schema DSL" do
+      expect do
+        described_class.validate_migration!(
+          "db/migrate/20260716120000_add_nothing.rb",
+          "class AddNothing < ActiveRecord::Migration[7.1]\n  def change\n  end\nend\n"
+        )
+      end.to raise_error(RailsAiBuild::ToolError, /empty migration/i)
     end
   end
 

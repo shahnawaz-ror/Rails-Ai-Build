@@ -45,14 +45,28 @@ RSpec.describe RailsAiBuild::Intelligence do
   end
 
   it 'heals duplicate migrations during prepare' do
-    workspace.join('db/migrate/2024_legacy.rb').write("class Legacy < ActiveRecord::Migration[7.1]; def change; end; end\n")
+    body = "class X < ActiveRecord::Migration[7.1]; def change; create_table :xs; end; end\n"
+    workspace.join('db/migrate/2024_legacy.rb').write(body.sub('class X', 'class Legacy').sub(':xs', ':legacies'))
     workspace.join('db/migrate/00000000002024_create_rails_ai_build_tables.rb')
-             .write("class CreateRailsAiBuildTables < ActiveRecord::Migration[7.1]; def change; end; end\n")
+             .write(body.sub('class X', 'class CreateRailsAiBuildTables').sub(':xs', ':rails_ai_build_tables'))
 
     result = described_class.prepare!(workspace: workspace)
     expect(result[:actions].any? { |a| a[:type] == 'migration_rename' }).to be true
     expect(
       RailsAiBuild::Migrations::Intelligence.diagnose(migrate_dir: workspace.join('db/migrate'))[:healthy]
     ).to be true
+  end
+
+  it 'quarantines placeholder add_your_to_your migrations during prepare' do
+    workspace.join('db/migrate/20260717135137_add_your_to_your.rb').write(
+      "class AddYourToYour < ActiveRecord::Migration[7.1]; def change; end; end\n"
+    )
+
+    result = described_class.prepare!(workspace: workspace)
+    expect(result[:actions].any? { |a| a[:type] == 'migration_quarantine' }).to be true
+    expect(workspace.join('db/migrate/20260717135137_add_your_to_your.rb')).not_to exist
+    expect(
+      workspace.join('db/migrate/.rails_ai_build_quarantine/20260717135137_add_your_to_your.rb')
+    ).to exist
   end
 end

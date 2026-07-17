@@ -69,6 +69,13 @@ module RailsAiBuild
           raise ToolError, "Migration #{basename} looks truncated (missing end)"
         end
 
+        stub_reason = Migrations::Intelligence.stub_reason_for(basename, content)
+        if stub_reason
+          raise ToolError,
+                "Migration #{basename} rejected (#{stub_reason}). " \
+                "Use real table/column names — never placeholders like 'your'."
+        end
+
         true
       end
 
