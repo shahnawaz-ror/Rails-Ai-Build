@@ -1,0 +1,19 @@
+{
+  "id": "32fabaa4-0c2d-4222-be9b-bcecf2d24aef",
+  "title": "Say hello without changing files",
+  "model": "gpt-4o",
+  "provider": "openai",
+  "created_at": "2026-07-17T14:18:38Z",
+  "updated_at": "2026-07-17T14:18:38Z",
+  "metadata": {},
+  "messages": [
+    {
+      "role": "user",
+      "content": "Say hello without changing files"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello from the model."
+    }
+  ]
+}

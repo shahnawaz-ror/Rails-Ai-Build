@@ -751,10 +751,18 @@
     }
 
     if (event === 'complete' || event === 'done' || event === 'finished' || event === 'pr_ready') {
+      if (data.session_id) {
+        sessionId = data.session_id;
+        localStorage.setItem('rab-session-id', sessionId);
+      } else if (data.session?.id) {
+        sessionId = data.session.id;
+        localStorage.setItem('rab-session-id', sessionId);
+      }
       if (data.host_safety) applyHostSafety(data.host_safety);
       if (data.applied_files?.length) turnFiles = data.applied_files;
       showDoneSummary(data);
       setLive('Done — review Changes → This run', 'reply');
+      loadSessions();
       return;
     }
 
@@ -1080,6 +1088,63 @@
     loadTasks();
   }
 
+  function appendHistoryAssistant(content) {
+    if (!content) return;
+    const turn = ensureTurn();
+    setTurnPhase('done');
+    turn.reply.hidden = false;
+    turn.reply.insertAdjacentHTML('beforeend',
+      '<div class="rab-reply-final">' + escapeHtml(String(content).slice(0, 8000)) + '</div>');
+    currentTurn = null;
+    replyBufferEl = null;
+    lastStepKey = '';
+  }
+
+  async function loadSessionHistory(id, { silent } = {}) {
+    if (!id || !streamEl) return false;
+    try {
+      const res = await fetch(base + '/ai/sessions/' + encodeURIComponent(id));
+      if (res.status === 404) {
+        if (!silent) {
+          localStorage.removeItem('rab-session-id');
+          sessionId = null;
+        }
+        return false;
+      }
+      if (!res.ok) throw new Error('Could not load chat (' + res.status + ')');
+      const data = await res.json();
+      sessionId = data.id || id;
+      localStorage.setItem('rab-session-id', sessionId);
+      streamEl.innerHTML = '';
+      currentTurn = null;
+      replyBufferEl = null;
+      lastStepKey = '';
+      turnFiles = [];
+      const msgs = (data.messages || []).filter((m) => m && (m.role === 'user' || m.role === 'assistant') && m.content);
+      if (!msgs.length) {
+        streamEl.innerHTML = '<div class="rab-empty-chat">Empty thread — ask the agent to start this chat.</div>';
+        return true;
+      }
+      msgs.forEach((m) => {
+        if (m.role === 'user') appendUserBubble(m.content);
+        else appendHistoryAssistant(m.content);
+      });
+      streamEl.scrollTop = streamEl.scrollHeight;
+      setLive(null);
+      if (statusEl) {
+        statusEl.className = 'rab-status-idle';
+        statusEl.textContent = (data.title || 'Thread') + ' · ' + msgs.length + ' messages';
+      }
+      return true;
+    } catch (e) {
+      if (!silent) {
+        streamEl.insertAdjacentHTML('beforeend',
+          '<div class="rab-empty-chat">Could not load previous chat: ' + escapeHtml(e.message) + '</div>');
+      }
+      return false;
+    }
+  }
+
   async function loadSessions() {
     const el = document.getElementById('rab-session-list');
     if (!el) return;
@@ -1087,29 +1152,58 @@
       const res = await fetch(base + '/ai/sessions');
       const data = await res.json();
       if (!data.sessions?.length) {
-        el.innerHTML = '<p class="rab-locked">No threads yet</p>';
+        el.innerHTML = '<p class="rab-locked">No previous chats yet — send a prompt to start a thread.</p>';
         return;
       }
       el.innerHTML = data.sessions.map(s =>
         '<div class="rab-tree-item rab-session-item' + (s.id === sessionId ? ' active' : '') + '" data-session="' + s.id + '" style="padding:0.4rem 0.5rem;cursor:pointer;border-bottom:1px solid var(--rab-border)">' +
-        '<div style="font-weight:600;font-size:0.75rem">' + escapeHtml(s.title || 'Thread') + '</div>' +
-        '<div style="font-size:0.68rem;color:var(--rab-muted)">' + (s.preview || '').slice(0, 60) + '</div></div>'
+        '<div style="display:flex;justify-content:space-between;gap:0.35rem;align-items:flex-start">' +
+          '<div style="min-width:0">' +
+            '<div style="font-weight:600;font-size:0.75rem">' + escapeHtml(s.title || 'Thread') + '</div>' +
+            '<div style="font-size:0.68rem;color:var(--rab-muted)">' + escapeHtml((s.preview || '').slice(0, 60)) + '</div>' +
+            '<div style="font-size:0.62rem;color:var(--rab-muted);margin-top:0.15rem">' + (s.message_count || 0) + ' msgs</div>' +
+          '</div>' +
+          '<button type="button" class="rab-btn rab-btn-secondary rab-session-delete" data-delete-session="' + s.id + '" title="Delete chat" style="padding:0.1rem 0.35rem;font-size:0.65rem">×</button>' +
+        '</div></div>'
       ).join('');
     } catch (e) {
       el.innerHTML = '<p class="rab-locked">' + e.message + '</p>';
     }
   }
 
-  document.getElementById('rab-session-list')?.addEventListener('click', (ev) => {
+  function openThreadsPanel() {
+    document.querySelector('.rab-activity-btn[data-panel="sessions"]')?.click();
+  }
+
+  document.getElementById('rab-open-threads')?.addEventListener('click', () => {
+    openThreadsPanel();
+    loadSessions();
+  });
+
+  document.getElementById('rab-session-list')?.addEventListener('click', async (ev) => {
+    const del = ev.target.closest('[data-delete-session]');
+    if (del) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const id = del.dataset.deleteSession;
+      if (!confirm('Delete this chat thread?')) return;
+      await fetch(base + '/ai/sessions/' + encodeURIComponent(id), { method: 'DELETE' });
+      if (sessionId === id) {
+        sessionId = null;
+        localStorage.removeItem('rab-session-id');
+        streamEl.innerHTML = '<div class="rab-empty-chat">Chat deleted. Ask anything to start a new thread.</div>';
+      }
+      loadSessions();
+      return;
+    }
     const item = ev.target.closest('[data-session]');
     if (!item) return;
     sessionId = item.dataset.session;
     localStorage.setItem('rab-session-id', sessionId);
     document.querySelectorAll('.rab-session-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    streamEl.innerHTML = '';
-    currentTurn = null;
-    appendEvent('session', { id: sessionId });
+    document.querySelector('[data-tab="agent"]')?.click();
+    await loadSessionHistory(sessionId);
   });
 
   document.getElementById('rab-new-session')?.addEventListener('click', async () => {
@@ -1117,8 +1211,10 @@
     const data = await res.json();
     sessionId = data.id;
     localStorage.setItem('rab-session-id', sessionId);
-    streamEl.innerHTML = '';
+    streamEl.innerHTML = '<div class="rab-empty-chat">New chat — ask the agent…</div>';
+    currentTurn = null;
     loadSessions();
+    document.querySelector('[data-tab="agent"]')?.click();
   });
 
   async function loadTasks() {
@@ -1143,6 +1239,12 @@
   document.getElementById('rab-refresh-tasks')?.addEventListener('click', loadTasks);
   loadTasks();
   loadSessions();
+  // Restore previous chat into the Agent stream (survives refresh)
+  if (sessionId) {
+    loadSessionHistory(sessionId, { silent: true }).then((ok) => {
+      if (!ok) loadSessions();
+    });
+  }
   setInterval(loadTasks, 8000);
 })();
 </script>

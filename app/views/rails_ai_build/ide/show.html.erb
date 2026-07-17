@@ -151,7 +151,10 @@
       <div class="rab-agent-panel" id="rab-agent-panel">
         <div class="rab-agent-header">
           <span>Agent</span>
-          <span id="rab-agent-status" class="rab-status-idle">Ready — Enter to send, Shift+Enter for newline</span>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <button type="button" class="rab-btn rab-btn-secondary" id="rab-open-threads" style="padding:0.15rem 0.45rem;font-size:0.65rem" title="Show previous chats">Chats</button>
+            <span id="rab-agent-status" class="rab-status-idle">Ready — Enter to send, Shift+Enter for newline</span>
+          </div>
         </div>
         <div class="rab-live-bar" id="rab-live-bar" hidden>
           <span class="rab-pulse"></span>
@@ -165,7 +168,7 @@
           <span id="rab-live-text">Working…</span>
         </div>
         <div class="rab-stream" id="rab-stream">
-          <div class="rab-empty-chat">Ask anything — you’ll get a short plan to approve, then live steps and a clear list of what changed.</div>
+          <div class="rab-empty-chat">Ask anything — you’ll get a short plan to approve, then live steps and a clear list of what changed. Open <strong>Chats</strong> (or the 💬 Threads panel) for previous requests.</div>
         </div>
         <form class="rab-prompt-bar" id="rab-prompt-form" action="#" method="post">
           <select id="rab-mode" title="Mode">

@@ -10,7 +10,7 @@ module RailsAiBuild
       session = Ai::Session.find(params.require(:id))
       return render json: { error: 'Not found' }, status: :not_found unless session
 
-      render json: session.to_h.merge(messages: session.messages_preview)
+      render json: session.to_h.merge(messages: session.messages_for_client)
     end
 
     def create
