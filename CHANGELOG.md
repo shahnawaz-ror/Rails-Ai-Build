@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.2] - 2026-07-17
+
+### Fixed — `Tool not allowed: run_generator` + stuck runs with empty Changes
+- Host initializers that omit `run_generator` still got generator-first prompts → tool call failed
+- **`CORE_TOOLS`** (`read_file`, `write_file`, `grep`, `list_files`, `run_generator`, `host_safety_check`) are always merged like explore tools
+- Agent **Runner** rescues `ToolError` and returns a fallback hint to the model (turn finishes with Done instead of hanging)
+- Refactor / SQL injection / query optimization prompts skip generator routing and tell the model to use `write_file`
+- RBAC admin/developer roles include `run_generator` + `host_safety_check`
+
 ## [2.9.1] - 2026-07-17
 
 ### Fixed / UX — Cursor-style plan → approve → clear “what changed”

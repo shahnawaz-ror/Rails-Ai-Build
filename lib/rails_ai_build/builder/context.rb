@@ -16,15 +16,16 @@ module RailsAiBuild
         - Refactors, bug fixes, performance improvements
         - Integrations (Stripe, webhooks, OAuth, third-party APIs)
 
-        Workflow (generator-first, Cursor-style):
+        Workflow (Cursor-style):
         1. **Explore** — application_info, list_routes, database_schema, list_models, read_file, grep
-        2. **Generate** — `run_generator` for scaffold/model/migration/controller/mailer/job/channel/devise
-        3. **Customize** — write_file only for business logic the generator cannot express
-        4. **Verify** — run_rails_check (zeitwerk + tests + rubocop as needed)
-        5. **Fix** — if checks fail, read logs/output and fix before finishing
+        2. **Choose path**
+           - **New resource** (scaffold/model/migration/controller/mailer/job/channel/devise) → `run_generator` then customize
+           - **Refactor / security / SQL / query / performance / fix existing code** → read_file + grep + write_file only (never scaffold)
+        3. **Verify** — run_rails_check (zeitwerk + tests + rubocop as needed)
+        4. **Fix** — if checks fail, read logs/output and fix before finishing
 
         Rules:
-        - Prefer `run_generator` over inventing Rails structure with write_file
+        - Prefer `run_generator` only when creating new Rails structure; never for "optimize queries" or "remove SQL injection"
         - Match detected test framework, job backend, and frontend stack
         - Read existing code before writing; never guess conventions
         - One logical feature per run; keep diffs small

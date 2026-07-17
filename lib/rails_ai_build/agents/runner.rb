@@ -74,10 +74,29 @@ module RailsAiBuild
       def execute_tool_calls(tool_calls)
         tool_calls.each do |tc|
           fire(:on_tool_call, tc)
-          result = agent.execute_tool(tc[:name], tc[:arguments])
+          result = begin
+            agent.execute_tool(tc[:name], tc[:arguments])
+          rescue ToolError, SecurityError => e
+            # Return error to the model so it can fall back (e.g. write_file)
+            # instead of aborting the turn with no Done / Changes summary.
+            {
+              error: e.message,
+              hint: fallback_hint_for(tc[:name], e)
+            }
+          end
           formatted = format_tool_result(result)
           fire(:on_tool_result, { name: tc[:name], tool_call_id: tc[:id], result: formatted })
           agent.add_message(Message.tool(formatted, tool_call_id: tc[:id], name: tc[:name]))
+        end
+      end
+
+      def fallback_hint_for(tool_name, error)
+        if tool_name.to_s == "run_generator" || error.message.to_s.include?("run_generator")
+          "Do not retry run_generator. Use read_file/grep to find the code, then write_file for a minimal fix."
+        elsif error.message.to_s.include?("not allowed")
+          "That tool is not available. Continue with read_file, grep, list_files, and write_file only."
+        else
+          "Fix the issue or try a smaller write_file change."
         end
       end
 

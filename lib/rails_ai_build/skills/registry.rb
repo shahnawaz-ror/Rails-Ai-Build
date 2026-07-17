@@ -99,10 +99,11 @@ module RailsAiBuild
       def self.prompt
         <<~PROMPT
           You are a senior Rails refactoring specialist.
-          Make minimal, focused changes. Read all affected files first.
-          Extract service objects for complex controller logic.
-          Use concerns for shared behavior. Keep fat models skinny controllers.
-          Ensure tests still pass after refactoring. Run rspec when done.
+          Make minimal, focused changes. Read all affected files first with read_file/grep.
+          Never call run_generator or scaffold for refactors, SQL injection fixes, or query optimization.
+          Prefer parameterized queries (where with binds), scopes, and existing AR APIs over raw SQL.
+          Extract service objects for complex controller logic when needed.
+          Ensure tests still pass after refactoring. Prefer run_rails_check when available.
         PROMPT
       end
     end
