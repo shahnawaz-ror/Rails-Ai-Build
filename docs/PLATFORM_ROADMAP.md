@@ -67,15 +67,30 @@ curl -X POST /rails_ai_build/orchestrate -d '{"task":"...","until_green":true}'
 | Credits & usage | Per-seat billing |
 | Marketplace packs | Catalog-derived skill packs |
 
+## Cloud runtime — must build (not gem-only)
+
+> Remote Desktop, Browser VM, and a live host Terminal pane need a **cloud/runtime product**, not only the Rails engine. Documented in the README under *Needs a cloud / runtime product*.
+
+| Capability | Status | Notes |
+|------------|--------|-------|
+| **Remote Desktop** | ❌ TODO | VM/desktop broker + IDE streaming client |
+| **Browser VM** | ❌ TODO | Per-workspace browser farm for agent click/test |
+| **Live host Terminal pane** | ❌ TODO | PTY over WebSocket into the host runtime (beyond sandboxed `shell` tool) |
+| Hosted agents / credits | 🔲 planned | Ties into billing + workspace isolation |
+| Runtime sidecar | 🔲 planned | Container/VM per app; gem talks to it over API |
+
+The mountable gem keeps shipping agent/IDE/queue/Host Safety. The cloud/runtime owns machines, PTYs, and browsers.
+
 ## v2.4 — Full Cursor parity
 
 | Item | Detail |
 |------|--------|
 | Monaco editor | In-browser edit + @-mentions |
-| Terminal panel | Sandboxed shell UI |
+| Terminal panel | Sandboxed shell UI (gem); **live host PTY** → cloud runtime |
 | Composer mode | Multi-file plan preview |
 | Background agents | Cloud Agents API bridge |
 | Rules / skills sync | `.cursor/rules` ↔ gem skills |
+| Remote Desktop / Browser VM | Cloud runtime only (see above) |
 
 ## Architecture
 
