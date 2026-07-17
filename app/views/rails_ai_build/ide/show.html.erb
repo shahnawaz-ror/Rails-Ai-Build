@@ -165,14 +165,14 @@
           <span id="rab-live-text">Working…</span>
         </div>
         <div class="rab-stream" id="rab-stream">
-          <div class="rab-empty-chat">Ask anything — you’ll see planning, tool runs, and the reply stream live (Cursor-style).</div>
+          <div class="rab-empty-chat">Ask anything — you’ll get a short plan to approve, then live steps and a clear list of what changed.</div>
         </div>
         <form class="rab-prompt-bar" id="rab-prompt-form" action="#" method="post">
           <select id="rab-mode" title="Mode">
-            <option value="stream">Agent</option>
+            <option value="stream" selected>Agent</option>
+            <option value="composer">Plan first</option>
             <option value="build">Build (verify)</option>
-            <option value="composer">Composer</option>
-            <option value="queue">Queue task</option>
+            <option value="queue">Queue (background)</option>
           </select>
           <select id="rab-skill">
             <option value="">No skill</option>
@@ -201,26 +201,30 @@
         </section>
 
         <section id="rab-panel-changes">
-          <h3 style="font-size:0.7rem;color:var(--rab-muted);margin-bottom:0.5rem">PENDING DIFFS</h3>
+          <h3 style="font-size:0.7rem;color:var(--rab-muted);margin-bottom:0.5rem">THIS RUN</h3>
+          <div id="rab-applied-list"><p class="rab-locked" id="rab-applied-empty">Nothing changed yet — run the agent to see files here.</p></div>
+          <h3 style="font-size:0.7rem;color:var(--rab-muted);margin:0.85rem 0 0.5rem">PENDING DIFFS</h3>
           <button class="rab-btn rab-btn-secondary" id="rab-undo-last-run" style="width:100%;margin-bottom:0.5rem" title="Rollback all file changes from the current AI session">Undo last run</button>
-          <% if @pending.any? %>
-            <% @pending.each do |c| %>
-              <div class="rab-change-item" data-change-id="<%= c.id %>">
-                <div class="rab-change-path"><%= c.path %></div>
-                <div style="margin-top:0.4rem;display:flex;gap:0.4rem">
-                  <button class="rab-btn rab-btn-secondary rab-apply-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Apply</button>
-                  <button class="rab-btn rab-btn-secondary rab-reject-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Reject</button>
+          <div id="rab-pending-list">
+            <% if @pending.any? %>
+              <% @pending.each do |c| %>
+                <div class="rab-change-item" data-change-id="<%= c.id %>">
+                  <div class="rab-change-path"><%= c.path %></div>
+                  <div style="margin-top:0.4rem;display:flex;gap:0.4rem">
+                    <button class="rab-btn rab-btn-secondary rab-apply-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Apply</button>
+                    <button class="rab-btn rab-btn-secondary rab-reject-btn" data-id="<%= c.id %>" style="padding:0.25rem 0.5rem;font-size:0.7rem">Reject</button>
+                  </div>
                 </div>
-              </div>
-            <% end %>
-            <button class="rab-btn rab-btn-accent" id="rab-apply-all" style="width:100%;margin-top:0.5rem">Apply All</button>
-          <% else %>
-            <% if RailsAiBuild.configuration.diff_preview %>
-              <p class="rab-locked">No pending changes yet. Run the agent to queue file diffs.</p>
+              <% end %>
+              <button class="rab-btn rab-btn-accent" id="rab-apply-all" style="width:100%;margin-top:0.5rem">Apply All</button>
             <% else %>
-              <p class="rab-locked">Auto-apply is on — file writes are applied immediately. Use <strong>Undo last run</strong> if Host Safety did not already roll back.</p>
+              <% if RailsAiBuild.configuration.diff_preview %>
+                <p class="rab-locked">No pending diffs. Approve writes after the agent proposes them.</p>
+              <% else %>
+                <p class="rab-locked">Auto-apply is on — see <strong>This run</strong> above for files touched. Use Undo to roll back.</p>
+              <% end %>
             <% end %>
-          <% end %>
+          </div>
           <div id="rab-diff-detail" style="margin-top:1rem"></div>
         </section>
 

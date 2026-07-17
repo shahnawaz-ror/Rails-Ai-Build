@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.9.1] - 2026-07-17
+
+### Fixed / UX — Cursor-style plan → approve → clear “what changed”
+- **Plan card** before Agent / Plan first / Build runs (approve or cancel — no silent execute)
+- Default mode is **Agent** (not background Queue); mode persists in `localStorage`
+- Background **Queue** tasks use the same timeline as Agent — **no more raw JSON** dumps from `formatEvent`
+- Status/context/ready events stay short human steps (never dump `checks` JSON)
+- **Changes → This run** lists files touched; Done summary shows changed paths at end of turn
+- Pending diffs refresh into `#rab-pending-list` instead of appending under the wrong heading
+
 ## [2.9.0] - 2026-07-17
 
 ### Changed — Shadow worktree isolation ON by default
