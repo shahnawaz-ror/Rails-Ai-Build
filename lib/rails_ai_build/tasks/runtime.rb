@@ -33,7 +33,9 @@ module RailsAiBuild
         skill: nil,
         verify: nil,
         max_attempts: nil,
-        task_id: nil
+        task_id: nil,
+        session_id: nil,
+        session: nil
       )
         @task = task.to_s
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
@@ -43,6 +45,8 @@ module RailsAiBuild
         @verify = verify.nil? ? RailsAiBuild.configuration.verify_builds : verify
         @max_attempts = max_attempts || RailsAiBuild.configuration.build_max_attempts
         @task_id = task_id
+        @session = session
+        @session_id = session_id || session&.id
         @attempts = []
       end
 
@@ -102,9 +106,11 @@ module RailsAiBuild
       end
 
       def run_agent(prompt, emit)
+        session = resolve_session!
         result = if emit
                    Ai::Driver.stream(
                      prompt,
+                     session: session,
                      provider: @provider,
                      model: @model,
                      skill: @skill,
@@ -115,12 +121,15 @@ module RailsAiBuild
                  else
                    Ai::Driver.run(
                      prompt,
+                     session: session,
                      provider: @provider,
                      model: @model,
                      skill: @skill,
                      workspace: @workspace
                    )
                  end
+        @session = result.session if result.session
+        @session_id = @session&.id
         {
           content: result.content,
           iterations: result.iterations,
@@ -129,6 +138,15 @@ module RailsAiBuild
           session_id: result.session&.id,
           host_safety: result.host_safety
         }
+      end
+
+      def resolve_session!
+        return @session if @session
+
+        @session = Ai::Session.find(@session_id) if @session_id.present?
+        @session ||= Ai::Session.create(provider: @provider, model: @model)
+        @session_id = @session.id
+        @session
       end
 
       def verify_workspace

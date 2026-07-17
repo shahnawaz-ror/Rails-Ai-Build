@@ -43,4 +43,23 @@ RSpec.describe RailsAiBuild::Tasks::Runtime do
     expect(result.status).to eq(:success)
     expect(result.attempts.size).to eq(2)
   end
+
+  it 'reuses the same AI session across verify retries' do
+    call_count = 0
+    allow_any_instance_of(RailsAiBuild::Tools::RunRailsCheckTool).to receive(:call) do
+      call_count += 1
+      if call_count == 1
+        { passed: false, checks: { test: { passed: false, exit_code: 1, stdout: '1 failure' } } }
+      else
+        { passed: true, checks: { test: { passed: true } } }
+      end
+    end
+
+    before_count = RailsAiBuild::Ai::Session.all.size
+    session = RailsAiBuild::Ai::Session.create(provider: :openai, model: 'gpt-4o')
+    result = described_class.new(task: 'Fix user spec', session_id: session.id).run!
+    expect(result.status).to eq(:success)
+    expect(result.session_id).to eq(session.id)
+    expect(RailsAiBuild::Ai::Session.all.size).to eq(before_count + 1)
+  end
 end

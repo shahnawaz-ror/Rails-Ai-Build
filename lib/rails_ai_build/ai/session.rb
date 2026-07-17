@@ -36,7 +36,9 @@ module RailsAiBuild
 
         @messages << message
         @messages.shift while @messages.size > MAX_MESSAGES
-        auto_title! if @title.nil? && message.respond_to?(:role) && message.role.to_sym == :user
+        if message.respond_to?(:role) && message.role.to_sym == :user
+          auto_title! if @title.nil? || wrapper_title?(@title)
+        end
         @updated_at = Time.zone.now
         self.class.persist!(self)
       end
@@ -281,7 +283,22 @@ module RailsAiBuild
 
       def auto_title!
         first = messages.find { |m| m.role.to_sym == :user }&.content.to_s
+        first = strip_routing_wrappers(first)
         @title = first[0, 48] if first.present?
+      end
+
+      # Build/Composer wrap the real ask in "# Task" / "# Composer mode" headers —
+      # don't use those as the thread title (causes identical jumpy Threads).
+      def strip_routing_wrappers(text)
+        s = text.to_s.dup
+        s.sub!(/\A#\s*Composer mode[^\n]*\n(?:.*\n){0,4}/i, "")
+        s.sub!(/\A#\s*Task\s*\n+/i, "")
+        s.sub!(/\A\[RailsAiBuild routing\][\s\S]*\z/i, "")
+        s.strip
+      end
+
+      def wrapper_title?(title)
+        title.to_s.match?(/\A#\s*(Task|Composer mode)\b/i)
       end
 
       def default_title
