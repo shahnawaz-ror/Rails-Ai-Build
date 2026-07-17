@@ -40,7 +40,10 @@ module RailsAiBuild
       task = Tasks::Queue.cancel(params[:id])
       return render json: { error: "Not found" }, status: :not_found unless task
 
-      render json: task.to_h
+      render json: task.to_h.merge(
+        stopped: task.status == :cancelled || Tasks::Queue.cancel_requested?(task.id),
+        message: Tasks::Queue.cancel_requested?(task.id) ? 'Stop requested' : 'Cancelled'
+      )
     end
 
     # Long-lived SSE. Must stay open until the task finishes or the client disconnects —

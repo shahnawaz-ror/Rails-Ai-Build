@@ -38,6 +38,58 @@ RSpec.describe 'Tasks API', type: :request do
     end
   end
 
+  describe 'DELETE /rails_ai_build/tasks/:id' do
+    it 'cancels a queued task' do
+      RailsAiBuild.configuration.sync_tasks = false
+      RailsAiBuild.configuration.max_concurrent_tasks = 1
+      gate = ::Queue.new
+      allow_any_instance_of(RailsAiBuild::Tasks::Runtime).to receive(:run!) do
+        gate.pop
+        RailsAiBuild::Tasks::Runtime::Result.new(
+          task: 'x', status: :success, attempts: [], content: 'ok',
+          iterations: 1, usage: {}, verify: {}, messages: []
+        )
+      end
+
+      post '/rails_ai_build/tasks', params: { task: 'blocker' }
+      post '/rails_ai_build/tasks', params: { task: 'please cancel' }
+      id = json_response[:id]
+      expect(json_response[:status]).to eq('queued')
+
+      delete "/rails_ai_build/tasks/#{id}"
+      expect(response).to have_http_status(:ok)
+      expect(json_response[:status]).to eq('cancelled')
+      expect(json_response[:stopped]).to eq(true)
+      gate << :go
+    end
+
+    it 'requests stop for a running task' do
+      RailsAiBuild.configuration.sync_tasks = false
+      started = ::Queue.new
+      allow_any_instance_of(RailsAiBuild::Tasks::Runtime).to receive(:run!) do |runtime|
+        started << true
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
+        loop do
+          break if runtime.instance_variable_get(:@cancel_check)&.call
+          break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+          sleep 0.01
+        end
+        raise RailsAiBuild::CancelledError, 'Stopped by user'
+      end
+
+      post '/rails_ai_build/tasks', params: { task: 'running stop' }
+      id = json_response[:id]
+      started.pop
+
+      delete "/rails_ai_build/tasks/#{id}"
+      expect(response).to have_http_status(:ok)
+      body = json_response
+      expect(body[:stopped] || body[:cancel_requested] || body[:status] == 'cancelled').to eq(true)
+      expect(body[:message].to_s).to match(/Stop|Cancel/i)
+    end
+  end
+
   describe 'POST /rails_ai_build/tasks/:id/stream' do
     it 'streams without raising on Rails 7.1 params API' do
       post '/rails_ai_build/tasks', params: { task: 'Stream me' }

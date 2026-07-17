@@ -351,10 +351,55 @@
   const promptEl = document.getElementById('rab-prompt');
   let running = false;
   let awaitingPlan = false;
+  let followedTaskId = null;
   let sessionId = localStorage.getItem('rab-session-id') || null;
   let historyGen = 0;
   let sessionsRefreshTimer = null;
+  let activeAbort = null;
+  let taskStreamAbort = null;
   const modeSel = document.getElementById('rab-mode');
+
+  function setRunButton(mode) {
+    if (!runBtn) return;
+    if (mode === 'stop') {
+      runBtn.type = 'button';
+      runBtn.disabled = false;
+      runBtn.textContent = 'Stop';
+      runBtn.classList.add('rab-btn-stop');
+    } else {
+      runBtn.type = 'submit';
+      runBtn.disabled = false;
+      runBtn.textContent = 'Send';
+      runBtn.classList.remove('rab-btn-stop');
+    }
+  }
+
+  function syncRunButton() {
+    setRunButton((running || followedTaskId) ? 'stop' : 'send');
+  }
+
+  async function stopAgent() {
+    if (activeAbort) {
+      try { activeAbort.abort(); } catch (e) { /* ignore */ }
+      activeAbort = null;
+    }
+    if (taskStreamAbort) {
+      try { taskStreamAbort.abort(); } catch (e) { /* ignore */ }
+      taskStreamAbort = null;
+    }
+    const taskId = followedTaskId;
+    if (taskId) {
+      try {
+        await fetch(base + '/tasks/' + encodeURIComponent(taskId), { method: 'DELETE' });
+      } catch (e) { /* ignore */ }
+    }
+    running = false;
+    followedTaskId = null;
+    setRunButton('send');
+    setLive(null);
+    addStep('error', 'Stopped');
+    loadTasks({ watch: false });
+  }
   (function restoreMode() {
     if (!modeSel) return;
     const saved = localStorage.getItem('rab-mode');
@@ -829,7 +874,30 @@
       if (data.applied_files?.length) turnFiles = data.applied_files;
       showDoneSummary(data);
       setLive('Done — review Changes → This run', 'reply');
+      if (opts.followInAgent) {
+        followedTaskId = null;
+        syncRunButton();
+      }
       scheduleLoadSessions();
+      loadTasks({ watch: false });
+      return;
+    }
+
+    if (event === 'status' && data.phase === 'cancel') {
+      setLive(data.message || 'Stopping…', 'executing');
+      addStep('plan', data.message || 'Stop requested…');
+      return;
+    }
+
+    if (event === 'cancelled' || (event === 'error' && data.cancelled)) {
+      setTurnPhase('done');
+      setLive(data.message || data.error || 'Stopped', 'reply');
+      addStep('error', data.message || data.error || 'Stopped');
+      if (opts.followInAgent || followedTaskId) {
+        followedTaskId = null;
+        syncRunButton();
+      }
+      loadTasks({ watch: false });
       return;
     }
 
@@ -847,13 +915,17 @@
     addStep('plan', event, escapeHtml(String(short)).slice(0, 160));
   }
 
-  async function consumeSse(res, onChunk) {
+  async function consumeSse(res, onChunk, signal) {
     if (!res.ok) throw new Error('Request failed (' + res.status + ')');
     if (!res.body) throw new Error('No response stream');
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     while (true) {
+      if (signal?.aborted) {
+        try { await reader.cancel(); } catch (e) { /* ignore */ }
+        throw new DOMException('Aborted', 'AbortError');
+      }
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
@@ -895,7 +967,7 @@
           return;
         }
         appendEvent('queued', { description: data.description || prompt, branch: data.branch, id: data.id });
-        setLive('Background task running…', 'executing');
+        setLive('Background task running… Press Stop to cancel.', 'executing');
         watchTask(data.id, { followInAgent: true });
         loadTasks();
       } catch (err) {
@@ -905,10 +977,9 @@
     }
 
     running = true;
-    if (runBtn) {
-      runBtn.disabled = true;
-      runBtn.textContent = 'Working…';
-    }
+    activeAbort = new AbortController();
+    const signal = activeAbort.signal;
+    syncRunButton();
     setLive(mode === 'composer' ? 'Executing plan…' : (mode === 'build' ? 'Building…' : 'Planning…'), 'planning');
     ensureTurn();
     setTurnPhase('planning');
@@ -924,9 +995,10 @@
             verify: true,
             composer: mode === 'composer',
             session_id: sessionId
-          })
+          }),
+          signal
         });
-        await consumeSse(res, (event, data) => appendEvent(event, data));
+        await consumeSse(res, (event, data) => appendEvent(event, data), signal);
         loadTasks();
         return;
       }
@@ -940,7 +1012,8 @@
             skill: skill,
             session_id: sessionId,
             provider: document.getElementById('rab-provider')?.value
-          })
+          }),
+          signal
         });
         const data = await res.json();
         if (data.error) appendEvent('error', { error: data.error });
@@ -959,17 +1032,20 @@
           skill: skill,
           provider: document.getElementById('rab-provider')?.value,
           session_id: sessionId
-        })
+        }),
+        signal
       });
-      await consumeSse(res, (event, data) => appendEvent(event, data));
+      await consumeSse(res, (event, data) => appendEvent(event, data), signal);
     } catch (err) {
-      appendEvent('error', { error: err.message });
+      if (err?.name === 'AbortError') {
+        // stopAgent already surfaces "Stopped"
+      } else {
+        appendEvent('error', { error: err.message });
+      }
     } finally {
       running = false;
-      if (runBtn) {
-        runBtn.disabled = false;
-        runBtn.textContent = 'Send';
-      }
+      if (activeAbort?.signal === signal) activeAbort = null;
+      syncRunButton();
       setLive(null);
       promptEl?.focus();
     }
@@ -978,6 +1054,10 @@
   async function runAgent(e) {
     e?.preventDefault?.();
     e?.stopPropagation?.();
+    if (runBtn?.classList.contains('rab-btn-stop') || (running && !awaitingPlan) || (followedTaskId && !awaitingPlan)) {
+      await stopAgent();
+      return;
+    }
     if (running || awaitingPlan) return;
     const prompt = promptEl?.value.trim();
     if (!prompt) {
@@ -1005,6 +1085,12 @@
 
   const promptForm = document.getElementById('rab-prompt-form');
   promptForm?.addEventListener('submit', runAgent);
+  runBtn?.addEventListener('click', async (ev) => {
+    if (!runBtn.classList.contains('rab-btn-stop')) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    await stopAgent();
+  });
 
   function isSendHotkey(ev) {
     if (ev.shiftKey || ev.altKey || ev.ctrlKey || ev.metaKey || ev.isComposing) return false;
@@ -1016,7 +1102,11 @@
     if (!isSendHotkey(ev)) return;
     ev.preventDefault();
     ev.stopPropagation();
-    if (running || awaitingPlan) return;
+    if (awaitingPlan) return;
+    if (running || followedTaskId || runBtn?.classList.contains('rab-btn-stop')) {
+      stopAgent();
+      return;
+    }
     if (promptForm?.requestSubmit) promptForm.requestSubmit();
     else runAgent(ev);
   }, true);
@@ -1142,7 +1232,6 @@
 
   const watchedTasks = new Set();
   const taskStreamBackoff = new Map(); // id -> epoch ms
-  let followedTaskId = null;
 
   async function watchTask(id, opts) {
     opts = opts || {};
@@ -1154,10 +1243,14 @@
     if (Date.now() < until) return;
     watchedTasks.add(id);
     followedTaskId = id;
+    syncRunButton();
+    taskStreamAbort = new AbortController();
+    const streamSignal = taskStreamAbort.signal;
     try {
       const res = await fetch(base + '/tasks/' + id + '/stream', {
         method: 'POST',
-        headers: { Accept: 'text/event-stream' }
+        headers: { Accept: 'text/event-stream' },
+        signal: streamSignal
       });
       if (res.status === 429) {
         const retrySec = parseInt(res.headers.get('Retry-After') || '20', 10);
@@ -1175,29 +1268,39 @@
         if (event === 'delta' && data.token) return;
         if (event === 'snapshot') return; // list metadata only
         appendEvent(event, data, { fromTask: true, followInAgent: true });
-      });
-    } catch (e) { /* client navigated away / server closed */ }
-    finally {
+      }, streamSignal);
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+    } finally {
       watchedTasks.delete(id);
+      if (taskStreamAbort?.signal === streamSignal) taskStreamAbort = null;
       // If the SSE dropped while the task is still running, resume after a short pause.
       // Do not reconnect in a tight loop (that froze Puma before).
-      if (followedTaskId === id) {
+      if (followedTaskId === id && !streamSignal.aborted) {
         setTimeout(async () => {
           try {
             const res = await fetch(base + '/tasks/' + encodeURIComponent(id));
             const t = await res.json();
-            if (t && (t.status === 'running' || t.status === 'queued')) {
+            if (t && (t.status === 'running' || t.status === 'queued') && followedTaskId === id) {
               watchTask(id, { followInAgent: true });
-            } else {
+            } else if (followedTaskId === id) {
               followedTaskId = null;
               setLive(null);
+              syncRunButton();
             }
           } catch (e) {
-            followedTaskId = null;
+            if (followedTaskId === id) {
+              followedTaskId = null;
+              syncRunButton();
+            }
           }
           loadTasks({ watch: false });
         }, 1500);
       } else {
+        if (followedTaskId === id && streamSignal.aborted) {
+          // stopAgent already cleared follow
+        }
+        syncRunButton();
         loadTasks({ watch: false });
       }
     }
@@ -1413,23 +1516,55 @@
     try {
       const res = await fetch(base + '/tasks');
       const data = await res.json();
-      if (!data.tasks?.length) { el.innerHTML = '<p class="rab-locked">No tasks queued</p>'; return; }
+      if (!data.tasks?.length) { el.innerHTML = '<p class="rab-locked">No background agents queued</p>'; return; }
       el.innerHTML = data.tasks.map(t => {
         const pr = t.compare_url || t.pr_url;
-        const following = followedTaskId === t.id ? ' · following' : '';
+        const following = followedTaskId === t.id;
+        const active = t.status === 'running' || t.status === 'queued';
+        const stopLabel = t.status === 'running' ? 'Stop' : 'Cancel';
         return '<div class="rab-change-item" data-task-id="' + t.id + '">' +
-          '<div class="rab-change-path">' + t.status + following + (t.branch ? ' · ' + t.branch : '') + '</div>' +
-          '<div style="font-size:0.72rem">' + (t.description || '').slice(0, 60) + '</div>' +
-          (pr ? '<a href="' + pr + '" target="_blank" style="font-size:0.68rem">PR</a>' : '') +
-          '</div>';
+          '<div class="rab-change-path">' + escapeHtml(String(t.status)) +
+            (following ? ' · following' : '') +
+            (t.cancel_requested ? ' · stopping' : '') +
+            (t.branch ? ' · ' + escapeHtml(t.branch) : '') + '</div>' +
+          '<div style="font-size:0.72rem">' + escapeHtml((t.description || '').slice(0, 80)) + '</div>' +
+          '<div class="rab-task-actions">' +
+            (active ? '<button type="button" class="rab-btn rab-btn-secondary" data-task-follow="' + t.id + '">' + (following ? 'Following' : 'Follow') + '</button>' : '') +
+            (t.cancellable ? '<button type="button" class="rab-btn rab-btn-stop" data-task-cancel="' + t.id + '">' + stopLabel + '</button>' : '') +
+            (pr ? '<a href="' + pr + '" target="_blank" class="rab-btn rab-btn-secondary">PR</a>' : '') +
+          '</div></div>';
       }).join('');
-      // If we were following a task and the SSE dropped while it is still running, resume once.
       if (opts.rewatchFollowed && followedTaskId) {
         const still = data.tasks.find((t) => t.id === followedTaskId && (t.status === 'running' || t.status === 'queued'));
         if (still) watchTask(still.id, { followInAgent: true });
       }
     } catch (e) { el.innerHTML = '<p class="rab-locked">' + e.message + '</p>'; }
   }
+
+  document.getElementById('rab-task-list')?.addEventListener('click', async (ev) => {
+    const cancelBtn = ev.target.closest('[data-task-cancel]');
+    if (cancelBtn) {
+      ev.preventDefault();
+      const id = cancelBtn.dataset.taskCancel;
+      await fetch(base + '/tasks/' + encodeURIComponent(id), { method: 'DELETE' });
+      if (followedTaskId === id) {
+        if (taskStreamAbort) try { taskStreamAbort.abort(); } catch (e) {}
+        followedTaskId = null;
+        syncRunButton();
+        addStep('error', 'Stop requested for background agent');
+      }
+      loadTasks({ watch: false });
+      return;
+    }
+    const followBtn = ev.target.closest('[data-task-follow]');
+    if (followBtn) {
+      ev.preventDefault();
+      const id = followBtn.dataset.taskFollow;
+      document.querySelector('[data-tab="agent"]')?.click();
+      watchTask(id, { followInAgent: true });
+      loadTasks({ watch: false });
+    }
+  });
 
   document.getElementById('rab-refresh-tasks')?.addEventListener('click', () => loadTasks());
   loadTasks();

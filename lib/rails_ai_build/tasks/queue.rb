@@ -29,7 +29,10 @@ module RailsAiBuild
             compare_url: compare_url || pr_url,
             created_at: created_at,
             started_at: started_at,
-            finished_at: finished_at
+            finished_at: finished_at,
+            cancellable: %i[queued running].include?(status),
+            # Read meta without taking Queue.mutex — to_h is often called while all/find hold it.
+            cancel_requested: RailsAiBuild::Tasks::Queue.send(:cancel_flag?, id)
           }.compact
         end
       end
@@ -78,14 +81,37 @@ module RailsAiBuild
         end
 
         def cancel(id)
-          task = mutex.synchronize { store[id] }
-          return nil unless task
-          return task if task.status == :running
+          task = nil
+          emit_running_stop = false
+          mutex.synchronize do
+            task = store[id]
+            return nil unless task
 
-          task.status = :cancelled
-          task.finished_at = Time.zone.now
-          EventBus.emit(task.id, :cancelled, task.to_h)
+            case task.status
+            when :queued
+              task.status = :cancelled
+              task.finished_at = Time.zone.now
+            when :running
+              # Cooperative stop — worker checks cancel_requested? between steps
+              metadata(id)[:cancel_requested] = true
+              emit_running_stop = true
+            else
+              return task
+            end
+          end
+
+          if emit_running_stop
+            EventBus.emit(task.id, :status, { phase: 'cancel', message: 'Stop requested — finishing current step…' })
+          else
+            EventBus.emit(task.id, :cancelled, task.to_h)
+          end
           task
+        end
+
+        def cancel_requested?(id)
+          return false if id.to_s.empty?
+
+          mutex.synchronize { cancel_flag?(id) }
         end
 
         def clear_finished!
@@ -147,6 +173,11 @@ module RailsAiBuild
           @store ||= {}
         end
 
+        # Caller must already hold mutex (or accept a brief unlocked read).
+        def cancel_flag?(id)
+          !!(@meta && @meta[id] && @meta[id][:cancel_requested])
+        end
+
         def metadata(id)
           @meta ||= {}
           @meta[id] ||= {}
@@ -202,6 +233,11 @@ module RailsAiBuild
 
         def run_task_safely(task)
           run_task(task)
+        rescue CancelledError => e
+          task.status = :cancelled
+          task.error = e.message
+          task.finished_at = Time.zone.now
+          EventBus.emit(task.id, :cancelled, task.to_h.merge(message: e.message))
         rescue StandardError => e
           task.status = :failed
           task.error = e.message
@@ -217,14 +253,24 @@ module RailsAiBuild
           task.status = :running
           task.started_at ||= Time.zone.now
 
+          raise CancelledError, 'Stopped by user' if cancel_requested?(task.id)
+
           result = Runtime.new(
             task: task.description,
             skill: task.skill,
             verify: task.verify,
             provider: meta[:provider],
             model: meta[:model],
-            task_id: task.id
+            task_id: task.id,
+            cancel_check: -> { cancel_requested?(task.id) }
           ).run!
+
+          if cancel_requested?(task.id)
+            task.status = :cancelled
+            task.finished_at = Time.zone.now
+            EventBus.emit(task.id, :cancelled, task.to_h.merge(message: 'Stopped by user'))
+            return
+          end
 
           task.result = result
           task.status = result.status

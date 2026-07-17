@@ -54,6 +54,56 @@ RSpec.describe RailsAiBuild::Tasks::Queue do
     expect(described_class.send(:workers).count(&:alive?)).to eq(0)
   end
 
+  it 'cancels a queued task before a worker claims it' do
+    RailsAiBuild.configuration.sync_tasks = false
+    RailsAiBuild.configuration.max_concurrent_tasks = 1
+    gate = ::Queue.new
+    allow_any_instance_of(RailsAiBuild::Tasks::Runtime).to receive(:run!) do
+      gate.pop
+      success_result
+    end
+
+    blocker = described_class.enqueue('blocker')
+    pending = described_class.enqueue('cancel me')
+    expect(pending.status).to eq(:queued)
+
+    described_class.cancel(pending.id)
+    expect(pending.status).to eq(:cancelled)
+    expect(pending.to_h[:cancellable]).to eq(false)
+
+    gate << :go
+    wait_until { %i[queued running].exclude?(blocker.status) }
+    expect(blocker.status).to eq(:success)
+  end
+
+  it 'cooperatively stops a running task when cancel is requested' do
+    RailsAiBuild.configuration.sync_tasks = false
+    RailsAiBuild.configuration.max_concurrent_tasks = 1
+    started = ::Queue.new
+    allow_any_instance_of(RailsAiBuild::Tasks::Runtime).to receive(:run!) do |runtime|
+      started << true
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 3
+      loop do
+        check = runtime.instance_variable_get(:@cancel_check)
+        break if check&.call
+        raise 'cancel_check never became true' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+        sleep 0.01
+      end
+      raise RailsAiBuild::CancelledError, 'Stopped by user'
+    end
+
+    task = described_class.enqueue('long running')
+    started.pop
+    described_class.cancel(task.id)
+    expect(described_class.cancel_requested?(task.id)).to eq(true)
+    expect(task.to_h[:cancel_requested]).to eq(true)
+
+    wait_until { task.status == :cancelled }
+    expect(task.status).to eq(:cancelled)
+    expect(task.error).to match(/Stopped/i)
+  end
+
   def wait_until(timeout: 3)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
     sleep 0.01 until yield || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline

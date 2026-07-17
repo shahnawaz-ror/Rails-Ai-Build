@@ -28,13 +28,14 @@ module RailsAiBuild
       end
 
       class << self
-        def run(message, session: nil, provider: nil, model: nil, skill: nil, workspace: nil)
+        def run(message, session: nil, provider: nil, model: nil, skill: nil, workspace: nil, cancel_check: nil)
           new(
             session: session,
             provider: provider,
             model: model,
             skill: skill,
-            workspace: workspace
+            workspace: workspace,
+            cancel_check: cancel_check
           ).run(message)
         end
 
@@ -43,12 +44,13 @@ module RailsAiBuild
         end
       end
 
-      def initialize(session: nil, provider: nil, model: nil, skill: nil, workspace: nil)
+      def initialize(session: nil, provider: nil, model: nil, skill: nil, workspace: nil, cancel_check: nil)
         @session = session || Session.create(model: model, provider: provider)
         @provider = provider || @session.provider
         @model = model || @session.model
         @skill = skill
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
+        @cancel_check = cancel_check
       end
 
       def run(message, &on_event)
@@ -65,8 +67,10 @@ module RailsAiBuild
         begin
           # Emit session id early so the IDE can persist/restore this thread
           emit(on_event, :session, @session.to_h.merge(model: @model, provider: @provider))
+          raise_if_cancelled!
 
           route_generators!(message, on_event)
+          raise_if_cancelled!
 
           if skip_ai_after_generator?
             return finish_generator_only!(message, on_event)
@@ -84,7 +88,7 @@ module RailsAiBuild
                  message: "Thinking with #{@provider}/#{@model || 'default'}…"
                })
 
-          runner = Agents::Runner.new(agent: agent)
+          runner = Agents::Runner.new(agent: agent, cancel_check: @cancel_check)
           wire_streaming(runner, on_event)
 
           result = runner.run!
@@ -103,9 +107,19 @@ module RailsAiBuild
           emit(on_event, :done, done_payload(result))
 
           build_result(result, context)
+        rescue CancelledError => e
+          emit(on_event, :status, { phase: 'cancel', message: e.message })
+          emit(on_event, :error, { error: e.message, cancelled: true })
+          raise
         ensure
           HostSafety.end_session!
         end
+      end
+
+      def raise_if_cancelled!
+        return unless @cancel_check&.call
+
+        raise CancelledError, 'Stopped by user'
       end
 
       TOOL_STATUS_TEMPLATES = {

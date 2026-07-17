@@ -45,6 +45,10 @@ module RailsAiBuild
       end
     rescue Cloud::Client::CloudUnavailableError => e
       response.stream.write(Ai::Stream.format(event: :error, data: e.as_json))
+    rescue CancelledError => e
+      response.stream.write(Ai::Stream.format(event: :error, data: { error: e.message, cancelled: true }))
+    rescue IOError, ActionController::Live::ClientDisconnected
+      # Client pressed Stop / closed the stream
     rescue StandardError => e
       response.stream.write(Ai::Stream.format(event: :error, data: { error: e.message }))
     ensure

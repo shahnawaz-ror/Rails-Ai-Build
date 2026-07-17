@@ -87,4 +87,14 @@ RSpec.describe RailsAiBuild::Agents::Runner do
     expect(results.first[:result]).to include("Tool not allowed")
     expect(results.first[:result]).to include("write_file")
   end
+
+  it "raises CancelledError when cancel_check becomes true" do
+    agent = RailsAiBuild::Agents::Agent.new
+    agent.instance_variable_set(:@provider, mock_provider)
+    agent.add_message(RailsAiBuild::Agents::Message.user("hello"))
+
+    expect {
+      described_class.new(agent: agent, cancel_check: -> { true }).run!
+    }.to raise_error(RailsAiBuild::CancelledError, /Stopped/)
+  end
 end

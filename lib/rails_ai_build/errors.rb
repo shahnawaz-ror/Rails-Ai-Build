@@ -7,4 +7,5 @@ module RailsAiBuild
   class ToolError < Error; end
   class ConfigurationError < Error; end
   class SecurityError < Error; end
+  class CancelledError < Error; end
 end

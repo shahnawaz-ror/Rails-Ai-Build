@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.10.1] - 2026-07-17
+
+### Added — Agent queue Send / Stop
+- **Send / Stop** on the Agent composer: while a run (or followed queue task) is active the button becomes **Stop**; Enter also stops
+- Browser `AbortController` closes live SSE for Agent / Plan first / Build when Stop is pressed
+- **Queue Cancel** (`DELETE /tasks/:id`): cancels a still-queued task immediately
+- **Queue Stop** (running): sets cooperative `cancel_requested`; Runtime / Agent Runner exit between LLM/tool steps (no `Thread.kill`)
+- Task list shows Follow / Cancel / Stop; following a background agent streams into the Agent chat
+- Task payloads include `cancellable` and `cancel_requested`
+- See `docs/AGENT_QUEUE_STOP.md` (Phase 2: mid-HTTP LLM abort + kill child processes)
+
 ## [2.10.0] - 2026-07-17
 
 ### Added — Agents-first IDE layout (chat like modern agent UIs)
