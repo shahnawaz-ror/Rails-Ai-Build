@@ -289,7 +289,10 @@ module RailsAiBuild
 
         runner.on(:on_iteration) do |response|
           content = response[:content].to_s
+          tool_calls = response[:tool_calls] || []
           next if content.empty? || streamed_tokens
+          # Tool turns often restate read_file dumps — never flood the reply pane with those.
+          next if tool_calls.any?
 
           emit(on_event, :delta, { content: content, final: true })
           streamed_tokens = false

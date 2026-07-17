@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.10.3] - 2026-07-17
+
+### Fixed — Stop infinite same-tool / Done spam (fundamental)
+- **Agent Runner** aborts when the model repeats the same tool+args (e.g. `read_file app/models/user.rb` forever)
+- **Streaming** no longer dumps tool-turn narration into the reply pane (that caused walls of the same text)
+- **EventBus** replays only one terminal event for finished tasks (no complete+finished flood on Follow/reconnect)
+- Queue `:finished` payload no longer re-sends full result content (Runtime already emitted `:complete`)
+- Session history collapses consecutive duplicate assistant messages
+
 ## [2.10.2] - 2026-07-17
 
 ### Fixed — Queue mode stacking duplicate Done cards

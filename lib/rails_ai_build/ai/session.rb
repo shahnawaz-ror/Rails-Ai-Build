@@ -69,7 +69,8 @@ module RailsAiBuild
 
       # Fuller transcript for IDE history UI (skips system + noisy tool payloads).
       def messages_for_client(limit: 8_000)
-        messages.filter_map do |msg|
+        out = []
+        messages.each do |msg|
           role = msg.role.to_sym
           next if role == :system
 
@@ -82,12 +83,18 @@ module RailsAiBuild
             content = content[0, limit]
           end
 
-          {
+          # Collapse consecutive duplicate assistant replies (looping models).
+          if role == :assistant && out.last && out.last[:role] == "assistant" && out.last[:content] == content
+            next
+          end
+
+          out << {
             role: role.to_s,
             content: content,
             name: msg.name
           }
         end
+        out
       end
 
       def refresh_title!
