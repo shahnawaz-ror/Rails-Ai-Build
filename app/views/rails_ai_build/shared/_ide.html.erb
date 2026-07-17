@@ -1121,13 +1121,18 @@
 
   const watchedTasks = new Set();
   const taskStreamBackoff = new Map(); // id -> epoch ms
+  let followedTaskId = null;
 
   async function watchTask(id, opts) {
     opts = opts || {};
+    // Only open SSE when the user is actively following a queued task in the Agent panel.
+    // Silent auto-watch from loadTasks caused reconnect storms (stream used to close in ms).
+    if (!opts.followInAgent) return;
     if (!id || watchedTasks.has(id)) return;
     const until = taskStreamBackoff.get(id) || 0;
     if (Date.now() < until) return;
     watchedTasks.add(id);
+    followedTaskId = id;
     try {
       const res = await fetch(base + '/tasks/' + id + '/stream', {
         method: 'POST',
@@ -1136,31 +1141,44 @@
       if (res.status === 429) {
         const retrySec = parseInt(res.headers.get('Retry-After') || '20', 10);
         taskStreamBackoff.set(id, Date.now() + (retrySec * 1000));
-        if (opts.followInAgent) {
-          setLive('Live updates paused (rate limit) — retrying in ' + retrySec + 's…', 'executing');
-          addStep('plan', 'Live updates paused — rate limit. Retrying shortly…');
-        }
+        setLive('Live updates paused (rate limit) — retrying in ' + retrySec + 's…', 'executing');
+        addStep('plan', 'Live updates paused — rate limit. Retrying shortly…');
         return;
       }
       if (!res.ok) {
-        if (opts.followInAgent) {
-          addStep('error', 'Could not follow task stream (' + res.status + ')');
-        }
+        addStep('error', 'Could not follow task stream (' + res.status + ')');
         return;
       }
       taskStreamBackoff.delete(id);
       await consumeSse(res, (event, data) => {
         if (event === 'delta' && data.token) return;
-        // Default: background tasks update Tasks panel only — never jump the open chat
-        appendEvent(event, data, {
-          fromTask: true,
-          followInAgent: !!opts.followInAgent
-        });
+        if (event === 'snapshot') return; // list metadata only
+        appendEvent(event, data, { fromTask: true, followInAgent: true });
       });
-    } catch (e) { /* task may have finished before subscribe */ }
+    } catch (e) { /* client navigated away / server closed */ }
     finally {
       watchedTasks.delete(id);
-      loadTasks();
+      // If the SSE dropped while the task is still running, resume after a short pause.
+      // Do not reconnect in a tight loop (that froze Puma before).
+      if (followedTaskId === id) {
+        setTimeout(async () => {
+          try {
+            const res = await fetch(base + '/tasks/' + encodeURIComponent(id));
+            const t = await res.json();
+            if (t && (t.status === 'running' || t.status === 'queued')) {
+              watchTask(id, { followInAgent: true });
+            } else {
+              followedTaskId = null;
+              setLive(null);
+            }
+          } catch (e) {
+            followedTaskId = null;
+          }
+          loadTasks({ watch: false });
+        }, 1500);
+      } else {
+        loadTasks({ watch: false });
+      }
     }
   }
 
@@ -1325,7 +1343,8 @@
     }
   });
 
-  async function loadTasks() {
+  async function loadTasks(opts) {
+    opts = opts || {};
     const el = document.getElementById('rab-task-list');
     if (!el) return;
     try {
@@ -1334,18 +1353,22 @@
       if (!data.tasks?.length) { el.innerHTML = '<p class="rab-locked">No tasks queued</p>'; return; }
       el.innerHTML = data.tasks.map(t => {
         const pr = t.compare_url || t.pr_url;
+        const following = followedTaskId === t.id ? ' · following' : '';
         return '<div class="rab-change-item" data-task-id="' + t.id + '">' +
-          '<div class="rab-change-path">' + t.status + (t.branch ? ' · ' + t.branch : '') + '</div>' +
+          '<div class="rab-change-path">' + t.status + following + (t.branch ? ' · ' + t.branch : '') + '</div>' +
           '<div style="font-size:0.72rem">' + (t.description || '').slice(0, 60) + '</div>' +
           (pr ? '<a href="' + pr + '" target="_blank" style="font-size:0.68rem">PR</a>' : '') +
           '</div>';
       }).join('');
-      // Silent watch — updates Tasks list only; does not steal the Agent chat
-      data.tasks.filter(t => t.status === 'running' || t.status === 'queued').forEach(t => watchTask(t.id, { followInAgent: false }));
+      // If we were following a task and the SSE dropped while it is still running, resume once.
+      if (opts.rewatchFollowed && followedTaskId) {
+        const still = data.tasks.find((t) => t.id === followedTaskId && (t.status === 'running' || t.status === 'queued'));
+        if (still) watchTask(still.id, { followInAgent: true });
+      }
     } catch (e) { el.innerHTML = '<p class="rab-locked">' + e.message + '</p>'; }
   }
 
-  document.getElementById('rab-refresh-tasks')?.addEventListener('click', loadTasks);
+  document.getElementById('rab-refresh-tasks')?.addEventListener('click', () => loadTasks());
   loadTasks();
   loadSessions();
   // Restore previous chat into the Agent stream (survives refresh)
@@ -1354,6 +1377,7 @@
       if (!ok) loadSessions();
     });
   }
-  setInterval(loadTasks, 8000);
+  // List refresh only — never open task SSE from the interval
+  setInterval(() => loadTasks({ watch: false }), 15000);
 })();
 </script>

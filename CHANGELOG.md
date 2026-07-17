@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.7] - 2026-07-17
+
+### Fixed — Task SSE reconnect storm (GET /tasks + POST /stream dozens/sec)
+- `TasksController#stream` subscribed then **closed immediately** (no keep-alive loop)
+- IDE treated that as disconnect and re-opened SSE in a tight loop → Puma flooded, UI frozen
+- Stream now stays open until the task finishes (or client disconnects), with keepalive pings
+- IDE only opens SSE when actively following a queued task; list polling no longer opens streams
+
 ## [2.9.6] - 2026-07-17
 
 ### Fixed — Queue task looks frozen while Rails log floods with 429
