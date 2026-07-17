@@ -30,5 +30,11 @@ module RailsAiBuild
       Ai::Session.destroy(params[:id])
       render json: { deleted: params[:id] }
     end
+
+    # Remove empty / wrapper-titled threads that clutter the sidebar.
+    def prune
+      removed = Ai::Session.prune_junk!
+      render json: { removed: removed, count: removed.size, sessions: Ai::Session.all.map(&:to_h) }
+    end
   end
 end

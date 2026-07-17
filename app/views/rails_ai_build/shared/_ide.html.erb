@@ -190,7 +190,7 @@
     suggested_plan: root.dataset.plan === 'free' ? 'pro' : 'team'
   }));
   document.getElementById('rab-open-upgrade')?.addEventListener('click', () => openUpgradeModal({
-    error: 'Choose a plan to unlock more of the Cursor-class loop.',
+    error: 'Choose a plan to unlock more agent features.',
     suggested_plan: 'pro'
   }));
   document.querySelectorAll('.rab-upgrade-link').forEach(btn => {
@@ -973,7 +973,7 @@
       promptEl.style.height = 'auto';
     }
 
-    // Cursor-style: ask before writing (Agent / Plan first / Build)
+    // Ask before writing (Agent / Plan first / Build)
     if (mode === 'stream' || mode === 'composer' || mode === 'build') {
       showPlanCard(prompt, mode, skill, () => { executeAgent(prompt, mode); });
       return;
@@ -1281,6 +1281,27 @@
     currentTurn = null;
     loadSessions();
     document.querySelector('[data-tab="agent"]')?.click();
+  });
+
+  document.getElementById('rab-prune-sessions')?.addEventListener('click', async () => {
+    if (running) {
+      alert('Wait for the current run to finish before cleaning chats.');
+      return;
+    }
+    if (!confirm('Remove empty chats and junk “Composer/Task” threads? Your real prompts are kept when we can retitle them.')) return;
+    const res = await fetch(base + '/ai/sessions/prune', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json().catch(() => ({}));
+    if (sessionId && (data.removed || []).includes(sessionId)) {
+      sessionId = null;
+      localStorage.removeItem('rab-session-id');
+      historyGen += 1;
+      streamEl.innerHTML = '<div class="rab-empty-chat">Cleaned up. Ask anything to start a new chat.</div>';
+    }
+    await loadSessions();
+    if (statusEl) {
+      statusEl.className = 'rab-status-idle';
+      statusEl.textContent = 'Removed ' + (data.count || 0) + ' junk chat(s)';
+    }
   });
 
   async function loadTasks() {

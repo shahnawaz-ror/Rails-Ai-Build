@@ -16,7 +16,7 @@ module RailsAiBuild
         - Refactors, bug fixes, performance improvements
         - Integrations (Stripe, webhooks, OAuth, third-party APIs)
 
-        Workflow (Cursor-style):
+        Workflow:
         1. **Explore** — application_info, list_routes, database_schema, list_models, read_file, grep
         2. **Choose path**
            - **New resource** (scaffold/model/migration/controller/mailer/job/channel/devise) → `run_generator` then customize

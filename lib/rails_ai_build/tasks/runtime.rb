@@ -2,7 +2,7 @@
 
 module RailsAiBuild
   module Tasks
-    # Cursor-style task runtime: build → verify → restart on failure.
+    # Build → verify → retry runtime for Plan first / Build modes.
     class Runtime
       Result = Struct.new(
         :task, :status, :attempts, :content, :iterations, :usage, :verify, :messages,
@@ -35,7 +35,8 @@ module RailsAiBuild
         max_attempts: nil,
         task_id: nil,
         session_id: nil,
-        session: nil
+        session: nil,
+        plan_first: false
       )
         @task = task.to_s
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
@@ -47,6 +48,7 @@ module RailsAiBuild
         @task_id = task_id
         @session = session
         @session_id = session_id || session&.id
+        @plan_first = plan_first
         @attempts = []
       end
 
@@ -99,10 +101,15 @@ module RailsAiBuild
       end
 
       def build_prompt(attempt:, context:)
-        parts = ["# Task\n#{@task}"]
+        # Keep the user's ask clean — no product-marketing wrappers in chat history/titles.
+        parts = []
+        if @plan_first
+          parts << "Plan first: briefly list the files you will change and why, then implement with minimal diffs.\n"
+        end
+        parts << @task.to_s.strip
         parts << context if context.present?
         parts << "\n(This is attempt #{attempt}/#{@max_attempts}.)" if attempt > 1
-        parts.join
+        parts.join("\n")
       end
 
       def run_agent(prompt, emit)
