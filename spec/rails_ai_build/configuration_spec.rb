@@ -45,7 +45,9 @@ RSpec.describe RailsAiBuild::Configuration do
       config = described_class.new
       expect(config.default_model).to eq("gpt-4o")
       expect(config.max_agent_iterations).to eq(25)
-      expect(config.allowed_tools).to include(:read_file, :grep, :run_generator, :host_safety_check)
+      expect(config.allowed_tools).to include(
+        :read_file, :grep, :run_generator, :host_safety_check, :application_info, :list_routes
+      )
       expect(config.generator_first).to be true
       expect(config.host_safety).to be true
       expect(config.host_safety_soft_preview).to be true
@@ -53,6 +55,15 @@ RSpec.describe RailsAiBuild::Configuration do
       expect(config.ssrf_protection).to be true
       expect(config.require_engine_token).to be false
       expect(config.auto_mount).to be true
+    end
+  end
+
+  describe "#ensure_explore_tools!" do
+    it "merges explore tools into a restricted host allowlist" do
+      config = described_class.new
+      config.allowed_tools = %i[read_file write_file]
+      config.ensure_explore_tools!
+      expect(config.allowed_tools).to include(:read_file, :write_file, :application_info, :list_models)
     end
   end
 end

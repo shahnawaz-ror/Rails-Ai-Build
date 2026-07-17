@@ -23,8 +23,13 @@ RailsAiBuild.configure do |config|
     config.default_model = ENV.fetch('OPENAI_MODEL', 'gpt-4o')
   end
 
-  # Tools the agent can use (run_generator preferred over freeform writes)
-  config.allowed_tools = %i[read_file write_file grep list_files shell run_generator host_safety_check]
+  # Tools the agent can use (explore + write; run_generator preferred over freeform writes)
+  config.allowed_tools = %i[
+    read_file write_file grep list_files shell run_generator host_safety_check
+    application_info list_routes database_schema list_models list_migrations
+    list_rake_tasks read_settings read_logs search_rails_docs model_attributes
+    run_rails_check
+  ]
 
   # Prefer Rails generators (catalog scoring) over inventing files with AI
   config.generator_first = true

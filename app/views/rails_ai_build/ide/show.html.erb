@@ -150,12 +150,19 @@
         </div>
         <div class="rab-live-bar" id="rab-live-bar" hidden>
           <span class="rab-pulse"></span>
+          <div class="rab-phase-rail" id="rab-phase-rail" aria-hidden="true">
+            <span class="rab-phase-chip" data-phase="planning">Planning</span>
+            <span class="rab-phase-sep">→</span>
+            <span class="rab-phase-chip" data-phase="executing">Executing</span>
+            <span class="rab-phase-sep">→</span>
+            <span class="rab-phase-chip" data-phase="reply">Reply</span>
+          </div>
           <span id="rab-live-text">Working…</span>
         </div>
         <div class="rab-stream" id="rab-stream">
-          <div class="rab-empty-chat">Ask anything — you’ll see context, tools, and file writes live as they happen.</div>
+          <div class="rab-empty-chat">Ask anything — you’ll see planning, tool runs, and the reply stream live (Cursor-style).</div>
         </div>
-        <form class="rab-prompt-bar" id="rab-prompt-form">
+        <form class="rab-prompt-bar" id="rab-prompt-form" action="#" method="post">
           <select id="rab-mode" title="Mode">
             <option value="stream">Agent</option>
             <option value="build">Build (verify)</option>
@@ -168,7 +175,7 @@
               <option value="<%= s[:name] %>"><%= s[:name] %></option>
             <% end %>
           </select>
-          <textarea id="rab-prompt" placeholder="Ask the agent… Enter to send · Shift+Enter for newline" rows="2"></textarea>
+          <textarea id="rab-prompt" name="prompt" placeholder="Ask the agent… Enter to send · Shift+Enter for newline" rows="2" autocomplete="off"></textarea>
           <button type="submit" class="rab-btn rab-btn-primary" id="rab-run-btn">Send</button>
         </form>
       </div>

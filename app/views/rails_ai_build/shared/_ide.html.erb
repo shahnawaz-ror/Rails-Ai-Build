@@ -347,14 +347,20 @@
     }
   }
 
-  function setLive(message) {
+  let currentTurn = null;
+  let replyBufferEl = null;
+  const phaseOrder = { planning: 0, executing: 1, reply: 2, done: 3 };
+
+  function setLive(message, phase) {
     if (!liveBar || !liveText) return;
     if (message) {
       liveBar.hidden = false;
       liveText.textContent = message;
       if (statusEl) statusEl.textContent = message;
+      if (phase) setGlobalPhase(phase);
     } else {
       liveBar.hidden = true;
+      setGlobalPhase(null);
       if (statusEl) {
         statusEl.className = 'rab-status-idle';
         statusEl.textContent = 'Ready — Enter to send, Shift+Enter for newline';
@@ -362,96 +368,263 @@
     }
   }
 
-  function formatEvent(event, data) {
-    const tags = {
-      start: 'rab-tag-start', status: 'rab-tag-status', context: 'rab-tag-context', session: 'rab-tag-session',
-      attempt: 'rab-tag-start', verify: 'rab-tag-iteration', queued: 'rab-tag-start', running: 'rab-tag-start',
-      tool_call: 'rab-tag-tool', tool_result: 'rab-tag-tool', delta: 'rab-tag-delta', iteration: 'rab-tag-iteration',
-      complete: 'rab-tag-complete', done: 'rab-tag-done', finished: 'rab-tag-complete', pr_ready: 'rab-tag-complete',
-      host_safety: 'rab-tag-error', generator_plan: 'rab-tag-status', generator_result: 'rab-tag-status',
-      error: 'rab-tag-error', user: 'rab-tag-start'
-    };
-    let body = '';
-    let extraClass = '';
-    if (event === 'user') {
-      body = escapeHtml(data.content || '');
-      extraClass = ' rab-event-user';
-    } else if (event === 'status') {
-      setLive(data.message || 'Working…');
-      body = escapeHtml(data.message || '');
-      extraClass = ' rab-event-status';
-    } else if (event === 'session') {
-      sessionId = data.id;
-      localStorage.setItem('rab-session-id', sessionId);
-      body = 'Thread ' + sessionId.slice(0, 8) + '… · ' + (data.provider || '') + '/' + (data.model || '');
-      loadSessions();
-    } else if (event === 'context') {
-      body = 'Context loaded · Rails ' + (data.rails || data.rails_version || '?');
-    } else if (event === 'start' || event === 'attempt') {
-      body = (event === 'attempt' ? 'Attempt ' + data.number + '/' + data.max : 'Starting: "' + (data.task || data.message || '') + '"');
-    } else if (event === 'verify') {
-      body = data.passed ? '✓ Verification passed' : '✗ Verification failed';
-    } else if (event === 'tool_call') {
-      body = '<strong>' + escapeHtml(data.name || '') + '</strong>';
-      if (data.arguments) {
-        body += '<pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' +
-          escapeHtml(JSON.stringify(data.arguments, null, 2)).slice(0, 600) + '</pre>';
-      }
-    } else if (event === 'tool_result') {
-      const summary = data.summary || ('Finished ' + (data.name || 'tool'));
-      body = '<span class="rab-applied">' + escapeHtml(summary) + '</span>';
-      if (data.result) {
-        body += '<pre style="margin:0.25rem 0;font-size:0.68rem;color:var(--rab-muted)">' +
-          escapeHtml(String(data.result).slice(0, 500)) + '</pre>';
-      }
-      if (/applied|written/i.test(summary)) loadTree();
-    } else if (event === 'delta' || event === 'iteration') {
-      body = data.content || '';
-      if (data.token) return '<span class="rab-token-delta">' + escapeHtml(body) + '</span>';
-      body = escapeHtml(body);
-    } else if (event === 'host_safety') {
-      applyHostSafety(data);
-      if (data.healthy) {
-        body = 'Host Safety OK' + (data.promoted ? ' · shadow promoted' : '');
-      } else {
-        body = 'Host unhealthy (' + escapeHtml(String(data.failure_class || 'unknown')) + ')' +
-          (data.rolled_back ? ' · rolled back' : '');
-      }
-    } else if (event === 'complete' || event === 'done' || event === 'finished') {
-      body = escapeHtml(data.content || (data.status ? 'Status: ' + data.status : 'Done.'));
-      if (data.applied_files?.length) {
-        body += '<div class="rab-applied" style="margin-top:0.4rem">Files: ' +
-          data.applied_files.map(f => escapeHtml(f.path) + ' (' + escapeHtml(f.status) + ')').join(', ') + '</div>';
-        loadTree();
-      }
-      if (data.pending_changes?.length) refreshChanges(data.pending_changes);
-      if (data.host_safety) applyHostSafety(data.host_safety);
-      if (data.compare_url || data.pr_url) body += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
-    } else if (event === 'pr_ready') {
-      body = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' + (data.branch || 'compare') + '</a>';
-    } else if (event === 'error') {
-      body = escapeHtml(data.error || 'Unknown error');
-    } else {
-      body = escapeHtml(typeof data === 'string' ? data : JSON.stringify(data));
-    }
-    return '<div class="rab-event' + extraClass + '"><span class="rab-event-tag ' + (tags[event] || 'rab-tag-error') + '">' +
-      event + '</span><div class="rab-event-body">' + body + '</div></div>';
+  function setGlobalPhase(phase) {
+    document.querySelectorAll('#rab-phase-rail .rab-phase-chip').forEach((chip) => {
+      const p = chip.dataset.phase;
+      chip.classList.toggle('active', !!phase && p === phase);
+      chip.classList.toggle('done', !!phase && phaseOrder[p] < phaseOrder[phase]);
+    });
   }
 
   function escapeHtml(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  function ensureTurn() {
+    if (currentTurn?.el?.isConnected) return currentTurn;
+    const el = document.createElement('div');
+    el.className = 'rab-turn';
+    el.innerHTML =
+      '<div class="rab-turn-phases">' +
+        '<span class="rab-phase-chip" data-phase="planning">Planning</span>' +
+        '<span class="rab-phase-sep">→</span>' +
+        '<span class="rab-phase-chip" data-phase="executing">Executing</span>' +
+        '<span class="rab-phase-sep">→</span>' +
+        '<span class="rab-phase-chip" data-phase="reply">Reply</span>' +
+      '</div>' +
+      '<div class="rab-turn-steps"></div>' +
+      '<div class="rab-turn-reply" hidden></div>';
+    streamEl.appendChild(el);
+    currentTurn = {
+      el,
+      steps: el.querySelector('.rab-turn-steps'),
+      reply: el.querySelector('.rab-turn-reply'),
+      chips: el.querySelectorAll('.rab-phase-chip'),
+      phase: 'planning'
+    };
+    replyBufferEl = null;
+    return currentTurn;
+  }
+
+  function setTurnPhase(phase) {
+    const turn = ensureTurn();
+    turn.phase = phase;
+    turn.chips.forEach((chip) => {
+      const p = chip.dataset.phase;
+      chip.classList.toggle('active', p === phase);
+      chip.classList.toggle('done', phaseOrder[p] < phaseOrder[phase]);
+    });
+    setGlobalPhase(phase === 'done' ? 'reply' : phase);
+  }
+
+  function addStep(kind, title, detailHtml) {
+    const turn = ensureTurn();
+    const step = document.createElement('div');
+    step.className = 'rab-step rab-step-' + kind;
+    step.innerHTML =
+      '<span class="rab-step-icon" aria-hidden="true"></span>' +
+      '<div class="rab-step-body">' +
+        '<div class="rab-step-title">' + escapeHtml(title) + '</div>' +
+        (detailHtml ? '<div class="rab-step-detail">' + detailHtml + '</div>' : '') +
+      '</div>';
+    turn.steps.appendChild(step);
+    streamEl.scrollTop = streamEl.scrollHeight;
+    return step;
+  }
+
+  function humanGeneratorPlan(data) {
+    const mode = data.mode || 'ai';
+    if (mode === 'generator' && data.generator) {
+      return 'Using Rails generator · ' + data.generator +
+        (data.args?.length ? ' ' + data.args.join(' ') : '');
+    }
+    if (mode === 'hybrid' && data.generator) {
+      return 'Plan · AI + generator ' + data.generator;
+    }
+    return data.reason || 'Plan · explore with tools, then edit files';
+  }
+
+  function toolArgsSummary(name, args) {
+    if (!args || typeof args !== 'object') return '';
+    const path = args.path || args.file;
+    const q = args.query || args.pattern;
+    if (path) return escapeHtml(String(path));
+    if (q) return escapeHtml(String(q)).slice(0, 80);
+    const keys = Object.keys(args);
+    if (!keys.length) return '';
+    return escapeHtml(JSON.stringify(args)).slice(0, 120);
+  }
+
+  function appendUserBubble(content) {
+    const empty = streamEl.querySelector('.rab-empty-chat');
+    if (empty) empty.remove();
+    currentTurn = null;
+    replyBufferEl = null;
+    const bubble = document.createElement('div');
+    bubble.className = 'rab-user-bubble';
+    bubble.innerHTML = '<div class="rab-user-label">You</div><div class="rab-user-text">' +
+      escapeHtml(content) + '</div>';
+    streamEl.appendChild(bubble);
+    streamEl.scrollTop = streamEl.scrollHeight;
+  }
+
+  function appendReplyToken(text) {
+    const turn = ensureTurn();
+    setTurnPhase('reply');
+    turn.reply.hidden = false;
+    if (!replyBufferEl) {
+      replyBufferEl = document.createElement('div');
+      replyBufferEl.className = 'rab-reply-stream';
+      turn.reply.appendChild(replyBufferEl);
+    }
+    replyBufferEl.insertAdjacentHTML('beforeend', '<span class="rab-token-delta">' + escapeHtml(text) + '</span>');
+    streamEl.scrollTop = streamEl.scrollHeight;
+  }
+
+  function formatEvent(event, data) {
+    // Legacy HTML helper for task watcher / session list clicks
+    if (event === 'session') {
+      return '<div class="rab-event"><span class="rab-event-tag rab-tag-session">session</span>' +
+        '<div class="rab-event-body">Thread ' + escapeHtml(String(data.id || '').slice(0, 8)) + '…</div></div>';
+    }
+    return '<div class="rab-event"><span class="rab-event-tag">' + escapeHtml(event) +
+      '</span><div class="rab-event-body">' +
+      escapeHtml(typeof data === 'string' ? data : JSON.stringify(data)) + '</div></div>';
+  }
+
   function appendEvent(event, data) {
     const empty = streamEl.querySelector('.rab-empty-chat');
     if (empty) empty.remove();
-    const html = formatEvent(event, data);
-    if (event === 'delta' && data.token) {
-      streamEl.insertAdjacentHTML('beforeend', html);
-    } else {
-      streamEl.insertAdjacentHTML('beforeend', html);
+
+    if (event === 'user') {
+      appendUserBubble(data.content || '');
+      return;
     }
-    streamEl.scrollTop = streamEl.scrollHeight;
+
+    if (event === 'status' || event === 'start' || event === 'attempt' || event === 'queued' || event === 'running') {
+      setTurnPhase('planning');
+      setLive(data.message || data.task || 'Planning…', 'planning');
+      addStep('plan', data.message || data.task || 'Planning…');
+      return;
+    }
+
+    if (event === 'generator_plan') {
+      setTurnPhase('planning');
+      const title = humanGeneratorPlan(data);
+      setLive(title, 'planning');
+      addStep('plan', title);
+      return;
+    }
+
+    if (event === 'generator_result') {
+      setTurnPhase('executing');
+      const ok = data.ok !== false && data.status !== 'failed';
+      setLive(ok ? 'Generator finished' : 'Generator failed', 'executing');
+      addStep(ok ? 'ok' : 'error', ok ? 'Generator finished' : 'Generator failed',
+        data.message || data.error ? escapeHtml(String(data.message || data.error)) : '');
+      return;
+    }
+
+    if (event === 'session') {
+      sessionId = data.id;
+      localStorage.setItem('rab-session-id', sessionId);
+      setTurnPhase('planning');
+      addStep('plan', 'Thread ' + String(sessionId).slice(0, 8) + '… · ' + (data.provider || '') + '/' + (data.model || 'default'));
+      loadSessions();
+      return;
+    }
+
+    if (event === 'context') {
+      setTurnPhase('planning');
+      setLive('Context loaded', 'planning');
+      addStep('plan', 'Context loaded · Rails ' + (data.rails || data.rails_version || '?'));
+      return;
+    }
+
+    if (event === 'tool_call') {
+      setTurnPhase('executing');
+      const detail = toolArgsSummary(data.name, data.arguments);
+      setLive('Running ' + (data.name || 'tool') + '…', 'executing');
+      addStep('tool', data.name || 'tool', detail);
+      return;
+    }
+
+    if (event === 'tool_result') {
+      setTurnPhase('executing');
+      const summary = data.summary || ('Finished ' + (data.name || 'tool'));
+      setLive(summary, 'executing');
+      addStep(/error|fail/i.test(summary) ? 'error' : 'ok', summary);
+      if (/applied|written/i.test(summary)) loadTree();
+      return;
+    }
+
+    if (event === 'verify') {
+      setTurnPhase('executing');
+      addStep(data.passed ? 'ok' : 'error', data.passed ? 'Verification passed' : 'Verification failed');
+      return;
+    }
+
+    if (event === 'delta' || event === 'iteration') {
+      if (data.token || event === 'delta') {
+        setLive('Streaming reply…', 'reply');
+        appendReplyToken(data.content || '');
+        return;
+      }
+      if (data.content) {
+        setTurnPhase('reply');
+        ensureTurn().reply.hidden = false;
+        ensureTurn().reply.insertAdjacentHTML('beforeend',
+          '<div class="rab-reply-block">' + escapeHtml(data.content) + '</div>');
+      }
+      return;
+    }
+
+    if (event === 'host_safety') {
+      applyHostSafety(data);
+      setTurnPhase('executing');
+      addStep(data.healthy ? 'ok' : 'error',
+        data.healthy ? ('Host Safety OK' + (data.promoted ? ' · shadow promoted' : '')) :
+          ('Host unhealthy' + (data.rolled_back ? ' · rolled back' : '')));
+      return;
+    }
+
+    if (event === 'complete' || event === 'done' || event === 'finished' || event === 'pr_ready') {
+      setTurnPhase('done');
+      const turn = ensureTurn();
+      turn.reply.hidden = false;
+      let html = '';
+      if (event === 'pr_ready') {
+        html = 'PR ready: <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">' +
+          escapeHtml(data.branch || 'compare') + '</a>';
+      } else {
+        html = escapeHtml(data.content || (data.status ? 'Status: ' + data.status : 'Done.'));
+      }
+      if (data.applied_files?.length) {
+        html += '<div class="rab-applied">Files: ' +
+          data.applied_files.map(f => escapeHtml(f.path) + ' (' + escapeHtml(f.status) + ')').join(', ') + '</div>';
+        loadTree();
+      }
+      if (data.pending_changes?.length) refreshChanges(data.pending_changes);
+      if (data.host_safety) applyHostSafety(data.host_safety);
+      if (data.compare_url || data.pr_url) {
+        html += ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>';
+      }
+      turn.reply.insertAdjacentHTML('beforeend', '<div class="rab-reply-final">' + html + '</div>');
+      setLive('Done', 'reply');
+      streamEl.scrollTop = streamEl.scrollHeight;
+      return;
+    }
+
+    if (event === 'error') {
+      setTurnPhase('done');
+      setLive(data.error || 'Error', 'reply');
+      addStep('error', data.error || 'Unknown error');
+      return;
+    }
+
+    // Unknown events → compact step, never dump raw JSON for plans
+    setTurnPhase(currentTurn?.phase || 'planning');
+    addStep('plan', event, escapeHtml(typeof data === 'string' ? data : (data.message || data.reason || '')).slice(0, 200));
   }
 
   async function consumeSse(res, onChunk) {
@@ -475,32 +648,49 @@
   }
 
   async function runAgent(e) {
-    e?.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (running) return;
     const prompt = promptEl?.value.trim();
-    if (!prompt) return;
+    if (!prompt) {
+      promptEl?.focus();
+      return;
+    }
     const mode = document.getElementById('rab-mode')?.value || 'stream';
 
     appendEvent('user', { content: prompt });
-    if (promptEl) promptEl.value = '';
+    if (promptEl) {
+      promptEl.value = '';
+      promptEl.style.height = 'auto';
+    }
 
     if (mode === 'queue') {
-      setLive('Queueing task…');
-      const res = await fetch(base + '/tasks', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
-      });
-      const data = await res.json();
-      appendEvent('complete', { content: 'Queued task ' + data.id, status: data.status });
-      setLive(null);
-      watchTask(data.id);
-      loadTasks();
+      setLive('Queueing task…', 'planning');
+      try {
+        const res = await fetch(base + '/tasks', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task: prompt, skill: document.getElementById('rab-skill').value || undefined, verify: true })
+        });
+        const data = await res.json();
+        appendEvent('complete', { content: 'Queued task ' + data.id, status: data.status });
+        watchTask(data.id);
+        loadTasks();
+      } catch (err) {
+        appendEvent('error', { error: err.message });
+      } finally {
+        setLive(null);
+      }
       return;
     }
 
     running = true;
-    if (runBtn) runBtn.disabled = true;
-    setLive(mode === 'composer' ? 'Composing plan…' : (mode === 'build' ? 'Building…' : 'Starting agent…'));
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.textContent = 'Working…';
+    }
+    setLive(mode === 'composer' ? 'Composing plan…' : (mode === 'build' ? 'Building…' : 'Planning…'), 'planning');
+    ensureTurn();
+    setTurnPhase('planning');
 
     try {
       if (mode === 'build' || mode === 'composer') {
@@ -554,20 +744,32 @@
       appendEvent('error', { error: err.message });
     } finally {
       running = false;
-      if (runBtn) runBtn.disabled = false;
+      if (runBtn) {
+        runBtn.disabled = false;
+        runBtn.textContent = 'Send';
+      }
       setLive(null);
+      promptEl?.focus();
     }
   }
 
-  document.getElementById('rab-prompt-form')?.addEventListener('submit', runAgent);
+  const promptForm = document.getElementById('rab-prompt-form');
+  promptForm?.addEventListener('submit', runAgent);
 
-  // Enter to send, Shift+Enter for newline
+  function isSendHotkey(ev) {
+    if (ev.shiftKey || ev.altKey || ev.ctrlKey || ev.metaKey || ev.isComposing) return false;
+    return ev.key === 'Enter' || ev.code === 'Enter' || ev.keyCode === 13;
+  }
+
+  // Enter to send (Shift+Enter = newline). Capture phase so Enter is not swallowed.
   promptEl?.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' && !ev.shiftKey) {
-      ev.preventDefault();
-      runAgent(ev);
-    }
-  });
+    if (!isSendHotkey(ev)) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (running) return;
+    if (promptForm?.requestSubmit) promptForm.requestSubmit();
+    else runAgent(ev);
+  }, true);
 
   // Auto-grow textarea
   promptEl?.addEventListener('input', () => {

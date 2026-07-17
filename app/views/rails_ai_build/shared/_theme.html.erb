@@ -220,26 +220,77 @@
   .rab-stream { flex: 1; overflow-y: auto; padding: 0.75rem; font-size: 0.78rem; }
   .rab-empty-chat { color: var(--rab-muted); text-align: center; padding: 2rem 1rem; font-family: var(--rab-font-ui); }
   .rab-live-bar {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.35rem 0.75rem; font-size: 0.72rem; color: var(--rab-accent);
-    background: color-mix(in srgb, var(--rab-accent) 12%, transparent);
+    display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;
+    padding: 0.4rem 0.75rem; font-size: 0.72rem; color: var(--rab-accent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--rab-accent) 14%, transparent), transparent);
     border-bottom: 1px solid var(--rab-border);
   }
   .rab-live-bar[hidden] { display: none !important; }
+  .rab-phase-rail { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .rab-phase-chip {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 0.15rem 0.45rem; border-radius: 999px; color: var(--rab-muted);
+    background: var(--rab-elevated); border: 1px solid var(--rab-border);
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  }
+  .rab-phase-chip.active {
+    color: #041016; background: var(--rab-accent); border-color: var(--rab-accent);
+    transform: translateY(-1px);
+  }
+  .rab-phase-chip.done { color: var(--rab-green); border-color: color-mix(in srgb, var(--rab-green) 45%, transparent); }
+  .rab-phase-sep { color: var(--rab-muted); font-size: 0.7rem; opacity: 0.7; }
   .rab-status-idle { color: var(--rab-muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+  .rab-user-bubble { margin: 0 0 0.85rem; animation: rab-fade-in 180ms ease-out; }
+  .rab-user-label { font-size: 0.65rem; font-weight: 700; color: var(--rab-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .rab-user-text {
+    background: color-mix(in srgb, var(--rab-accent) 16%, var(--rab-elevated));
+    border: 1px solid color-mix(in srgb, var(--rab-accent) 35%, var(--rab-border));
+    border-radius: 12px; padding: 0.65rem 0.85rem; font-family: var(--rab-font-ui); line-height: 1.45;
+  }
+
+  .rab-turn {
+    margin: 0 0 1rem; padding: 0.65rem 0.75rem 0.75rem;
+    border: 1px solid var(--rab-border); border-radius: 12px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--rab-elevated) 80%, transparent), var(--rab-surface));
+    animation: rab-fade-in 200ms ease-out;
+  }
+  .rab-turn-phases { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.55rem; }
+  .rab-turn-steps { display: flex; flex-direction: column; gap: 0.35rem; }
+  .rab-step {
+    display: flex; gap: 0.55rem; align-items: flex-start;
+    padding: 0.35rem 0.45rem; border-radius: 8px;
+    animation: rab-slide-in 160ms ease-out;
+  }
+  .rab-step-icon {
+    width: 8px; height: 8px; margin-top: 0.4rem; border-radius: 50%; flex-shrink: 0;
+    background: var(--rab-muted);
+  }
+  .rab-step-plan .rab-step-icon { background: var(--rab-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rab-blue) 22%, transparent); }
+  .rab-step-tool .rab-step-icon { background: var(--rab-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rab-yellow) 22%, transparent); }
+  .rab-step-ok .rab-step-icon { background: var(--rab-green); }
+  .rab-step-error .rab-step-icon { background: var(--rab-red); }
+  .rab-step-title { font-family: var(--rab-font-ui); font-size: 0.8rem; color: var(--rab-text); }
+  .rab-step-detail { font-family: var(--rab-font-mono); font-size: 0.7rem; color: var(--rab-muted); margin-top: 0.15rem; }
+  .rab-turn-reply { margin-top: 0.65rem; padding-top: 0.55rem; border-top: 1px dashed var(--rab-border); }
+  .rab-reply-stream, .rab-reply-block, .rab-reply-final {
+    font-family: var(--rab-font-ui); font-size: 0.84rem; line-height: 1.5; white-space: pre-wrap;
+  }
+  .rab-token-delta { color: var(--rab-text); }
+  .rab-applied { color: var(--rab-green); font-weight: 600; margin-top: 0.35rem; }
+
   .rab-event { margin-bottom: 0.6rem; animation: rab-fade-in 180ms ease-out; }
   .rab-event-tag { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 3px; margin-right: 0.4rem; font-weight: 600; }
   .rab-tag-start, .rab-tag-status, .rab-tag-context, .rab-tag-session { background: color-mix(in srgb, var(--rab-blue) 25%, transparent); color: var(--rab-blue); }
   .rab-tag-tool { background: color-mix(in srgb, var(--rab-yellow) 25%, transparent); color: var(--rab-yellow); }
   .rab-tag-complete, .rab-tag-done { background: color-mix(in srgb, var(--rab-green) 25%, transparent); color: var(--rab-green); }
   .rab-tag-error { background: color-mix(in srgb, var(--rab-red) 25%, transparent); color: var(--rab-red); }
-  .rab-tag-iteration, .rab-tag-delta { background: color-mix(in srgb, var(--rab-purple) 20%, transparent); color: var(--rab-purple); }
+  .rab-tag-iteration, .rab-tag-delta { background: color-mix(in srgb, var(--rab-accent) 20%, transparent); color: var(--rab-accent); }
   .rab-event-body { background: var(--rab-elevated); border-radius: 8px; padding: 0.55rem 0.75rem; font-family: var(--rab-font-mono); border: 1px solid transparent; }
   .rab-event-user .rab-event-body { border-color: color-mix(in srgb, var(--rab-accent) 40%, transparent); }
   .rab-event-status .rab-event-body { font-family: var(--rab-font-ui); color: var(--rab-muted); }
-  .rab-token-delta { color: var(--rab-text); }
-  .rab-applied { color: var(--rab-green); font-weight: 600; }
   @keyframes rab-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes rab-slide-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
 
   .rab-prompt-bar {
     display: flex; gap: 0.5rem; padding: 0.6rem; border-top: 1px solid var(--rab-border);

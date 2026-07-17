@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.3] - 2026-07-17
+
+### Fixed / UX — Cursor-style agent timeline + Enter-to-send
+- Agent stream shows **Planning → Executing → Reply** phases (no raw `generator_plan` JSON dump)
+- Enter sends the prompt (capture-phase keydown + `requestSubmit`); Shift+Enter still newlines
+- Explore tools (`application_info`, routes, schema, …) are always merged into `allowed_tools` so Free hosts stop failing with `Tool not allowed: application_info`
+
 ## [2.8.2] - 2026-07-17
 
 ### Fixed — Boot crash `TSort::Cyclic` on host apps

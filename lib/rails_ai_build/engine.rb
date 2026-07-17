@@ -22,6 +22,7 @@ module RailsAiBuild
     initializer "rails_ai_build.load_activation", after: :load_config_initializers do
       RailsAiBuild.configuration.apply_env_providers!
       RailsAiBuild::Activation.load_into_configuration!
+      RailsAiBuild.configuration.ensure_explore_tools!
     rescue StandardError => e
       Rails.logger.warn("[rails_ai_build] Activation load skipped: #{e.message}") if defined?(Rails)
     end

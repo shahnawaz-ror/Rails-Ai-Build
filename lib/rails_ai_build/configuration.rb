@@ -2,6 +2,13 @@
 
 module RailsAiBuild
   class Configuration
+    # Read-only explore tools the agent needs to plan (always merged into allowed_tools).
+    EXPLORE_TOOLS = %i[
+      application_info list_routes database_schema list_models list_migrations
+      list_rake_tasks read_settings read_logs search_rails_docs model_attributes
+      run_rails_check
+    ].freeze
+
     attr_accessor :default_model,
                   :default_provider,
                   :api_keys,
@@ -63,7 +70,14 @@ module RailsAiBuild
       @default_model = "gpt-4o"
       @default_provider = :openai
       @api_keys = {}
-      @allowed_tools = %i[read_file write_file grep list_files shell run_generator host_safety_check]
+      # Default includes explore/read Boost tools so the agent can plan without
+      # "Tool not allowed: application_info" on Free BYOK installs.
+      @allowed_tools = %i[
+        read_file write_file grep list_files shell run_generator host_safety_check
+        application_info list_routes database_schema list_models list_migrations
+        list_rake_tasks read_settings read_logs search_rails_docs model_attributes
+        run_rails_check
+      ]
       @workspace_root = -> { Rails.root }
       @max_agent_iterations = 25
       @shell_timeout = 30
@@ -147,6 +161,12 @@ module RailsAiBuild
         self.seat_limit = ENV["RAILS_AI_BUILD_SEAT_LIMIT"].to_i
       end
       self.redis_url ||= ENV["RAILS_AI_BUILD_REDIS_URL"].presence || ENV["REDIS_URL"].presence
+      ensure_explore_tools!
+    end
+
+    # Host initializers often omit Boost explore tools; merge them so planning works.
+    def ensure_explore_tools!
+      self.allowed_tools = Array(allowed_tools).map(&:to_sym) | EXPLORE_TOOLS
     end
 
     def register_provider(name, provider_class, options = {})
