@@ -1374,9 +1374,19 @@
         streamEl.innerHTML = '<div class="rab-empty-chat">Empty thread — ask the agent to start this chat.</div>';
         return true;
       }
+      let lastAssistant = '';
       msgs.forEach((m) => {
-        if (m.role === 'user') appendUserBubble(m.content);
-        else appendHistoryAssistant(m.content);
+        if (m.role === 'user') {
+          appendUserBubble(m.content);
+          lastAssistant = '';
+          return;
+        }
+        const text = String(m.content || '').trim();
+        if (!text || text === lastAssistant) return;
+        // Skip tool-dump assistant blobs that look like read_file restatements
+        if (/has \d+ lines of content/i.test(text) && text.length < 500) return;
+        lastAssistant = text;
+        appendHistoryAssistant(text);
       });
       streamEl.scrollTop = streamEl.scrollHeight;
       setLive(null);

@@ -97,4 +97,37 @@ RSpec.describe RailsAiBuild::Agents::Runner do
       described_class.new(agent: agent, cancel_check: -> { true }).run!
     }.to raise_error(RailsAiBuild::CancelledError, /Stopped/)
   end
+
+  it "stops when the model repeats the same tool calls" do
+    calls = 0
+    provider = Class.new(RailsAiBuild::Models::BaseProvider) do
+      define_method(:name) { :mock }
+      define_method(:list_models) { ["mock"] }
+      define_method(:chat) do |messages:, tools: [], model: nil, **|
+        calls += 1
+        {
+          role: "assistant",
+          content: "Reading user model…",
+          tool_calls: [{
+            id: "call_#{calls}",
+            name: "read_file",
+            arguments: { "path" => "app/models/user.rb" }
+          }],
+          usage: { "prompt_tokens" => 1, "completion_tokens" => 1, "total_tokens" => 2 },
+          finish_reason: "tool_calls"
+        }
+      end
+    end.new(name: :mock)
+
+    agent = RailsAiBuild::Agents::Agent.new
+    agent.instance_variable_set(:@provider, provider)
+    agent.add_message(RailsAiBuild::Agents::Message.user("add complete rspec"))
+    allow(agent).to receive(:execute_tool).and_return({ "path" => "app/models/user.rb", "lines" => 111 })
+
+    result = described_class.new(agent: agent).run!
+
+    expect(result[:content]).to match(/repeated the same tool/i)
+    expect(calls).to be <= 3
+    expect(agent).to have_received(:execute_tool).once
+  end
 end

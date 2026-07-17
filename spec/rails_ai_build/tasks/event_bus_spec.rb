@@ -6,7 +6,7 @@ RSpec.describe RailsAiBuild::Tasks::EventBus do
   before { described_class.reset! }
   after { described_class.reset! }
 
-  it "emits and replays buffered events to new subscribers" do
+  it "emits and replays buffered events to new subscribers while running" do
     described_class.emit("t1", :queued, { id: "t1" })
     seen = []
     unsub = described_class.subscribe("t1") { |event, data| seen << [event, data] }
@@ -18,6 +18,18 @@ RSpec.describe RailsAiBuild::Tasks::EventBus do
     unsub.call
     described_class.emit("t1", :finished, { id: "t1" })
     expect(seen.map(&:first)).not_to include(:finished)
+  end
+
+  it "replays only one terminal event when the task already finished" do
+    described_class.emit("t1", :queued, { id: "t1" })
+    described_class.emit("t1", :running, { id: "t1" })
+    described_class.emit("t1", :complete, { content: "dump" })
+    described_class.emit("t1", :finished, { id: "t1" })
+
+    seen = []
+    described_class.subscribe("t1") { |event, data| seen << [event, data] }
+    expect(seen.size).to eq(1)
+    expect(seen.first.first).to eq(:finished)
   end
 
   it "caps buffer size per task" do

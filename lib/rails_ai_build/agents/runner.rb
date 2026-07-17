@@ -7,11 +7,16 @@ module RailsAiBuild
     class Runner
       attr_reader :agent, :iterations, :last_response
 
+      # Same tool+args seen again → stop before a second identical round (weak models loop on read_file).
+      MAX_IDENTICAL_TOOL_ROUNDS = 1
+
       def initialize(agent:, cancel_check: nil)
         @agent = agent
         @cancel_check = cancel_check
         @iterations = 0
         @last_response = nil
+        @last_tool_fingerprint = nil
+        @repeat_tool_rounds = 0
         @callbacks = {
           on_iteration: [],
           on_tool_call: [],
@@ -42,6 +47,11 @@ module RailsAiBuild
           raise_if_cancelled!
 
           tool_calls = response[:tool_calls] || []
+          if tool_calls.any? && repeated_tools?(tool_calls)
+            stop_repeat_loop!(tool_calls)
+            break
+          end
+
           agent.add_message(Message.assistant(response[:content], tool_calls: tool_calls.presence))
           break if tool_calls.empty?
 
@@ -60,6 +70,33 @@ module RailsAiBuild
         return unless @cancel_check&.call
 
         raise CancelledError, 'Stopped by user'
+      end
+
+      def repeated_tools?(tool_calls)
+        fp = tool_fingerprint(tool_calls)
+        if fp == @last_tool_fingerprint
+          @repeat_tool_rounds += 1
+        else
+          @last_tool_fingerprint = fp
+          @repeat_tool_rounds = 0
+        end
+        @repeat_tool_rounds >= MAX_IDENTICAL_TOOL_ROUNDS
+      end
+
+      def tool_fingerprint(tool_calls)
+        Array(tool_calls).map do |tc|
+          args = tc[:arguments].is_a?(Hash) ? tc[:arguments] : {}
+          [tc[:name].to_s, args.transform_keys(&:to_s).sort.to_h]
+        end.sort_by(&:first)
+      end
+
+      def stop_repeat_loop!(tool_calls)
+        names = Array(tool_calls).map { |tc| tc[:name].to_s }.uniq.join(', ')
+        message = "Stopped: repeated the same tool call(s) (#{names}) without progress. " \
+                  "Tell me the next concrete step and I will continue."
+        @last_response = (@last_response || {}).merge(content: message, tool_calls: [])
+        agent.add_message(Message.assistant(message))
+        fire(:on_iteration, @last_response)
       end
 
       def fetch_response(stream_tokens:)

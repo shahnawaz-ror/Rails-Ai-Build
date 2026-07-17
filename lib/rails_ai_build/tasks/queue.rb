@@ -276,7 +276,8 @@ module RailsAiBuild
           task.status = result.status
           task.finished_at = Time.zone.now
           attach_pr!(task) if result.status == :success
-          EventBus.emit(task.id, :finished, task.to_h)
+          # Prefer a slim finished payload — Runtime already emitted :complete with content.
+          EventBus.emit(task.id, :finished, task.to_h.except(:result, :error))
           Analytics.track_basic(event: 'task.completed', metadata: { status: task.status }) if defined?(Analytics)
         end
 

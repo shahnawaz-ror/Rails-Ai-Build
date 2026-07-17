@@ -30,6 +30,8 @@ module RailsAiBuild
           mutex.synchronize { (buffers[task_id.to_s] || []).dup }
         end
 
+        TERMINAL_EVENTS = %w[complete done finished error cancelled].freeze
+
         def subscribe(task_id, &block)
           raise ArgumentError, "block required" unless block
 
@@ -38,7 +40,7 @@ module RailsAiBuild
             raise ConfigurationError, "Too many SSE listeners for task #{task_id}" if list.size >= MAX_LISTENERS_PER_TASK
 
             list << block
-            buffer!(task_id).each { |entry| safe_call(block, entry[:event].to_sym, entry[:data]) }
+            replay_for_subscriber!(task_id, block)
           end
           -> { unsubscribe(task_id, block) }
         end
@@ -97,6 +99,20 @@ module RailsAiBuild
           callback.call(event, data)
         rescue StandardError
           nil
+        end
+
+        # Replaying the full buffer after complete+finished stacked identical Done cards
+        # in the IDE. If the task already finished, send one terminal event only.
+        def replay_for_subscriber!(task_id, block)
+          buf = buffer!(task_id)
+          terminal = buf.reverse.find { |entry| TERMINAL_EVENTS.include?(entry[:event].to_s) }
+          if terminal
+            preferred = buf.reverse.find { |entry| entry[:event].to_s == "finished" } || terminal
+            safe_call(block, preferred[:event].to_sym, preferred[:data])
+            return
+          end
+
+          buf.each { |entry| safe_call(block, entry[:event].to_sym, entry[:data]) }
         end
       end
     end
