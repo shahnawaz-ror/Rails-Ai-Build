@@ -1120,16 +1120,35 @@
   });
 
   const watchedTasks = new Set();
+  const taskStreamBackoff = new Map(); // id -> epoch ms
 
   async function watchTask(id, opts) {
     opts = opts || {};
     if (!id || watchedTasks.has(id)) return;
+    const until = taskStreamBackoff.get(id) || 0;
+    if (Date.now() < until) return;
     watchedTasks.add(id);
     try {
       const res = await fetch(base + '/tasks/' + id + '/stream', {
         method: 'POST',
         headers: { Accept: 'text/event-stream' }
       });
+      if (res.status === 429) {
+        const retrySec = parseInt(res.headers.get('Retry-After') || '20', 10);
+        taskStreamBackoff.set(id, Date.now() + (retrySec * 1000));
+        if (opts.followInAgent) {
+          setLive('Live updates paused (rate limit) — retrying in ' + retrySec + 's…', 'executing');
+          addStep('plan', 'Live updates paused — rate limit. Retrying shortly…');
+        }
+        return;
+      }
+      if (!res.ok) {
+        if (opts.followInAgent) {
+          addStep('error', 'Could not follow task stream (' + res.status + ')');
+        }
+        return;
+      }
+      taskStreamBackoff.delete(id);
       await consumeSse(res, (event, data) => {
         if (event === 'delta' && data.token) return;
         // Default: background tasks update Tasks panel only — never jump the open chat
@@ -1139,8 +1158,10 @@
         });
       });
     } catch (e) { /* task may have finished before subscribe */ }
-    watchedTasks.delete(id);
-    loadTasks();
+    finally {
+      watchedTasks.delete(id);
+      loadTasks();
+    }
   }
 
   function appendHistoryAssistant(content) {
