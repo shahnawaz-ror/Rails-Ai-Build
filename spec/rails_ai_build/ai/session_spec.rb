@@ -53,4 +53,19 @@ RSpec.describe RailsAiBuild::Ai::Session do
     expect(client.map { |m| m[:role] }).to eq(%w[user tool assistant])
     expect(client.first[:content]).to eq("hello")
   end
+
+  it "titles threads from the real ask, not Composer/Task wrappers" do
+    session = described_class.create
+    wrapped = <<~MSG
+      # Composer mode (Cursor-style multi-file plan)
+      First outline which files you will create or change and why.
+      Then implement the plan with minimal focused diffs.
+
+      # Task
+      remove sql injection and optimize queries
+    MSG
+    session.add_message(RailsAiBuild::Agents::Message.user(wrapped))
+    expect(session.title).to include("remove sql injection")
+    expect(session.title).not_to match(/Composer mode/i)
+  end
 end

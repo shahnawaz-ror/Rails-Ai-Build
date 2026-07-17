@@ -331,6 +331,8 @@
   let running = false;
   let awaitingPlan = false;
   let sessionId = localStorage.getItem('rab-session-id') || null;
+  let historyGen = 0;
+  let sessionsRefreshTimer = null;
   const modeSel = document.getElementById('rab-mode');
   (function restoreMode() {
     if (!modeSel) return;
@@ -600,7 +602,52 @@
       escapeHtml(typeof data === 'string' ? data : JSON.stringify(data)) + '</div></div>';
   }
 
-  function appendEvent(event, data) {
+  function scheduleLoadSessions() {
+    if (sessionsRefreshTimer) clearTimeout(sessionsRefreshTimer);
+    sessionsRefreshTimer = setTimeout(() => { loadSessions(); }, 250);
+  }
+
+  function bindSession(id, { quiet } = {}) {
+    if (!id) return;
+    const changed = sessionId !== id;
+    sessionId = id;
+    localStorage.setItem('rab-session-id', sessionId);
+    if (!quiet && changed) {
+      setTurnPhase('planning');
+      addStep('plan', 'Thread ' + String(sessionId).slice(0, 8) + '…');
+    }
+    scheduleLoadSessions();
+  }
+
+  async function ensureSession() {
+    if (sessionId) {
+      // Verify it still exists; otherwise create a fresh one
+      try {
+        const res = await fetch(base + '/ai/sessions/' + encodeURIComponent(sessionId));
+        if (res.ok) return sessionId;
+      } catch (e) { /* create below */ }
+      sessionId = null;
+      localStorage.removeItem('rab-session-id');
+    }
+    const res = await fetch(base + '/ai/sessions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+    });
+    const data = await res.json();
+    bindSession(data.id, { quiet: true });
+    return sessionId;
+  }
+
+  function appendEvent(event, data, opts) {
+    opts = opts || {};
+    // Background task watchers must not steal the active chat / rewrite the stream
+    if (opts.fromTask && (event === 'session' || event === 'user')) return;
+    if (opts.fromTask && !opts.followInAgent) {
+      if (event === 'complete' || event === 'done' || event === 'finished' || event === 'error') {
+        loadTasks();
+      }
+      return;
+    }
+
     const empty = streamEl.querySelector('.rab-empty-chat');
     if (empty) empty.remove();
 
@@ -682,11 +729,11 @@
     }
 
     if (event === 'session') {
-      sessionId = data.id;
-      localStorage.setItem('rab-session-id', sessionId);
-      setTurnPhase('planning');
-      addStep('plan', 'Thread ' + String(sessionId).slice(0, 8) + '… · ' + (data.provider || '') + '/' + (data.model || 'default'));
-      loadSessions();
+      // Only bind when this event belongs to the chat the user is running
+      if (opts.fromTask && !opts.followInAgent) return;
+      if (data.id && (!sessionId || data.id === sessionId || running)) {
+        bindSession(data.id, { quiet: sessionId === data.id });
+      }
       return;
     }
 
@@ -751,18 +798,17 @@
     }
 
     if (event === 'complete' || event === 'done' || event === 'finished' || event === 'pr_ready') {
-      if (data.session_id) {
-        sessionId = data.session_id;
-        localStorage.setItem('rab-session-id', sessionId);
-      } else if (data.session?.id) {
-        sessionId = data.session.id;
-        localStorage.setItem('rab-session-id', sessionId);
+      if (opts.fromTask && !opts.followInAgent) {
+        loadTasks();
+        return;
       }
+      const sid = data.session_id || data.session?.id;
+      if (sid && (!sessionId || sid === sessionId || running)) bindSession(sid, { quiet: true });
       if (data.host_safety) applyHostSafety(data.host_safety);
       if (data.applied_files?.length) turnFiles = data.applied_files;
       showDoneSummary(data);
       setLive('Done — review Changes → This run', 'reply');
-      loadSessions();
+      scheduleLoadSessions();
       return;
     }
 
@@ -808,12 +854,19 @@
     currentTurn = null;
     replyBufferEl = null;
 
+    try {
+      await ensureSession();
+    } catch (e) {
+      appendEvent('error', { error: 'Could not open chat thread: ' + e.message });
+      return;
+    }
+
     if (mode === 'queue') {
       setLive('Queueing task…', 'planning');
       try {
         const res = await fetch(base + '/tasks', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ task: prompt, skill: skill, verify: true })
+          body: JSON.stringify({ task: prompt, skill: skill, verify: true, session_id: sessionId })
         });
         const data = await res.json();
         if (data.error) {
@@ -822,7 +875,7 @@
         }
         appendEvent('queued', { description: data.description || prompt, branch: data.branch, id: data.id });
         setLive('Background task running…', 'executing');
-        watchTask(data.id);
+        watchTask(data.id, { followInAgent: true });
         loadTasks();
       } catch (err) {
         appendEvent('error', { error: err.message });
@@ -848,10 +901,11 @@
             task: prompt,
             skill: skill,
             verify: true,
-            composer: mode === 'composer'
+            composer: mode === 'composer',
+            session_id: sessionId
           })
         });
-        await consumeSse(res, appendEvent);
+        await consumeSse(res, (event, data) => appendEvent(event, data));
         loadTasks();
         return;
       }
@@ -870,7 +924,7 @@
         const data = await res.json();
         if (data.error) appendEvent('error', { error: data.error });
         else {
-          if (data.session?.id) { sessionId = data.session.id; localStorage.setItem('rab-session-id', sessionId); }
+          if (data.session?.id) bindSession(data.session.id, { quiet: true });
           appendEvent('done', data);
         }
         return;
@@ -886,7 +940,7 @@
           session_id: sessionId
         })
       });
-      await consumeSse(res, appendEvent);
+      await consumeSse(res, (event, data) => appendEvent(event, data));
     } catch (err) {
       appendEvent('error', { error: err.message });
     } finally {
@@ -1067,7 +1121,8 @@
 
   const watchedTasks = new Set();
 
-  async function watchTask(id) {
+  async function watchTask(id, opts) {
+    opts = opts || {};
     if (!id || watchedTasks.has(id)) return;
     watchedTasks.add(id);
     try {
@@ -1075,13 +1130,13 @@
         method: 'POST',
         headers: { Accept: 'text/event-stream' }
       });
-      // Same Cursor timeline as Agent mode — never dump raw JSON via formatEvent
       await consumeSse(res, (event, data) => {
         if (event === 'delta' && data.token) return;
-        appendEvent(event, data);
-        if (event === 'complete' || event === 'done' || event === 'finished' || event === 'error') {
-          loadTasks();
-        }
+        // Default: background tasks update Tasks panel only — never jump the open chat
+        appendEvent(event, data, {
+          fromTask: true,
+          followInAgent: !!opts.followInAgent
+        });
       });
     } catch (e) { /* task may have finished before subscribe */ }
     watchedTasks.delete(id);
@@ -1100,10 +1155,13 @@
     lastStepKey = '';
   }
 
-  async function loadSessionHistory(id, { silent } = {}) {
+  async function loadSessionHistory(id, { silent, force } = {}) {
     if (!id || !streamEl) return false;
+    if (running && !force) return false; // never yank the stream mid-run
+    const gen = ++historyGen;
     try {
       const res = await fetch(base + '/ai/sessions/' + encodeURIComponent(id));
+      if (gen !== historyGen) return false;
       if (res.status === 404) {
         if (!silent) {
           localStorage.removeItem('rab-session-id');
@@ -1113,8 +1171,8 @@
       }
       if (!res.ok) throw new Error('Could not load chat (' + res.status + ')');
       const data = await res.json();
-      sessionId = data.id || id;
-      localStorage.setItem('rab-session-id', sessionId);
+      if (gen !== historyGen) return false;
+      bindSession(data.id || id, { quiet: true });
       streamEl.innerHTML = '';
       currentTurn = null;
       replyBufferEl = null;
@@ -1137,7 +1195,7 @@
       }
       return true;
     } catch (e) {
-      if (!silent) {
+      if (!silent && gen === historyGen) {
         streamEl.insertAdjacentHTML('beforeend',
           '<div class="rab-empty-chat">Could not load previous chat: ' + escapeHtml(e.message) + '</div>');
       }
@@ -1191,6 +1249,7 @@
       if (sessionId === id) {
         sessionId = null;
         localStorage.removeItem('rab-session-id');
+        historyGen += 1;
         streamEl.innerHTML = '<div class="rab-empty-chat">Chat deleted. Ask anything to start a new thread.</div>';
       }
       loadSessions();
@@ -1198,19 +1257,26 @@
     }
     const item = ev.target.closest('[data-session]');
     if (!item) return;
-    sessionId = item.dataset.session;
-    localStorage.setItem('rab-session-id', sessionId);
+    if (running) {
+      alert('Wait for the current run to finish before switching chats.');
+      return;
+    }
+    const id = item.dataset.session;
     document.querySelectorAll('.rab-session-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
     document.querySelector('[data-tab="agent"]')?.click();
-    await loadSessionHistory(sessionId);
+    await loadSessionHistory(id, { force: true });
   });
 
   document.getElementById('rab-new-session')?.addEventListener('click', async () => {
+    if (running) {
+      alert('Wait for the current run to finish before starting a new chat.');
+      return;
+    }
     const res = await fetch(base + '/ai/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     const data = await res.json();
-    sessionId = data.id;
-    localStorage.setItem('rab-session-id', sessionId);
+    historyGen += 1;
+    bindSession(data.id, { quiet: true });
     streamEl.innerHTML = '<div class="rab-empty-chat">New chat — ask the agent…</div>';
     currentTurn = null;
     loadSessions();
@@ -1232,7 +1298,8 @@
           (pr ? '<a href="' + pr + '" target="_blank" style="font-size:0.68rem">PR</a>' : '') +
           '</div>';
       }).join('');
-      data.tasks.filter(t => t.status === 'running' || t.status === 'queued').forEach(t => watchTask(t.id));
+      // Silent watch — updates Tasks list only; does not steal the Agent chat
+      data.tasks.filter(t => t.status === 'running' || t.status === 'queued').forEach(t => watchTask(t.id, { followInAgent: false }));
     } catch (e) { el.innerHTML = '<p class="rab-locked">' + e.message + '</p>'; }
   }
 

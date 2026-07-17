@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.4] - 2026-07-17
+
+### Fixed — Agent chat jumping between threads
+- Plan first / Build created a **new session every run** (no `session_id`) → duplicate “# Composer mode” threads
+- Background task watchers called `appendEvent` and **stole** the open chat / session binding
+- Thread titles no longer use `# Task` / `# Composer mode` wrappers
+- Build stream + Runtime reuse one session across retries; IDE binds session once and blocks mid-run switches
+
 ## [2.9.3] - 2026-07-17
 
 ### Fixed — Previous chats / requests missing from Agent tab

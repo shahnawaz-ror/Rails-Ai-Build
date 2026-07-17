@@ -31,7 +31,7 @@ module RailsAiBuild
       response.headers['Cache-Control'] = 'no-cache'
       response.headers['X-Accel-Buffering'] = 'no'
 
-      body = params.permit(:task, :provider, :model, :skill, :verify, :max_attempts, :workspace, :composer)
+      body = params.permit(:task, :provider, :model, :skill, :verify, :max_attempts, :workspace, :composer, :session_id)
       workspace = sanitize_workspace_param(body[:workspace])
       task = compose_task(body[:task], composer: body[:composer])
 
@@ -42,7 +42,8 @@ module RailsAiBuild
         skill: body[:skill],
         verify: body[:verify].nil? ? nil : ActiveModel::Type::Boolean.new.cast(body[:verify]),
         max_attempts: body[:max_attempts]&.to_i,
-        workspace: workspace
+        workspace: workspace,
+        session_id: body[:session_id]
       ) do |event, data|
         response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
       end
