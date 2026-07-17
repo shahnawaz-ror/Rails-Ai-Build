@@ -480,7 +480,8 @@
       steps: el.querySelector('.rab-turn-steps'),
       reply: el.querySelector('.rab-turn-reply'),
       chips: el.querySelectorAll('.rab-phase-chip'),
-      phase: 'planning'
+      phase: 'planning',
+      doneShown: false
     };
     replyBufferEl = null;
     return currentTurn;
@@ -583,14 +584,35 @@
   }
 
   function showDoneSummary(data) {
-    const files = data.applied_files || turnFiles || [];
-    const paths = files.map((f) => f.path || f).filter(Boolean);
+    // Queue emits both :complete (Runtime) and :finished (Queue); EventBus also
+    // replays the buffer on (re)subscribe — never stack identical Done cards.
     const turn = ensureTurn();
+    const nested = data.result && typeof data.result === 'object' ? data.result : null;
+    const content = data.content || nested?.content || '';
+    const files = data.applied_files || nested?.applied_files || turnFiles || [];
+    const paths = files.map((f) => f.path || f).filter(Boolean);
+
+    if (turn.doneShown) {
+      setTurnPhase('done');
+      if (paths.length) renderAppliedFiles(files);
+      if (data.pending_changes?.length) refreshChanges(data.pending_changes);
+      if ((data.compare_url || data.pr_url) && !turn.reply.querySelector('a[href*="github"], a[href*="compare"]')) {
+        turn.reply.insertAdjacentHTML('beforeend',
+          ' <a href="' + (data.compare_url || data.pr_url) + '" target="_blank">Open PR</a>');
+      }
+      return;
+    }
+    turn.doneShown = true;
     setTurnPhase('done');
     turn.reply.hidden = false;
     let html = '<div class="rab-done-summary">';
     html += '<div class="rab-done-title">Done</div>';
-    if (data.content) html += '<div class="rab-reply-final">' + escapeHtml(String(data.content).slice(0, 2000)) + '</div>';
+    // Skip tool-dump "content" that just restates a read_file result
+    const clean = String(content || '').trim();
+    const looksLikeToolDump = /has \d+ lines of content/i.test(clean) && clean.length < 400;
+    if (clean && !looksLikeToolDump) {
+      html += '<div class="rab-reply-final">' + escapeHtml(clean.slice(0, 2000)) + '</div>';
+    }
     if (paths.length) {
       html += '<div class="rab-done-files"><strong>Changed files</strong><ul>' +
         paths.map((p) => '<li>' + escapeHtml(p) + '</li>').join('') + '</ul></div>';
@@ -1264,11 +1286,17 @@
         return;
       }
       taskStreamBackoff.delete(id);
+      let sawTerminal = false;
       await consumeSse(res, (event, data) => {
         if (event === 'delta' && data.token) return;
         if (event === 'snapshot') return; // list metadata only
+        if (['complete', 'done', 'finished', 'error', 'cancelled'].includes(event)) sawTerminal = true;
         appendEvent(event, data, { fromTask: true, followInAgent: true });
       }, streamSignal);
+      if (sawTerminal) {
+        followedTaskId = null;
+        syncRunButton();
+      }
     } catch (e) {
       if (e?.name === 'AbortError') return;
     } finally {

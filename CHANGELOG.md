@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.2] - 2026-07-17
+
+### Fixed — Queue mode stacking duplicate Done cards
+- Background tasks emit both `:complete` and `:finished`; EventBus also replays the buffer on subscribe
+- IDE now shows **one** Done summary per turn (later events only refresh Changes / PR links)
+- Skips tool-dump “content” like `The file … has N lines of content` in the Done card
+- After a terminal task event, do not reconnect the follow stream
+
 ## [2.10.1] - 2026-07-17
 
 ### Added — Agent queue Send / Stop
