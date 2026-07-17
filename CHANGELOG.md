@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.6] - 2026-07-17
+
+### Fixed — Queue task looks frozen while Rails log floods with 429
+- IDE polls `POST /tasks/:id/stream` for live updates; that endpoint was rate-limited
+- After 60 POSTs/minute the stream returned **429**, so the Agent panel stopped updating while the worker still ran
+- Task stream subscribe is **exempt** from rate limits (mutating `/ai/stream` / `/build/stream` still limited)
+- IDE backs off on 429 instead of reconnect-storming
+
 ## [2.9.5] - 2026-07-17
 
 ### Fixed — Stop saying “Cursor” to end users + clean chat mess

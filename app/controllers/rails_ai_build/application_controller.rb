@@ -24,8 +24,15 @@ module RailsAiBuild
     def rate_limited_request?
       return false if request.get? || request.head?
       return false if controller_name == "billing" && action_name == "webhook"
+      # Task SSE subscribe is polled by the IDE; rate-limiting it causes 429 storms
+      # and a frozen Agent panel while the worker still runs.
+      return false if task_stream_subscribe?
 
       true
+    end
+
+    def task_stream_subscribe?
+      controller_name == "tasks" && action_name == "stream"
     end
 
     def seat_gated_request?

@@ -48,5 +48,34 @@ RSpec.describe 'Tasks API', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('event:')
     end
+
+    it 'is not blocked by the mutating-endpoint rate limit' do
+      previous_limit = ENV['RAILS_AI_BUILD_RATE_LIMIT']
+      previous_window = ENV['RAILS_AI_BUILD_RATE_WINDOW']
+      ENV['RAILS_AI_BUILD_RATE_LIMIT'] = '2'
+      ENV['RAILS_AI_BUILD_RATE_WINDOW'] = '60'
+      RailsAiBuild::RateLimit.reset!
+
+      post '/rails_ai_build/tasks', params: { task: 'Rate limit stream' }
+      id = json_response[:id]
+
+      # Burn the rate-limit budget on a mutating endpoint
+      2.times do
+        post '/rails_ai_build/ai/chat',
+             params: { message: 'ping' }.to_json,
+             headers: { 'Content-Type' => 'application/json' }
+      end
+      post '/rails_ai_build/ai/chat',
+           params: { message: 'ping' }.to_json,
+           headers: { 'Content-Type' => 'application/json' }
+      expect(response).to have_http_status(:too_many_requests)
+
+      post "/rails_ai_build/tasks/#{id}/stream", headers: { 'Accept' => 'text/event-stream' }
+      expect(response).to have_http_status(:ok)
+    ensure
+      ENV['RAILS_AI_BUILD_RATE_LIMIT'] = previous_limit
+      ENV['RAILS_AI_BUILD_RATE_WINDOW'] = previous_window
+      RailsAiBuild::RateLimit.reset!
+    end
   end
 end
