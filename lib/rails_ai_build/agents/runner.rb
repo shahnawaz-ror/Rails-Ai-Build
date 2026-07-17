@@ -7,8 +7,9 @@ module RailsAiBuild
     class Runner
       attr_reader :agent, :iterations, :last_response
 
-      def initialize(agent:)
+      def initialize(agent:, cancel_check: nil)
         @agent = agent
+        @cancel_check = cancel_check
         @iterations = 0
         @last_response = nil
         @callbacks = {
@@ -30,6 +31,7 @@ module RailsAiBuild
         stream_tokens = @callbacks[:on_delta].any?
 
         loop do
+          raise_if_cancelled!
           @iterations += 1
           raise AgentError, "Max iterations (#{max}) exceeded" if @iterations > max
 
@@ -37,6 +39,7 @@ module RailsAiBuild
           @last_response = response
           fire(:on_iteration, response)
           track_usage(response)
+          raise_if_cancelled!
 
           tool_calls = response[:tool_calls] || []
           agent.add_message(Message.assistant(response[:content], tool_calls: tool_calls.presence))
@@ -52,6 +55,12 @@ module RailsAiBuild
       end
 
       private
+
+      def raise_if_cancelled!
+        return unless @cancel_check&.call
+
+        raise CancelledError, 'Stopped by user'
+      end
 
       def fetch_response(stream_tokens:)
         agent.provider.chat(
@@ -73,6 +82,7 @@ module RailsAiBuild
 
       def execute_tool_calls(tool_calls)
         tool_calls.each do |tc|
+          raise_if_cancelled!
           fire(:on_tool_call, tc)
           result = begin
             agent.execute_tool(tc[:name], tc[:arguments])

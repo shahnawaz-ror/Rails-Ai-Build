@@ -47,6 +47,10 @@ module RailsAiBuild
       ) do |event, data|
         response.stream.write(Streaming::Sse.format_sse(event: event, data: data))
       end
+    rescue CancelledError => e
+      response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message, cancelled: true }))
+    rescue IOError, ActionController::Live::ClientDisconnected
+      # Client pressed Stop / closed the stream
     rescue StandardError => e
       response.stream.write(Streaming::Sse.format_sse(event: :error, data: { error: e.message }))
     ensure

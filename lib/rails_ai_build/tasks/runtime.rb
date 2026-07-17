@@ -36,7 +36,8 @@ module RailsAiBuild
         task_id: nil,
         session_id: nil,
         session: nil,
-        plan_first: false
+        plan_first: false,
+        cancel_check: nil
       )
         @task = task.to_s
         @workspace = workspace || RailsAiBuild.configuration.workspace_path
@@ -49,6 +50,7 @@ module RailsAiBuild
         @session = session
         @session_id = session_id || session&.id
         @plan_first = plan_first
+        @cancel_check = cancel_check
         @attempts = []
       end
 
@@ -60,9 +62,11 @@ module RailsAiBuild
         last_result = nil
 
         @max_attempts.times do |i|
+          raise_if_cancelled!
           emit&.call(:attempt, { number: i + 1, max: @max_attempts })
           prompt = build_prompt(attempt: i + 1, context: context)
           last_result = run_agent(prompt, emit)
+          raise_if_cancelled!
           verify_result = @verify ? verify_workspace : { passed: true, skipped: true }
           emit&.call(:verify, verify_result)
 
@@ -112,8 +116,15 @@ module RailsAiBuild
         parts.join("\n")
       end
 
+      def raise_if_cancelled!
+        return unless @cancel_check&.call
+
+        raise CancelledError, 'Stopped by user'
+      end
+
       def run_agent(prompt, emit)
         session = resolve_session!
+        cancel = @cancel_check
         result = if emit
                    Ai::Driver.stream(
                      prompt,
@@ -121,7 +132,8 @@ module RailsAiBuild
                      provider: @provider,
                      model: @model,
                      skill: @skill,
-                     workspace: @workspace
+                     workspace: @workspace,
+                     cancel_check: cancel
                    ) do |event, data|
                      emit.call(event, data)
                    end
@@ -132,7 +144,8 @@ module RailsAiBuild
                      provider: @provider,
                      model: @model,
                      skill: @skill,
-                     workspace: @workspace
+                     workspace: @workspace,
+                     cancel_check: cancel
                    )
                  end
         @session = result.session if result.session
