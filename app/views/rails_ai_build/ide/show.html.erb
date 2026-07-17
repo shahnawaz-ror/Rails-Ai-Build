@@ -113,50 +113,52 @@
     </div>
   </div>
 
-  <div class="rab-workspace">
-    <nav class="rab-activity">
-      <button class="rab-activity-btn active" data-panel="files" title="Explorer">📁</button>
-      <button class="rab-activity-btn" data-panel="sessions" title="Threads">💬</button>
-      <button class="rab-activity-btn" data-panel="agent" title="Agent">🤖</button>
+  <div class="rab-workspace rab-layout-agents">
+    <nav class="rab-activity" aria-label="Workspace">
+      <button class="rab-activity-btn active" data-panel="sessions" title="Agents">✦</button>
+      <button class="rab-activity-btn" data-panel="files" title="Files">☰</button>
+      <button class="rab-activity-btn" data-panel="agent" title="Focus chat">◎</button>
       <% if @features[:git_integration] %><button class="rab-activity-btn" data-panel="git" title="Git">⎇</button><% end %>
     </nav>
 
-    <aside class="rab-sidebar" id="rab-sidebar-files">
-      <div class="rab-sidebar-header">Explorer</div>
+    <aside class="rab-sidebar" id="rab-sidebar-sessions">
+      <div class="rab-sidebar-header rab-agents-header">
+        <span>Agents</span>
+        <span class="rab-agents-actions">
+          <button type="button" class="rab-btn rab-btn-secondary" id="rab-prune-sessions" title="Remove empty chats">Clean</button>
+        </span>
+      </div>
+      <div class="rab-new-agent-wrap">
+        <button type="button" class="rab-btn rab-btn-primary rab-new-agent-btn" id="rab-new-session">+ New agent</button>
+      </div>
+      <div class="rab-sidebar-body" id="rab-session-list">
+        <p class="rab-locked">Loading agents…</p>
+      </div>
+    </aside>
+
+    <aside class="rab-sidebar" id="rab-sidebar-files" style="display:none">
+      <div class="rab-sidebar-header">Files</div>
       <div class="rab-sidebar-body" id="rab-file-tree">
         <p class="rab-locked">Loading workspace…</p>
       </div>
     </aside>
 
-    <aside class="rab-sidebar" id="rab-sidebar-sessions" style="display:none">
-      <div class="rab-sidebar-header" style="display:flex;justify-content:space-between;align-items:center;gap:0.35rem">
-        <span>Chats</span>
-        <span style="display:flex;gap:0.25rem">
-          <button type="button" class="rab-btn rab-btn-secondary" id="rab-prune-sessions" style="padding:0.2rem 0.4rem;font-size:0.65rem" title="Remove empty and junk threads">Clean</button>
-          <button type="button" class="rab-btn rab-btn-secondary" id="rab-new-session" style="padding:0.2rem 0.4rem;font-size:0.65rem">New</button>
-        </span>
-      </div>
-      <div class="rab-sidebar-body" id="rab-session-list">
-        <p class="rab-locked">Loading threads…</p>
-      </div>
-    </aside>
-
     <main class="rab-center">
       <div class="rab-tabs" id="rab-editor-tabs">
-        <button class="rab-tab active" data-tab="editor">Editor</button>
-        <button class="rab-tab" data-tab="agent">Agent</button>
+        <button class="rab-tab active" data-tab="agent">Agent</button>
+        <button class="rab-tab" data-tab="editor">Editor</button>
       </div>
 
-      <div class="rab-editor" id="rab-editor">
-        <div class="rab-editor-empty">Select a file from the explorer, or ask the agent below.</div>
+      <div class="rab-editor" id="rab-editor" style="display:none">
+        <div class="rab-editor-empty">Open a file from Files (left or right rail), or stay in Agent and ask for changes.</div>
       </div>
 
-      <div class="rab-agent-panel" id="rab-agent-panel">
+      <div class="rab-agent-panel rab-agent-primary" id="rab-agent-panel">
         <div class="rab-agent-header">
-          <span>Agent</span>
-          <div style="display:flex;align-items:center;gap:0.5rem">
-            <button type="button" class="rab-btn rab-btn-secondary" id="rab-open-threads" style="padding:0.15rem 0.45rem;font-size:0.65rem" title="Show previous chats">Chats</button>
-            <span id="rab-agent-status" class="rab-status-idle">Ready — Enter to send, Shift+Enter for newline</span>
+          <span id="rab-agent-title">Agent</span>
+          <div class="rab-agent-header-right">
+            <button type="button" class="rab-btn rab-btn-secondary" id="rab-open-threads" title="Show agent history">History</button>
+            <span id="rab-agent-status" class="rab-status-idle">Ready — Enter to send</span>
           </div>
         </div>
         <div class="rab-live-bar" id="rab-live-bar" hidden>
@@ -171,7 +173,11 @@
           <span id="rab-live-text">Working…</span>
         </div>
         <div class="rab-stream" id="rab-stream">
-          <div class="rab-empty-chat">Ask anything — you’ll get a short plan to approve, then live steps and a clear list of what changed. Open <strong>Chats</strong> (or the 💬 Threads panel) for previous requests.</div>
+          <div class="rab-empty-chat">
+            <div class="rab-empty-title">What should we build?</div>
+            <p>Describe a change — you’ll get a short plan to approve, live steps, then a clear list of files changed.</p>
+            <p class="rab-empty-hint">Previous runs live in <strong>Agents</strong> on the left.</p>
+          </div>
         </div>
         <form class="rab-prompt-bar" id="rab-prompt-form" action="#" method="post">
           <select id="rab-mode" title="Mode">
@@ -186,24 +192,24 @@
               <option value="<%= s[:name] %>"><%= s[:name] %></option>
             <% end %>
           </select>
-          <textarea id="rab-prompt" name="prompt" placeholder="Ask the agent… Enter to send · Shift+Enter for newline" rows="2" autocomplete="off"></textarea>
+          <textarea id="rab-prompt" name="prompt" placeholder="Send a follow-up… Enter to send · Shift+Enter for newline" rows="2" autocomplete="off"></textarea>
           <button type="submit" class="rab-btn rab-btn-primary" id="rab-run-btn">Send</button>
         </form>
       </div>
     </main>
 
     <aside class="rab-right">
-      <div class="rab-right-tabs">
-        <button class="rab-right-tab" data-right="tasks">Tasks</button>
-        <button class="rab-right-tab active" data-right="changes">Changes</button>
-        <button class="rab-right-tab" data-right="git">Git</button>
-        <button class="rab-right-tab" data-right="doctor">Doctor</button>
-        <button class="rab-right-tab" data-right="enterprise">Enterprise</button>
+      <div class="rab-right-tabs" role="tablist">
+        <button class="rab-right-tab active" data-right="changes" title="Changes">Changes</button>
+        <button class="rab-right-tab" data-right="files" title="Files">Files</button>
+        <button class="rab-right-tab" data-right="git" title="Git">Git</button>
+        <button class="rab-right-tab" data-right="doctor" title="Doctor">Doctor</button>
+        <button class="rab-right-tab" data-right="more" title="More">More</button>
       </div>
       <div class="rab-right-body">
-        <section id="rab-panel-tasks" style="display:none">
-          <button class="rab-btn rab-btn-secondary" id="rab-refresh-tasks" style="width:100%;margin-bottom:0.5rem">Refresh</button>
-          <div id="rab-task-list"><p class="rab-locked">No tasks queued</p></div>
+        <section id="rab-panel-files" style="display:none">
+          <p class="rab-locked" style="margin-bottom:0.5rem">Workspace files — click to open in Editor.</p>
+          <div id="rab-file-tree-right" class="rab-file-tree-right"><p class="rab-locked">Loading…</p></div>
         </section>
 
         <section id="rab-panel-changes">
@@ -257,32 +263,39 @@
           <div id="rab-doctor-list"></div>
         </section>
 
-        <section id="rab-panel-enterprise" style="display:none">
-          <div class="rab-enterprise-item">
-            <strong>Plan:</strong> <%= @plan_name %>
-            <% if @plan == :enterprise %><span class="rab-badge rab-badge-enterprise" style="margin-left:0.5rem">SSO · RBAC · SOC2</span><% end %>
-          </div>
-          <div class="rab-enterprise-item">
-            <strong>Entitlement:</strong> <%= @activation[:entitlement_source] %>
-            <% if @activation[:license_present] %> · license<% end %>
-          </div>
-          <% @features.each do |name, enabled| %>
+        <section id="rab-panel-more" style="display:none">
+          <h3 class="rab-right-section-title">Background tasks</h3>
+          <button class="rab-btn rab-btn-secondary" id="rab-refresh-tasks" style="width:100%;margin-bottom:0.5rem">Refresh tasks</button>
+          <div id="rab-task-list"><p class="rab-locked">No tasks queued</p></div>
+
+          <h3 class="rab-right-section-title" style="margin-top:1rem">Plan &amp; enterprise</h3>
+          <div id="rab-panel-enterprise">
             <div class="rab-enterprise-item">
-              <span class="<%= enabled ? 'rab-feature-on' : 'rab-feature-off' %>"><%= enabled ? '✓' : '○' %></span>
-              <%= name.to_s.humanize %>
-              <% unless enabled %>
-                <button type="button" class="rab-upgrade-link" data-feature="<%= name %>">Upgrade</button>
-              <% end %>
+              <strong>Plan:</strong> <%= @plan_name %>
+              <% if @plan == :enterprise %><span class="rab-badge rab-badge-enterprise" style="margin-left:0.5rem">SSO · RBAC · SOC2</span><% end %>
             </div>
-          <% end %>
-          <% if @features[:audit_log] %>
-            <button class="rab-btn rab-btn-secondary" id="rab-load-audit" style="width:100%;margin-top:0.75rem">Load audit log</button>
-            <pre id="rab-audit-log" class="rab-diff-view" style="margin-top:0.5rem;max-height:160px"></pre>
-          <% end %>
-          <% if @features[:sso] %>
-            <p style="margin-top:0.75rem;font-size:0.72rem;color:var(--rab-muted)">SSO: <code>GET /auth/saml</code> — mount behind your IdP</p>
-          <% end %>
-          <button type="button" class="rab-btn rab-btn-accent" id="rab-open-upgrade" style="width:100%;margin-top:0.75rem">Upgrade plan</button>
+            <div class="rab-enterprise-item">
+              <strong>Entitlement:</strong> <%= @activation[:entitlement_source] %>
+              <% if @activation[:license_present] %> · license<% end %>
+            </div>
+            <% @features.each do |name, enabled| %>
+              <div class="rab-enterprise-item">
+                <span class="<%= enabled ? 'rab-feature-on' : 'rab-feature-off' %>"><%= enabled ? '✓' : '○' %></span>
+                <%= name.to_s.humanize %>
+                <% unless enabled %>
+                  <button type="button" class="rab-upgrade-link" data-feature="<%= name %>">Upgrade</button>
+                <% end %>
+              </div>
+            <% end %>
+            <% if @features[:audit_log] %>
+              <button class="rab-btn rab-btn-secondary" id="rab-load-audit" style="width:100%;margin-top:0.75rem">Load audit log</button>
+              <pre id="rab-audit-log" class="rab-diff-view" style="margin-top:0.5rem;max-height:160px"></pre>
+            <% end %>
+            <% if @features[:sso] %>
+              <p style="margin-top:0.75rem;font-size:0.72rem;color:var(--rab-muted)">SSO: <code>GET /auth/saml</code> — mount behind your IdP</p>
+            <% end %>
+            <button type="button" class="rab-btn rab-btn-accent" id="rab-open-upgrade" style="width:100%;margin-top:0.75rem">Upgrade plan</button>
+          </div>
         </section>
       </div>
     </aside>

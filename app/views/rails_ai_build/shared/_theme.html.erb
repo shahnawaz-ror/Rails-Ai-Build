@@ -173,14 +173,34 @@
   .rab-activity-btn.active, .rab-activity-btn:hover { background: var(--rab-elevated); color: var(--rab-text); }
 
   .rab-sidebar {
-    width: 260px; background: var(--rab-panel); border-right: 1px solid var(--rab-border);
+    width: 280px; background: var(--rab-panel); border-right: 1px solid var(--rab-border);
     display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
   }
   .rab-sidebar-header {
     padding: 0.6rem 0.75rem; font-size: 0.65rem; text-transform: uppercase;
     letter-spacing: 0.08em; color: var(--rab-muted); border-bottom: 1px solid var(--rab-border);
   }
+  .rab-agents-header { display: flex; justify-content: space-between; align-items: center; gap: 0.35rem; }
+  .rab-agents-actions .rab-btn { padding: 0.15rem 0.4rem; font-size: 0.65rem; }
+  .rab-new-agent-wrap { padding: 0.65rem 0.75rem 0.35rem; border-bottom: 1px solid var(--rab-border); }
+  .rab-new-agent-btn { width: 100%; justify-content: center; }
   .rab-sidebar-body { flex: 1; overflow-y: auto; padding: 0.5rem; font-size: 0.78rem; }
+  .rab-session-day {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--rab-muted); padding: 0.65rem 0.35rem 0.3rem;
+  }
+  .rab-session-item {
+    padding: 0.55rem 0.55rem; border-radius: 10px; cursor: pointer; margin-bottom: 0.25rem;
+    border: 1px solid transparent;
+  }
+  .rab-session-item:hover { background: var(--rab-elevated); }
+  .rab-session-item.active {
+    background: color-mix(in srgb, var(--rab-accent) 16%, var(--rab-elevated));
+    border-color: color-mix(in srgb, var(--rab-accent) 40%, var(--rab-border));
+  }
+  .rab-session-title { font-weight: 600; font-size: 0.8rem; color: var(--rab-text); line-height: 1.3; }
+  .rab-session-preview { font-size: 0.68rem; color: var(--rab-muted); margin-top: 0.15rem; }
+  .rab-session-meta { font-size: 0.62rem; color: var(--rab-muted); margin-top: 0.2rem; display: flex; gap: 0.45rem; }
 
   .rab-tree-item {
     padding: 0.2rem 0.4rem; border-radius: 4px; cursor: pointer;
@@ -214,11 +234,25 @@
     height: 42%; min-height: 200px; border-top: 1px solid var(--rab-border);
     display: flex; flex-direction: column; background: var(--rab-surface);
   }
-  .rab-agent-header {
-    padding: 0.4rem 0.75rem; font-size: 0.65rem; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--rab-muted); border-bottom: 1px solid var(--rab-border);
-    display: flex; justify-content: space-between;
+  .rab-layout-agents .rab-agent-panel,
+  .rab-agent-panel.rab-agent-primary {
+    flex: 1; height: auto !important; min-height: 0; border-top: none;
   }
+  .rab-agent-header {
+    padding: 0.55rem 0.9rem; font-size: 0.72rem; text-transform: none;
+    letter-spacing: 0; color: var(--rab-text); font-weight: 600;
+    border-bottom: 1px solid var(--rab-border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .rab-agent-header-right { display: flex; align-items: center; gap: 0.5rem; }
+  .rab-empty-title { font-size: 1.15rem; font-weight: 700; color: var(--rab-text); margin-bottom: 0.4rem; }
+  .rab-empty-chat p { margin: 0.35rem 0; max-width: 28rem; margin-left: auto; margin-right: auto; }
+  .rab-empty-hint { font-size: 0.78rem; }
+  .rab-right-section-title {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--rab-muted); margin: 0 0 0.5rem;
+  }
+  .rab-file-tree-right { max-height: calc(100vh - 180px); overflow: auto; }
   .rab-stream { flex: 1; overflow-y: auto; padding: 0.75rem; font-size: 0.78rem; }
   .rab-empty-chat { color: var(--rab-muted); text-align: center; padding: 2rem 1rem; font-family: var(--rab-font-ui); }
   .rab-live-bar {
